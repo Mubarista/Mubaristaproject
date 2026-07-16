@@ -30,6 +30,20 @@ export async function POST(request: Request) {
     const body = await request.json();
     console.log("Received hero update request:", JSON.stringify(body, null, 2));
 
+    // Validate request body
+    if (!body || typeof body !== 'object') {
+      console.error("Invalid request body: not an object");
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    }
+
+    // Check payload size
+    const payloadSize = JSON.stringify(body).length;
+    console.log("Request payload size:", payloadSize, "bytes");
+    if (payloadSize > 4000000) { // 4MB limit for Vercel
+      console.error("Payload too large:", payloadSize);
+      return NextResponse.json({ error: "Payload too large. Images/videos must be smaller than 4MB total." }, { status: 413 });
+    }
+
     const results = [];
 
     if (body.heroContent) {

@@ -1,38 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import {
-  Users,
-  Trophy,
-  CreditCard,
-  FileCheck,
-  Gavel,
-  BookOpen,
-  Wrench,
-  Briefcase,
-  BarChart3,
-  Settings,
-  Bell,
-  Globe,
-} from "lucide-react";
+import { Settings, Bell } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-const adminModules = [
-  { icon: Users, label: "User Management", count: "48.5K", color: "text-blue" },
-  { icon: Trophy, label: "Competitions", count: 12, color: "text-yellow" },
-  { icon: FileCheck, label: "Applications", count: "47 pending", color: "text-green" },
-  { icon: CreditCard, label: "Payments", count: "$12,450", color: "text-green" },
-  { icon: Gavel, label: "Judges", count: "24", color: "text-blue" },
-  { icon: BookOpen, label: "Books", count: "156", color: "text-yellow" },
-  { icon: Wrench, label: "Tools", count: "89", color: "text-red" },
-  { icon: Briefcase, label: "Jobs", count: "34", color: "text-green" },
-  { icon: BarChart3, label: "Analytics", count: "Live", color: "text-blue" },
-  { icon: Bell, label: "Notifications", count: "12", color: "text-red" },
-  { icon: Globe, label: "Countries", count: 127, color: "text-green" },
-  { icon: Settings, label: "Settings", count: "CMS", color: "text-muted" },
-];
 
 export default function AdminDashboard() {
   return (
@@ -54,16 +26,6 @@ export default function AdminDashboard() {
               <Bell className="h-4 w-4" /> Send Announcement
             </Button>
           </div>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
-          {adminModules.map((mod) => (
-            <Card key={mod.label} className="cursor-pointer group">
-              <mod.icon className={`h-6 w-6 mb-3 ${mod.color} group-hover:scale-110 transition-transform`} />
-              <CardTitle className="text-sm mb-1">{mod.label}</CardTitle>
-              <p className="text-lg font-bold">{mod.count}</p>
-            </Card>
-          ))}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

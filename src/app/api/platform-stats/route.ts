@@ -28,6 +28,15 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    
+    // Check payload size
+    const payloadSize = JSON.stringify(body).length;
+    console.log("Platform stats request payload size:", payloadSize, "bytes");
+    if (payloadSize > 1000000) { // 1MB limit for stats
+      console.error("Payload too large for stats:", payloadSize);
+      return NextResponse.json({ error: "Payload too large for stats update." }, { status: 413 });
+    }
+
     const computed = await computePlatformStats();
 
     // Merge body with computed stats, computed wins for live platform data

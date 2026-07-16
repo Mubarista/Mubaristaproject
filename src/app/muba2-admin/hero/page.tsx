@@ -99,7 +99,16 @@ export default function AdminHeroPage() {
         body: JSON.stringify(payload),
       });
       
-      const result = await response.json();
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get("content-type");
+      let result;
+      if (contentType && contentType.includes("application/json")) {
+        result = await response.json();
+      } else {
+        const text = await response.text();
+        console.error("Non-JSON response:", text);
+        result = { error: "Server returned non-JSON response. Check console for details." };
+      }
       console.log("Save response:", result);
       
       if (response.ok) {
