@@ -1,0 +1,538 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  LayoutDashboard,
+  Trophy,
+  Medal,
+  Image,
+  Star,
+  Building2,
+  Coffee,
+  Lightbulb,
+  FileText,
+  HelpCircle,
+  BookOpen,
+  Wrench,
+  Briefcase,
+  GraduationCap,
+  Clock,
+  UserCheck,
+  BarChart3,
+  Home,
+  ChevronRight,
+  Sparkles,
+  Globe,
+  DollarSign,
+  Scale,
+  Lock,
+  LogOut,
+  Eye,
+  EyeOff,
+  Settings,
+  Tags,
+  Search,
+  X,
+  Crown,
+  ListOrdered,
+} from "lucide-react";
+import { LoadingDots } from "@/components/ui/loading-dots";
+import { useAdminAuth } from "@/lib/admin-auth-context";
+
+const sections = [
+  { label: "Overview", href: "/muba2-admin", icon: LayoutDashboard },
+  { label: "Hero & Stats", href: "/muba2-admin/hero", icon: Home },
+  { label: "How It Works", href: "/muba2-admin/how-it-works", icon: ListOrdered },
+  { label: "Competitions", href: "/muba2-admin/competitions", icon: Trophy },
+  { label: "Applicants", href: "/muba2-admin/applications", icon: UserCheck },
+  { label: "Winners", href: "/muba2-admin/winners", icon: Medal },
+  { label: "Latte Art", href: "/muba2-admin/latte-art", icon: Image },
+  { label: "Testimonials", href: "/muba2-admin/testimonials", icon: Star },
+  { label: "Sponsors", href: "/muba2-admin/sponsors", icon: Building2 },
+  { label: "Coffee Facts", href: "/muba2-admin/coffee-facts", icon: Coffee },
+  { label: "Tips & Skills", href: "/muba2-admin/tips", icon: Lightbulb },
+  { label: "Articles", href: "/muba2-admin/articles", icon: FileText },
+  { label: "FAQs", href: "/muba2-admin/faqs", icon: HelpCircle },
+  { label: "Learn Categories", href: "/muba2-admin/learn", icon: BookOpen },
+  { label: "Categories", href: "/muba2-admin/categories", icon: Tags },
+  { label: "Books", href: "/muba2-admin/books", icon: BookOpen },
+  { label: "Tools", href: "/muba2-admin/tools", icon: Wrench },
+  { label: "Jobs", href: "/muba2-admin/jobs", icon: Briefcase },
+  { label: "Schools", href: "/muba2-admin/schools", icon: GraduationCap },
+  { label: "Coffee Timeline", href: "/muba2-admin/timeline", icon: Clock },
+  { label: "Legends", href: "/muba2-admin/legends", icon: UserCheck },
+  { label: "About", href: "/muba2-admin/about", icon: FileText },
+  { label: "Contact", href: "/muba2-admin/contact", icon: Building2 },
+  { label: "Message Center", href: "/muba2-admin/messages", icon: HelpCircle },
+  { label: "Countries", href: "/muba2-admin/countries", icon: Globe },
+  { label: "Payments", href: "/muba2-admin/payments", icon: DollarSign },
+  { label: "Subscription Plans", href: "/muba2-admin/subscription-plans", icon: Crown },
+  { label: "Judges",   href: "/muba2-admin/judges",   icon: Scale },
+  { label: "Settings", href: "/muba2-admin/settings", icon: Settings },
+];
+
+function AdminLoginScreen() {
+  const { adminLogin } = useAdminAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const result = await adminLogin(email, password);
+      if (!result.success) setError(result.error || "Invalid email or password.");
+    } catch {
+      setError("Login failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4 bg-background">
+      {/* Background glow */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 h-96 w-96 rounded-full bg-blue/10 blur-3xl" />
+        <div className="absolute bottom-1/4 left-1/3 h-64 w-64 rounded-full bg-red/8 blur-3xl" />
+      </div>
+
+      <div className="relative w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-red to-red/60 shadow-lg shadow-red/20 mb-4">
+            <Sparkles className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight">
+            MUBA<span className="text-blue">RISTA</span>
+          </h1>
+          <p className="text-muted text-sm mt-1">Admin Portal</p>
+        </div>
+
+        {/* Card */}
+        <div className="glass-card rounded-2xl p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue/10">
+              <Lock className="h-4 w-4 text-blue" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-base">Administrator Login</h2>
+              <p className="text-xs text-muted">Restricted access — authorised personnel only</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="text-sm text-muted mb-1.5 block">Admin Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                className="w-full rounded-xl bg-muted-bg border border-white/10 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue transition-all"
+                placeholder="admin@mubarista.com"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-muted mb-1.5 block">Password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                  className="w-full rounded-xl bg-muted-bg border border-white/10 px-4 py-3 pr-11 text-sm focus:outline-none focus:ring-2 focus:ring-blue transition-all"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-red/10 border border-red/20 text-red text-sm">
+                <Lock className="h-4 w-4 shrink-0" />
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded-xl bg-blue text-white font-semibold text-sm hover:bg-blue-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loading ? "Verifying..." : "Sign In to Admin Portal"}
+            </button>
+          </form>
+
+          <div className="mt-6 pt-4 border-t border-white/10 text-center">
+            <Link href="/" className="text-xs text-muted hover:text-foreground transition-colors">
+              ← Back to MUBARISTA site
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { isAdminAuthed, isLoading, adminLogout, userId } = useAdminAuth();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [settings, setSettings] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
+  const [showGlobalSearch, setShowGlobalSearch] = useState(false);
+  const [globalSearchQuery, setGlobalSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    fetchSettings();
+    if (userId) {
+      fetchUser();
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowGlobalSearch(true);
+      }
+      if (e.key === 'Escape' && showGlobalSearch) {
+        setShowGlobalSearch(false);
+        setGlobalSearchQuery("");
+        setSearchResults([]);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showGlobalSearch]);
+
+  async function fetchSettings() {
+    try {
+      const res = await fetch("/api/site-settings");
+      if (res.ok) {
+        const data = await res.json();
+        setSettings(data || {});
+      }
+    } catch (error) {
+      console.error("Error fetching site settings:", error);
+      setSettings({});
+    }
+  }
+
+  async function fetchUser() {
+    if (!userId) return;
+    try {
+      const res = await fetch(`/api/user?userId=${userId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data);
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+    }
+  }
+
+  async function performGlobalSearch(query: string) {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    setSearching(true);
+    try {
+      const results: any[] = [];
+      const q = query.toLowerCase();
+      
+      // Search sections (navigation items)
+      sections.forEach((section) => {
+        if (section.label.toLowerCase().includes(q)) {
+          results.push({ type: "Section", name: section.label, subtitle: "Navigation", href: section.href, icon: section.icon });
+        }
+      });
+      
+      // Search tools
+      try {
+        const toolsRes = await fetch("/api/tools");
+        if (toolsRes.ok) {
+          const tools = await toolsRes.json();
+          tools.forEach((t: any) => {
+            if (t.name.toLowerCase().includes(q) || t.brand.toLowerCase().includes(q) || t.category.toLowerCase().includes(q)) {
+              results.push({ type: "Tool", name: t.name, subtitle: t.brand, href: `/muba2-admin/tools`, icon: Wrench });
+            }
+          });
+        }
+      } catch {}
+      
+      // Search books
+      try {
+        const booksRes = await fetch("/api/books");
+        if (booksRes.ok) {
+          const books = await booksRes.json();
+          books.forEach((b: any) => {
+            if (b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q) || b.category.toLowerCase().includes(q)) {
+              results.push({ type: "Book", name: b.title, subtitle: b.author, href: `/muba2-admin/books`, icon: BookOpen });
+            }
+          });
+        }
+      } catch {}
+      
+      // Search articles
+      try {
+        const articlesRes = await fetch("/api/articles");
+        if (articlesRes.ok) {
+          const articles = await articlesRes.json();
+          articles.forEach((a: any) => {
+            if (a.title.toLowerCase().includes(q) || a.author.toLowerCase().includes(q) || a.category.toLowerCase().includes(q)) {
+              results.push({ type: "Article", name: a.title, subtitle: a.author, href: `/muba2-admin/articles`, icon: FileText });
+            }
+          });
+        }
+      } catch {}
+      
+      // Search legends
+      try {
+        const legendsRes = await fetch("/api/legends");
+        if (legendsRes.ok) {
+          const legends = await legendsRes.json();
+          legends.forEach((l: any) => {
+            if (l.name.toLowerCase().includes(q) || l.country.toLowerCase().includes(q)) {
+              results.push({ type: "Legend", name: l.name, subtitle: l.country, href: `/muba2-admin/legends`, icon: UserCheck });
+            }
+          });
+        }
+      } catch {}
+      
+      // Search winners
+      try {
+        const winnersRes = await fetch("/api/winners");
+        if (winnersRes.ok) {
+          const winners = await winnersRes.json();
+          winners.forEach((w: any) => {
+            if (w.name.toLowerCase().includes(q) || w.competition.toLowerCase().includes(q)) {
+              results.push({ type: "Winner", name: w.name, subtitle: w.competition, href: `/muba2-admin/winners`, icon: Medal });
+            }
+          });
+        }
+      } catch {}
+      
+      setSearchResults(results.slice(0, 20)); // Limit to 20 results
+    } catch (error) {
+      console.error("Global search error:", error);
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <LoadingDots />
+      </div>
+    );
+  }
+
+  if (!isAdminAuthed) return <AdminLoginScreen />;
+
+  return (
+    <div className="flex min-h-screen">
+      {/* Sidebar */}
+      <aside className="fixed top-0 left-0 bottom-0 w-60 bg-background border-r border-white/10 overflow-y-auto z-30 flex flex-col">
+        <div className="px-4 py-4 border-b border-white/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden bg-muted-bg">
+                {user?.avatar ? (
+                  <img src={user.avatar} alt={user?.name || "Admin"} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-muted text-sm font-medium">
+                    {user?.name?.charAt(0) || "A"}
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-bold">{settings?.adminPortalTitle || "Admin Portal"}</p>
+                <p className="text-xs text-muted">{settings?.adminPortalSubtitle || "Full CMS Control"}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowGlobalSearch(true)}
+              className="p-2 rounded-lg hover:bg-white/5 text-muted hover:text-foreground transition-colors"
+              title="Global Search"
+            >
+              <Search className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        <nav className="flex-1 px-2 py-3 space-y-0.5">
+          {sections.map((s) => {
+            const active = s.href === "/muba2-admin" ? pathname === s.href : pathname.startsWith(s.href);
+            return (
+              <Link
+                key={s.href}
+                href={s.href}
+                className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                  active
+                    ? "bg-blue text-white"
+                    : "text-muted hover:bg-white/5 hover:text-foreground"
+                }`}
+              >
+                <s.icon className="h-4 w-4 shrink-0" />
+                {s.label}
+                {active && <ChevronRight className="h-3 w-3 ml-auto" />}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="px-4 py-3 border-t border-white/10 space-y-1">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-xs text-muted hover:text-foreground transition-colors py-1"
+          >
+            <Home className="h-3.5 w-3.5" />
+            Back to Site
+          </Link>
+          <button
+            onClick={() => setShowLogoutConfirm(true)}
+            className="flex items-center gap-2 text-xs text-red/70 hover:text-red transition-colors py-1 w-full"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            Sign Out
+          </button>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <main className="flex-1 ml-60 p-8 min-h-screen">
+        {children}
+      </main>
+
+      {/* Global Search Modal */}
+      {showGlobalSearch && (
+        <div className="fixed inset-0 bg-black/50 flex items-start justify-center pt-20 z-50 p-4">
+          <div className="w-full max-w-2xl rounded-2xl bg-card border border-white/10 shadow-2xl">
+            <div className="flex items-center gap-3 p-4 border-b border-white/10">
+              <Search className="h-5 w-5 text-muted" />
+              <input
+                type="text"
+                placeholder="Search sections, tools, books, articles... (⌘K)"
+                value={globalSearchQuery}
+                onChange={(e) => {
+                  setGlobalSearchQuery(e.target.value);
+                  performGlobalSearch(e.target.value);
+                }}
+                autoFocus
+                className="flex-1 bg-transparent text-sm focus:outline-none"
+              />
+              <button
+                onClick={() => {
+                  setShowGlobalSearch(false);
+                  setGlobalSearchQuery("");
+                  setSearchResults([]);
+                }}
+                className="p-1 rounded hover:bg-white/5 text-muted hover:text-foreground transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="max-h-96 overflow-y-auto p-2">
+              {searching ? (
+                <div className="flex items-center justify-center py-12">
+                  <LoadingDots />
+                </div>
+              ) : searchResults.length === 0 && globalSearchQuery ? (
+                <div className="text-center py-12">
+                  <Search className="h-12 w-12 text-muted mx-auto mb-3" />
+                  <p className="text-muted">No results found</p>
+                </div>
+              ) : searchResults.length === 0 && !globalSearchQuery ? (
+                <div className="text-center py-12">
+                  <Search className="h-12 w-12 text-muted mx-auto mb-3" />
+                  <p className="text-muted">Type to search sections, tools, books, articles, and more</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {searchResults.map((result, index) => (
+                    <Link
+                      key={index}
+                      href={result.href}
+                      onClick={() => {
+                        setShowGlobalSearch(false);
+                        setGlobalSearchQuery("");
+                        setSearchResults([]);
+                      }}
+                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors"
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue/10">
+                        <result.icon className="h-5 w-5 text-blue" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium truncate">{result.name}</p>
+                          <span className="px-2 py-0.5 rounded-full bg-muted-bg text-xs text-muted">
+                            {result.type}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted truncate">{result.subtitle}</p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted shrink-0" />
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Logout Confirmation Dialog */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="w-full max-w-sm p-6 rounded-2xl bg-card border border-white/10">
+            <h2 className="text-lg font-bold mb-2">Confirm Sign Out</h2>
+            <p className="text-sm text-muted mb-6">Are you sure you want to sign out of the admin portal? Your regular user session will remain active.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-muted-bg text-muted hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  await adminLogout();
+                  setShowLogoutConfirm(false);
+                  router.push("/");
+                }}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-red text-white hover:bg-red/90 transition-colors"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

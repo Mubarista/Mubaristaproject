@@ -1,0 +1,47 @@
+{
+  "name": "mubarista",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "server": "cd server && npm run dev"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.110.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "dotenv": "^17.4.2",
+    "firebase": "^12.15.0",
+    "framer-motion": "^12.42.0",
+    "lucide-react": "^1.22.0",
+    "next": "^16.2.10",
+    "next-themes": "^0.4.6",
+    "pg": "^8.22.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "sharp": "^0.35.3",
+    "tailwind-merge": "^3.6.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.9",
+    "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.23.0",
+    "typescript": "^5"
+  },
+  "overrides": {
+    "postcss": "^8.5.10",
+    "send": "^0.19.0",
+    "serialize-javascript": "^7.0.3",
+    "terser": "^4.8.1",
+    "uuid": "^11.1.1"
+  }
+}
