@@ -126,21 +126,50 @@ export default function AdminHeroPage() {
     }
   }
 
-  function handleImageFile(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleImageFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      if (ev.target?.result) setBg(b => ({ ...b, imageUrl: ev.target!.result as string }));
-    };
-    reader.readAsDataURL(file);
+    setSaving(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("type", "photo");
+      const response = await fetch("/api/upload", { method: "POST", body: formData });
+      if (response.ok) {
+        const data = await response.json();
+        setBg(b => ({ ...b, imageUrl: data.url }));
+      } else {
+        alert("Failed to upload image. Please try a smaller file.");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Failed to upload image.");
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function handleVideoFile(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleVideoFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setBg(b => ({ ...b, videoUrl: url }));
+    setSaving(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("type", "video");
+      const response = await fetch("/api/upload", { method: "POST", body: formData });
+      if (response.ok) {
+        const data = await response.json();
+        setBg(b => ({ ...b, videoUrl: data.url }));
+      } else {
+        alert("Failed to upload video. Please try a smaller file.");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Failed to upload video.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (

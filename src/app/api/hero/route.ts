@@ -44,6 +44,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Payload too large. Images/videos must be smaller than 4MB total." }, { status: 413 });
     }
 
+    // Reject base64 data URLs - images/videos must be uploaded to storage first
+    const hasBase64 = JSON.stringify(body).includes("data:image/") || JSON.stringify(body).includes("data:video/");
+    if (hasBase64) {
+      console.error("Base64 data URL detected in payload");
+      return NextResponse.json({ error: "Base64 data URLs are not allowed. Please upload images/videos to storage first." }, { status: 413 });
+    }
+
     const results = [];
 
     if (body.heroContent) {
