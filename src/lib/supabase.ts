@@ -4,6 +4,10 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY || '';
 
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable');
+}
+
 // Client-side Supabase client (uses anon/publishable key)
 // Session persistence is enabled by default with auth.persistSession = true
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
