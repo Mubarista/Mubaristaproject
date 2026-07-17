@@ -4,7 +4,7 @@ import { mapKeysToCamelCase, keysToSnakeCase } from "@/lib/supabase-utils";
 
 export async function GET() {
   try {
-    const { data, error } = await supabaseAdmin.from("site_settings").select("*").limit(1).single();
+    const { data, error } = await supabaseAdmin.from("site_settings").select("*").limit(1).maybeSingle();
     if (error || !data) {
       return NextResponse.json({
         learnBadgeText: "Education",

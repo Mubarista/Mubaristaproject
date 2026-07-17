@@ -203,11 +203,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [searching, setSearching] = useState(false);
 
   useEffect(() => {
+    // Wait for auth state to settle and avoid fetching while the dev server may still be starting
+    if (isLoading) return;
     fetchSettings();
     if (userId) {
       fetchUser();
     }
-  }, [userId]);
+  }, [isLoading, userId]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -228,13 +230,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   async function fetchSettings() {
     try {
-      const res = await fetch("/api/site-settings");
-      if (res.ok) {
+      const res = await fetchWithRetry("/api/site-settings");
+      if (res?.ok) {
         const data = await res.json();
         setSettings(data || {});
       }
     } catch (error) {
-      console.error("Error fetching site settings:", error);
+      console.warn("Error fetching site settings:", error);
       setSettings({});
     }
   }
@@ -242,13 +244,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   async function fetchUser() {
     if (!userId) return;
     try {
-      const res = await fetch(`/api/user?userId=${userId}`);
-      if (res.ok) {
+      const res = await fetchWithRetry(`/api/user?userId=${userId}`);
+      if (res?.ok) {
         const data = await res.json();
         setUser(data);
       }
     } catch (error) {
-      console.error("Error fetching user:", error);
+      console.warn("Error fetching user:", error);
+    }
+  }
+
+  async function fetchWithRetry(url: string, retries = 1, delay = 1000) {
+    try {
+      return await fetch(url);
+    } catch (error) {
+      if (retries <= 0) throw error;
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return fetchWithRetry(url, retries - 1, delay);
     }
   }
 
