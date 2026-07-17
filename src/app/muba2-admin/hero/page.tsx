@@ -439,15 +439,12 @@ export default function AdminHeroPage() {
                         <LoadingDots />
                       </div>
                     )}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      key={previewUrl || bg.imageUrl} // Force re-render when URL changes
-                      src={previewUrl || bg.imageUrl}
-                      alt="Hero background"
-                      className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
-                      // Only use crossOrigin for remote URLs, not blob URLs
-                      crossOrigin={previewUrl?.startsWith("blob:") ? undefined : "anonymous"}
+                    <div
+                      key={previewUrl || bg.imageUrl}
+                      className="w-full h-full bg-cover bg-center bg-no-repeat"
+                      style={{
+                        backgroundImage: `url('${previewUrl || bg.imageUrl}')`,
+                      }}
                       onLoad={() => {
                         console.log("[Hero Admin] Image rendered successfully:", previewUrl || bg.imageUrl);
                         setPreviewLoading(false);

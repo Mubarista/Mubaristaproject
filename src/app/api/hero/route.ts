@@ -7,9 +7,9 @@ export async function GET() {
   try {
     const [computedStats, statsRes, contentRes, bgRes] = await Promise.all([
       computePlatformStats(),
-      supabaseAdmin.from("platform_stats").select("*").limit(1).single(),
-      supabaseAdmin.from("hero_content").select("*").limit(1).single(),
-      supabaseAdmin.from("hero_background").select("*").limit(1).single(),
+      supabaseAdmin.from("platform_stats").select("*").limit(1).maybeSingle(),
+      supabaseAdmin.from("hero_content").select("*").limit(1).maybeSingle(),
+      supabaseAdmin.from("hero_background").select("*").limit(1).maybeSingle(),
     ]);
 
     const storedStats = statsRes.data ? mapKeysToCamelCase(statsRes.data) : null;

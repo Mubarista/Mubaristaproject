@@ -44,6 +44,8 @@ export function HeroSection() {
   const [heroContent, setHeroContent] = useState<HeroContent | null>(null);
   const [heroBackground, setHeroBackground] = useState<HeroBackground | null>(null);
   const [loading, setLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const { user, isLoading: isAuthLoading } = useAuth();
 
@@ -55,6 +57,14 @@ export function HeroSection() {
     return () => clearInterval(interval);
   }, []);
 
+  // Reset image state when hero background URL changes
+  useEffect(() => {
+    if (heroBackground?.imageUrl) {
+      setImageError(false);
+      setImageLoaded(false);
+    }
+  }, [heroBackground?.imageUrl]);
+
   async function fetchHeroData() {
     try {
       const response = await fetch("/api/hero");
@@ -62,7 +72,9 @@ export function HeroSection() {
         const data = await response.json();
         setPlatformStats(data.platformStats);
         setHeroContent(data.heroContent);
-        setHeroBackground(data.heroBackground);
+        // Don't overwrite the background with null because of transient API errors;
+        // only update when the API actually returns a value.
+        setHeroBackground((prev) => data.heroBackground || prev);
       }
     } catch (error) {
       console.error("Error fetching hero data:", error);
@@ -96,19 +108,14 @@ export function HeroSection() {
           muted
           playsInline
         />
-      ) : heroBackground?.imageUrl ? (
-        /* eslint-disable-next-line @next/next/no-img-element */
+      ) : heroBackground?.imageUrl && !imageError ? (
         <img
           src={heroBackground.imageUrl}
-          alt="Hero background"
-          className="absolute inset-0 w-full h-full object-cover"
-          referrerPolicy="no-referrer"
-          crossOrigin="anonymous"
-          onError={(e) => {
-            console.error("[Hero Section] Background image failed to load:", heroBackground.imageUrl, e);
-            // Fallback to gradient if image fails
-            e.currentTarget.style.display = 'none';
-          }}
+          alt=""
+          loading="eager"
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+          onLoad={() => setImageLoaded(true)}
+          onError={() => setImageError(true)}
         />
       ) : (
         <div className="absolute inset-0 bg-gradient-to-br from-black via-black/90 to-black/80" />
