@@ -85,11 +85,14 @@ export async function POST(request: Request) {
     }
 
     // Upload to Supabase Storage
-    const bucketName = type === "pdf" ? "Documents" : "Images"; 
+    // Wrap the sharp Buffer in a Blob to ensure Vercel/Node passes the binary
+    // body correctly instead of coercing it to a UTF-8 string.
+    const bucketName = type === "pdf" ? "Documents" : "Images";
+    const uploadBody = new Blob([buffer], { type: contentType });
     const { error } = await supabaseAdmin
       .storage
       .from(bucketName)
-      .upload(fileName, buffer, {
+      .upload(fileName, uploadBody, {
         contentType,
         upsert: false
       });
