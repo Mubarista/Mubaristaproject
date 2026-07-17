@@ -100,8 +100,9 @@ export default function AdminHeroPage() {
 
   function setPreviewUrlSafe(url: string | null) {
     setPreviewUrl((prev) => {
-      if (prev && prev.startsWith("blob:")) {
-        URL.revokeObjectURL(prev);
+      // Only revoke if it's a different blob URL
+      if (prev && prev.startsWith("blob:") && prev !== url) {
+        setTimeout(() => URL.revokeObjectURL(prev), 100); // Delay revocation to allow rendering
       }
       return url;
     });
@@ -440,6 +441,7 @@ export default function AdminHeroPage() {
                     )}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
+                      key={previewUrl || bg.imageUrl} // Force re-render when URL changes
                       src={previewUrl || bg.imageUrl}
                       alt="Hero background"
                       className="w-full h-full object-cover"
@@ -453,8 +455,12 @@ export default function AdminHeroPage() {
                       onError={(e) => {
                         console.error("[Hero Admin] Image failed to render:", previewUrl || bg.imageUrl, e);
                         setPreviewLoading(false);
-                        // If the direct URL fails, try fetching as blob and replacing src
-                        if (bg.imageUrl && !previewUrl) {
+                        // If blob URL fails, fall back to remote URL
+                        if (previewUrl?.startsWith("blob:") && bg.imageUrl) {
+                          console.log("[Hero Admin] Falling back to remote URL");
+                          setPreviewUrlSafe(bg.imageUrl);
+                        } else if (bg.imageUrl && !previewUrl) {
+                          // If the direct URL fails, try fetching as blob and replacing src
                           refreshPreview(bg.imageUrl);
                         }
                       }}
