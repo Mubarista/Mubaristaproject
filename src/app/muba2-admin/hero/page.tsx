@@ -69,6 +69,7 @@ export default function AdminHeroPage() {
 
   // Preview state: use a blob URL for the admin preview to avoid Supabase img quirks
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const previewUrlRef = useRef<string | null>(null);
 
   // Keep ref in sync with state so cleanup can always revoke the latest URL
@@ -91,6 +92,7 @@ export default function AdminHeroPage() {
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const imgRef = useRef<HTMLImageElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [showCropModal, setShowCropModal] = useState(false);
 
   useEffect(() => {
     fetchHeroData();
@@ -190,6 +192,8 @@ export default function AdminHeroPage() {
       setRawImageSrc(reader.result as string);
       // Set default centered crop with 16:9 aspect
       setCrop({ unit: "%", width: 90, height: 50, x: 5, y: 25 });
+      // Show modal with a small delay for smooth transition
+      setTimeout(() => setShowCropModal(true), 50);
     };
     reader.readAsDataURL(file);
     // Reset input so same file can be selected again
@@ -236,9 +240,13 @@ export default function AdminHeroPage() {
         setPreviewUrlSafe(localPreview);
         // Then replace with a fresh blob from the uploaded URL
         await refreshPreview(data.url);
-        setRawImageSrc(null);
-        setCrop(undefined);
-        setCompletedCrop(undefined);
+        // Close modal smoothly
+        setShowCropModal(false);
+        setTimeout(() => {
+          setRawImageSrc(null);
+          setCrop(undefined);
+          setCompletedCrop(undefined);
+        }, 200);
         console.log("[Hero Admin] Image uploaded. Remember to click Save All to persist.");
       } else {
         const errorData = await response.json().catch(() => ({}));
@@ -254,9 +262,13 @@ export default function AdminHeroPage() {
   }, [completedCrop]);
 
   function cancelCrop() {
-    setRawImageSrc(null);
-    setCrop(undefined);
-    setCompletedCrop(undefined);
+    setShowCropModal(false);
+    // Wait for transition to complete before clearing state
+    setTimeout(() => {
+      setRawImageSrc(null);
+      setCrop(undefined);
+      setCompletedCrop(undefined);
+    }, 200);
   }
 
   // Fetch a remote image and display it as a local blob URL. This avoids
@@ -267,6 +279,7 @@ export default function AdminHeroPage() {
       setPreviewUrlSafe(null);
       return;
     }
+    setPreviewLoading(true);
     try {
       const res = await fetch(url, { mode: "cors", cache: "no-cache" });
       console.log("[Hero Admin] Preview fetch status:", res.status, "content-type:", res.headers.get("content-type"));
@@ -281,6 +294,8 @@ export default function AdminHeroPage() {
       // Fall back to the raw URL so the user still sees something if the
       // browser can render it directly.
       setPreviewUrlSafe(url);
+    } finally {
+      setPreviewLoading(false);
     }
   }
 
@@ -364,8 +379,14 @@ export default function AdminHeroPage() {
               <div className="space-y-3">
                 {/* Cropper Modal */}
                 {rawImageSrc && (
-                  <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-                    <div className="bg-card rounded-2xl p-6 max-w-2xl w-full">
+                  <div 
+                    className={`fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 transition-opacity duration-200 ${
+                      showCropModal ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                    }`}
+                  >
+                    <div className={`bg-card rounded-2xl p-6 max-w-2xl w-full transition-all duration-200 ${
+                      showCropModal ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+                    }`}>
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="font-bold flex items-center gap-2">
                           <CropIcon className="h-5 w-5" /> Crop Hero Image
@@ -412,6 +433,11 @@ export default function AdminHeroPage() {
                 {/* Current image display */}
                 {previewUrl || bg.imageUrl ? (
                   <div className="relative h-48 rounded-xl overflow-hidden border border-white/10 bg-muted-bg">
+                    {previewLoading && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-10">
+                        <LoadingDots />
+                      </div>
+                    )}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={previewUrl || bg.imageUrl}
@@ -420,9 +446,13 @@ export default function AdminHeroPage() {
                       referrerPolicy="no-referrer"
                       // Only use crossOrigin for remote URLs, not blob URLs
                       crossOrigin={previewUrl?.startsWith("blob:") ? undefined : "anonymous"}
-                      onLoad={() => console.log("[Hero Admin] Image rendered successfully:", previewUrl || bg.imageUrl)}
+                      onLoad={() => {
+                        console.log("[Hero Admin] Image rendered successfully:", previewUrl || bg.imageUrl);
+                        setPreviewLoading(false);
+                      }}
                       onError={(e) => {
                         console.error("[Hero Admin] Image failed to render:", previewUrl || bg.imageUrl, e);
+                        setPreviewLoading(false);
                         // If the direct URL fails, try fetching as blob and replacing src
                         if (bg.imageUrl && !previewUrl) {
                           refreshPreview(bg.imageUrl);
@@ -440,7 +470,7 @@ export default function AdminHeroPage() {
                         setBg((b) => ({ ...b, imageUrl: "" }));
                         setPreviewUrlSafe(null);
                       }}
-                      className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white hover:bg-red/80 transition-colors"
+                      className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white hover:bg-red/80 transition-colors z-20"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>

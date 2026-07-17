@@ -97,10 +97,17 @@ export function HeroSection() {
           playsInline
         />
       ) : heroBackground?.imageUrl ? (
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: `url('${heroBackground.imageUrl}')`,
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img
+          src={heroBackground.imageUrl}
+          alt="Hero background"
+          className="absolute inset-0 w-full h-full object-cover"
+          referrerPolicy="no-referrer"
+          crossOrigin="anonymous"
+          onError={(e) => {
+            console.error("[Hero Section] Background image failed to load:", heroBackground.imageUrl, e);
+            // Fallback to gradient if image fails
+            e.currentTarget.style.display = 'none';
           }}
         />
       ) : (
