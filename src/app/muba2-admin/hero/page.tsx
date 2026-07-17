@@ -91,6 +91,7 @@ export default function AdminHeroPage() {
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const imgRef = useRef<HTMLImageElement>(null);
+  const previewImgRef = useRef<HTMLImageElement>(null);
   const [uploading, setUploading] = useState(false);
   const [showCropModal, setShowCropModal] = useState(false);
 
@@ -439,12 +440,12 @@ export default function AdminHeroPage() {
                         <LoadingDots />
                       </div>
                     )}
-                    <div
+                    <img
+                      ref={previewImgRef}
                       key={previewUrl || bg.imageUrl}
-                      className="w-full h-full bg-cover bg-center bg-no-repeat"
-                      style={{
-                        backgroundImage: `url('${previewUrl || bg.imageUrl}')`,
-                      }}
+                      src={previewUrl || bg.imageUrl}
+                      alt="Hero background preview"
+                      className="w-full h-full object-cover"
                       onLoad={() => {
                         console.log("[Hero Admin] Image rendered successfully:", previewUrl || bg.imageUrl);
                         setPreviewLoading(false);
