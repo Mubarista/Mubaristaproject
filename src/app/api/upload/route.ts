@@ -37,6 +37,8 @@ export async function POST(request: Request) {
       contentType = "application/pdf";
     }
 
+    console.log("Upload request:", { type, fileName: file.name, fileType: file.type, fileSize: file.size, maxWidth, maxHeight, quality });
+
     // Process image if it's an image type
     if (type === "photo" && file.type.startsWith("image/")) {
       try {
@@ -99,7 +101,13 @@ export async function POST(request: Request) {
       .getPublicUrl(fileName);
 
     console.log("Upload successful:", publicUrl);
-    return NextResponse.json({ url: publicUrl });
+    return NextResponse.json({ 
+      url: publicUrl,
+      fileName,
+      bucket: bucketName,
+      contentType,
+      size: buffer.length,
+    });
   } catch (error) {
     console.error("Upload error:", error);
     return NextResponse.json({ error: "Failed to upload image", details: error instanceof Error ? error.message : String(error) }, { status: 500 });

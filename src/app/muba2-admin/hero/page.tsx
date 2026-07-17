@@ -83,26 +83,31 @@ export default function AdminHeroPage() {
 
   async function fetchHeroData() {
     try {
+      console.log("[Hero Admin] Fetching hero data...");
       const response = await fetch("/api/hero");
       if (response.ok) {
         const data = await response.json();
+        console.log("[Hero Admin] Received hero data:", data);
         if (data.heroContent) {
           const { created_at, updated_at, ...cleanHeroContent } = data.heroContent;
           setHero(cleanHeroContent);
         }
         if (data.heroBackground) {
           const { created_at, updated_at, ...cleanHeroBackground } = data.heroBackground;
+          console.log("[Hero Admin] Setting background:", cleanHeroBackground);
           setBg(cleanHeroBackground);
           // Refresh preview from remote URL
-          refreshPreview(cleanHeroBackground.imageUrl);
+          await refreshPreview(cleanHeroBackground.imageUrl);
         }
         if (data.platformStats) {
           const { created_at, updated_at, ...cleanPlatformStats } = data.platformStats;
           setStats(cleanPlatformStats);
         }
+      } else {
+        console.error("[Hero Admin] Failed to fetch hero data:", response.status);
       }
     } catch (error) {
-      console.error("Error fetching hero data:", error);
+      console.error("[Hero Admin] Error fetching hero data:", error);
     } finally {
       setLoading(false);
     }
@@ -122,6 +127,7 @@ export default function AdminHeroPage() {
         heroBackground: cleanHeroBackground,
         platformStats: cleanPlatformStats,
       };
+      console.log("[Hero Admin] Saving payload:", payload);
       const response = await fetch("/api/hero", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -191,6 +197,12 @@ export default function AdminHeroPage() {
       const response = await fetch("/api/upload", { method: "POST", body: formData });
       if (response.ok) {
         const data = await response.json();
+        console.log("[Hero Admin] Upload response:", data);
+        if (!data.url) {
+          console.error("[Hero Admin] Upload response missing URL:", data);
+          alert("Upload succeeded but no URL was returned.");
+          return;
+        }
         setBg((b) => ({ ...b, type: "image", imageUrl: data.url, videoUrl: "" }));
         // Show the cropped image immediately while the remote fetch happens
         const localPreview = URL.createObjectURL(file);
@@ -203,8 +215,11 @@ export default function AdminHeroPage() {
         setRawImageSrc(null);
         setCrop(undefined);
         setCompletedCrop(undefined);
+        console.log("[Hero Admin] Image uploaded. Remember to click Save All to persist.");
       } else {
-        alert("Failed to upload cropped image.");
+        const errorData = await response.json().catch(() => ({}));
+        console.error("[Hero Admin] Upload failed:", response.status, errorData);
+        alert("Failed to upload cropped image: " + (errorData.error || response.statusText));
       }
     } catch (error) {
       console.error("Crop upload error:", error);
@@ -223,12 +238,14 @@ export default function AdminHeroPage() {
   // Fetch a remote image and display it as a local blob URL. This avoids
   // referrer/CORS/cache issues that can break <img src={supabaseUrl}>.
   async function refreshPreview(url: string) {
+    console.log("[Hero Admin] Refreshing preview for URL:", url);
     if (!url) {
       setPreviewUrl(null);
       return;
     }
     try {
       const res = await fetch(url, { mode: "cors", cache: "no-cache" });
+      console.log("[Hero Admin] Preview fetch status:", res.status, "content-type:", res.headers.get("content-type"));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const blob = await res.blob();
       const objectUrl = URL.createObjectURL(blob);
@@ -236,8 +253,9 @@ export default function AdminHeroPage() {
         if (prev) URL.revokeObjectURL(prev);
         return objectUrl;
       });
+      console.log("[Hero Admin] Preview loaded via blob URL");
     } catch (error) {
-      console.error("Failed to load preview blob:", error);
+      console.error("[Hero Admin] Failed to load preview blob:", error);
       // Fall back to the raw URL so the user still sees something if the
       // browser can render it directly.
       setPreviewUrl((prev) => {
@@ -374,7 +392,7 @@ export default function AdminHeroPage() {
 
                 {/* Current image display */}
                 {previewUrl || bg.imageUrl ? (
-                  <div className="relative h-48 rounded-xl overflow-hidden border border-white/10">
+                  <div className="relative h-48 rounded-xl overflow-hidden border border-white/10 bg-muted-bg">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={previewUrl || bg.imageUrl}
@@ -382,7 +400,20 @@ export default function AdminHeroPage() {
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
                       crossOrigin="anonymous"
+                      onLoad={() => console.log("[Hero Admin] Image rendered successfully:", previewUrl || bg.imageUrl)}
+                      onError={(e) => {
+                        console.error("[Hero Admin] Image failed to render:", previewUrl || bg.imageUrl, e);
+                        // If the direct URL fails, try fetching as blob and replacing src
+                        if (bg.imageUrl && !previewUrl) {
+                          refreshPreview(bg.imageUrl);
+                        }
+                      }}
                     />
+                    {previewUrl && (
+                      <div className="absolute bottom-2 left-2 px-2 py-1 rounded-lg bg-black/60 text-white text-xs">
+                        Preview
+                      </div>
+                    )}
                     <button
                       type="button"
                       onClick={() => {
