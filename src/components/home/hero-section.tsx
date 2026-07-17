@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Play, Trophy, Users, Globe } from "lucide-react";
@@ -46,6 +46,7 @@ export function HeroSection() {
   const [loading, setLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   const { user, isLoading: isAuthLoading } = useAuth();
 
@@ -62,6 +63,10 @@ export function HeroSection() {
     if (heroBackground?.imageUrl) {
       setImageError(false);
       setImageLoaded(false);
+      // If the image is already cached/complete, make it visible immediately
+      if (imgRef.current?.complete) {
+        setImageLoaded(true);
+      }
     }
   }, [heroBackground?.imageUrl]);
 
@@ -110,6 +115,7 @@ export function HeroSection() {
         />
       ) : heroBackground?.imageUrl && !imageError ? (
         <img
+          ref={imgRef}
           src={heroBackground.imageUrl}
           alt=""
           loading="eager"
