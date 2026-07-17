@@ -12,9 +12,10 @@ interface Props {
 export default async function LegendDetailPage({ params }: Props) {
   const { id } = await params;
   let legend: any = null;
+  const vercelUrl = process.env.VERCEL_URL;
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+    (vercelUrl ? (vercelUrl.startsWith("http") ? vercelUrl : `https://${vercelUrl}`) : "http://localhost:3000");
 
   try {
     const res = await fetch(`${baseUrl}/api/legends`, {
