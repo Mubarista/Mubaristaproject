@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase, keysToSnakeCase } from "@/lib/supabase-utils";
 import { computePlatformStats } from "@/lib/platform-stats";
 
@@ -75,6 +75,10 @@ export async function POST(request: Request) {
 
     if (body.heroBackground) {
       console.log("Updating hero background:", body.heroBackground);
+      if (!process.env.SUPABASE_SECRET_KEY) {
+        console.error("[Hero API] SUPABASE_SECRET_KEY is not set");
+        results.push({ type: "heroBackground", success: false, error: "Server misconfiguration: SUPABASE_SECRET_KEY is missing" });
+      } else {
       const { id, created_at, updated_at, ...cleanData } = body.heroBackground;
       const snakeCaseData = keysToSnakeCase(cleanData);
       console.log("Snake case data:", snakeCaseData);
@@ -90,6 +94,7 @@ export async function POST(request: Request) {
       } catch (err) {
         console.error("Hero background upsert error:", err);
         results.push({ type: "heroBackground", success: false, error: err instanceof Error ? err.message : String(err) });
+      }
       }
     }
 

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, Trophy, Award } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardTitle } from "@/components/ui/card";
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase } from "@/lib/supabase-utils";
 
 interface Props {

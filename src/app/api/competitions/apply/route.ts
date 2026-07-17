@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase } from "@/lib/supabase-utils";
 import { validatePhoneNumber } from "@/lib/phone-utils";
 import type { CompetitionApplication, Competition } from "@/types";

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import sharp from 'sharp';
 
 export async function POST(request: Request) {
@@ -13,6 +13,11 @@ export async function POST(request: Request) {
     
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
+
+    if (!process.env.SUPABASE_SECRET_KEY) {
+      console.error("[Upload] SUPABASE_SECRET_KEY is not set");
+      return NextResponse.json({ error: "Server misconfiguration: SUPABASE_SECRET_KEY is missing" }, { status: 500 });
     }
 
     // Get file extension

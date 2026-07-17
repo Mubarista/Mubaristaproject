@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase, keysToSnakeCase } from "@/lib/supabase-utils";
 import type { Payment, Invoice } from "@/types";
 

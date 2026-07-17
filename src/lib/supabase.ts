@@ -2,7 +2,6 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY || '';
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable');
@@ -38,16 +37,4 @@ export const supabaseAdminAuth =
       })
     : supabase;
 
-// Server-side Supabase client with service role key (bypasses RLS)
-// Use this in API routes for admin operations
-export const supabaseAdmin = supabaseSecretKey
-  ? createClient(supabaseUrl, supabaseSecretKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    })
-  : (() => {
-      console.warn("SUPABASE_SECRET_KEY not found, falling back to anon key - admin operations may fail");
-      return supabase;
-    })();
+

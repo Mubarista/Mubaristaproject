@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { supabase, supabaseAdmin } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase } from "@/lib/supabase-utils";
 import { createInvoiceFromPayment } from "@/lib/invoice";
 import { normalizePaymentMethod } from "@/lib/payment";
