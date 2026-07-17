@@ -96,13 +96,15 @@ export function HeroSection() {
           muted
           playsInline
         />
-      ) : (
+      ) : heroBackground?.imageUrl ? (
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: `url('${heroBackground?.imageUrl || "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=1920&q=80"}')`,
+            backgroundImage: `url('${heroBackground.imageUrl}')`,
           }}
         />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-black via-black/90 to-black/80" />
       )}
       <div className="absolute inset-0 hero-gradient" />
       <div className="absolute inset-0 bg-black/55 dark:bg-black/65" />
