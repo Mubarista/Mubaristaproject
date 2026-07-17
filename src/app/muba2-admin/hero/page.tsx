@@ -67,6 +67,9 @@ export default function AdminHeroPage() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
+  // Preview state: use a blob URL for the admin preview to avoid Supabase img quirks
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
   // Crop state
   const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState<Crop>();
@@ -90,6 +93,8 @@ export default function AdminHeroPage() {
         if (data.heroBackground) {
           const { created_at, updated_at, ...cleanHeroBackground } = data.heroBackground;
           setBg(cleanHeroBackground);
+          // Refresh preview from remote URL
+          refreshPreview(cleanHeroBackground.imageUrl);
         }
         if (data.platformStats) {
           const { created_at, updated_at, ...cleanPlatformStats } = data.platformStats;
@@ -187,6 +192,14 @@ export default function AdminHeroPage() {
       if (response.ok) {
         const data = await response.json();
         setBg((b) => ({ ...b, type: "image", imageUrl: data.url, videoUrl: "" }));
+        // Show the cropped image immediately while the remote fetch happens
+        const localPreview = URL.createObjectURL(file);
+        setPreviewUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return localPreview;
+        });
+        // Then replace with a fresh blob from the uploaded URL
+        await refreshPreview(data.url);
         setRawImageSrc(null);
         setCrop(undefined);
         setCompletedCrop(undefined);
@@ -205,6 +218,33 @@ export default function AdminHeroPage() {
     setRawImageSrc(null);
     setCrop(undefined);
     setCompletedCrop(undefined);
+  }
+
+  // Fetch a remote image and display it as a local blob URL. This avoids
+  // referrer/CORS/cache issues that can break <img src={supabaseUrl}>.
+  async function refreshPreview(url: string) {
+    if (!url) {
+      setPreviewUrl(null);
+      return;
+    }
+    try {
+      const res = await fetch(url, { mode: "cors", cache: "no-cache" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      setPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return objectUrl;
+      });
+    } catch (error) {
+      console.error("Failed to load preview blob:", error);
+      // Fall back to the raw URL so the user still sees something if the
+      // browser can render it directly.
+      setPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return url;
+      });
+    }
   }
 
   async function handleVideoFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -333,18 +373,25 @@ export default function AdminHeroPage() {
                 )}
 
                 {/* Current image display */}
-                {bg.imageUrl ? (
+                {previewUrl || bg.imageUrl ? (
                   <div className="relative h-48 rounded-xl overflow-hidden border border-white/10">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={bg.imageUrl}
+                      src={previewUrl || bg.imageUrl}
                       alt="Hero background"
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
+                      crossOrigin="anonymous"
                     />
                     <button
                       type="button"
-                      onClick={() => setBg((b) => ({ ...b, imageUrl: "" }))}
+                      onClick={() => {
+                        setBg((b) => ({ ...b, imageUrl: "" }));
+                        setPreviewUrl((prev) => {
+                          if (prev) URL.revokeObjectURL(prev);
+                          return null;
+                        });
+                      }}
                       className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white hover:bg-red/80 transition-colors"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
