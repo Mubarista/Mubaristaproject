@@ -87,7 +87,7 @@ export function HeroSection() {
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
       {/* Background — video or image */}
-      {heroBackground?.type === "video" && heroBackground?.videoUrl ? (
+      {heroBackground?.videoUrl ? (
         <video
           className="absolute inset-0 w-full h-full object-cover"
           src={heroBackground.videoUrl}

@@ -186,7 +186,7 @@ export default function AdminHeroPage() {
       const response = await fetch("/api/upload", { method: "POST", body: formData });
       if (response.ok) {
         const data = await response.json();
-        setBg((b) => ({ ...b, imageUrl: data.url }));
+        setBg((b) => ({ ...b, type: "image", imageUrl: data.url, videoUrl: "" }));
         setRawImageSrc(null);
         setCrop(undefined);
         setCompletedCrop(undefined);
@@ -218,7 +218,7 @@ export default function AdminHeroPage() {
       const response = await fetch("/api/upload", { method: "POST", body: formData });
       if (response.ok) {
         const data = await response.json();
-        setBg((b) => ({ ...b, videoUrl: data.url }));
+        setBg((b) => ({ ...b, type: "video", videoUrl: data.url, imageUrl: "" }));
       } else {
         alert("Failed to upload video. Please try a smaller file.");
       }
