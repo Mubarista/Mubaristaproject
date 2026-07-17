@@ -340,10 +340,7 @@ export default function AdminHeroPage() {
                       src={bg.imageUrl}
                       alt="Hero background"
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        console.error("Image load error:", bg.imageUrl);
-                        (e.target as HTMLImageElement).style.opacity = "0.3";
-                      }}
+                      referrerPolicy="no-referrer"
                     />
                     <button
                       type="button"
