@@ -69,6 +69,21 @@ export default function AdminHeroPage() {
 
   // Preview state: use a blob URL for the admin preview to avoid Supabase img quirks
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const previewUrlRef = useRef<string | null>(null);
+
+  // Keep ref in sync with state so cleanup can always revoke the latest URL
+  useEffect(() => {
+    previewUrlRef.current = previewUrl;
+  }, [previewUrl]);
+
+  // Cleanup object URLs on unmount
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
+      }
+    };
+  }, []);
 
   // Crop state
   const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
@@ -80,6 +95,15 @@ export default function AdminHeroPage() {
   useEffect(() => {
     fetchHeroData();
   }, []);
+
+  function setPreviewUrlSafe(url: string | null) {
+    setPreviewUrl((prev) => {
+      if (prev && prev.startsWith("blob:")) {
+        URL.revokeObjectURL(prev);
+      }
+      return url;
+    });
+  }
 
   async function fetchHeroData() {
     try {
@@ -98,6 +122,9 @@ export default function AdminHeroPage() {
           setBg(cleanHeroBackground);
           // Refresh preview from remote URL
           await refreshPreview(cleanHeroBackground.imageUrl);
+        } else {
+          console.log("[Hero Admin] No hero background in response");
+          setPreviewUrlSafe(null);
         }
         if (data.platformStats) {
           const { created_at, updated_at, ...cleanPlatformStats } = data.platformStats;
@@ -206,10 +233,7 @@ export default function AdminHeroPage() {
         setBg((b) => ({ ...b, type: "image", imageUrl: data.url, videoUrl: "" }));
         // Show the cropped image immediately while the remote fetch happens
         const localPreview = URL.createObjectURL(file);
-        setPreviewUrl((prev) => {
-          if (prev) URL.revokeObjectURL(prev);
-          return localPreview;
-        });
+        setPreviewUrlSafe(localPreview);
         // Then replace with a fresh blob from the uploaded URL
         await refreshPreview(data.url);
         setRawImageSrc(null);
@@ -240,7 +264,7 @@ export default function AdminHeroPage() {
   async function refreshPreview(url: string) {
     console.log("[Hero Admin] Refreshing preview for URL:", url);
     if (!url) {
-      setPreviewUrl(null);
+      setPreviewUrlSafe(null);
       return;
     }
     try {
@@ -248,20 +272,15 @@ export default function AdminHeroPage() {
       console.log("[Hero Admin] Preview fetch status:", res.status, "content-type:", res.headers.get("content-type"));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const blob = await res.blob();
+      console.log("[Hero Admin] Fetched blob:", blob.type, blob.size);
       const objectUrl = URL.createObjectURL(blob);
-      setPreviewUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return objectUrl;
-      });
-      console.log("[Hero Admin] Preview loaded via blob URL");
+      setPreviewUrlSafe(objectUrl);
+      console.log("[Hero Admin] Preview loaded via blob URL:", objectUrl);
     } catch (error) {
       console.error("[Hero Admin] Failed to load preview blob:", error);
       // Fall back to the raw URL so the user still sees something if the
       // browser can render it directly.
-      setPreviewUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return url;
-      });
+      setPreviewUrlSafe(url);
     }
   }
 
@@ -399,7 +418,8 @@ export default function AdminHeroPage() {
                       alt="Hero background"
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
-                      crossOrigin="anonymous"
+                      // Only use crossOrigin for remote URLs, not blob URLs
+                      crossOrigin={previewUrl?.startsWith("blob:") ? undefined : "anonymous"}
                       onLoad={() => console.log("[Hero Admin] Image rendered successfully:", previewUrl || bg.imageUrl)}
                       onError={(e) => {
                         console.error("[Hero Admin] Image failed to render:", previewUrl || bg.imageUrl, e);
@@ -418,10 +438,7 @@ export default function AdminHeroPage() {
                       type="button"
                       onClick={() => {
                         setBg((b) => ({ ...b, imageUrl: "" }));
-                        setPreviewUrl((prev) => {
-                          if (prev) URL.revokeObjectURL(prev);
-                          return null;
-                        });
+                        setPreviewUrlSafe(null);
                       }}
                       className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white hover:bg-red/80 transition-colors"
                     >
