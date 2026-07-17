@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X, Upload, ImageIcon, Trash2, Search, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdminData } from "@/lib/admin-data-context";
@@ -314,6 +314,40 @@ interface ImageUploadProps {
 export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "banner" }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let objectUrl: string | null = null;
+    let cancelled = false;
+
+    async function loadPreview() {
+      if (!value) {
+        setPreviewUrl(null);
+        return;
+      }
+      try {
+        const res = await fetch(value, { mode: "cors", cache: "no-cache" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        objectUrl = URL.createObjectURL(blob);
+        if (cancelled) {
+          URL.revokeObjectURL(objectUrl);
+          return;
+        }
+        setPreviewUrl(objectUrl);
+      } catch (error) {
+        console.error("ImageUpload preview fetch error:", error);
+        setPreviewUrl(null);
+      }
+    }
+
+    loadPreview();
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [value]);
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -356,7 +390,17 @@ export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "b
       {value ? (
         <div className={`relative rounded-xl overflow-hidden border border-white/10 bg-muted-bg ${heightClass}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={value} alt={label} className="w-full h-full object-cover" />
+          <img
+            src={previewUrl || value}
+            alt={label}
+            className="w-full h-full object-cover"
+            onError={() => {
+              if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+                setPreviewUrl(null);
+              }
+            }}
+          />
           <button
             type="button"
             onClick={() => { onChange(""); if (inputRef.current) inputRef.current.value = ""; }}
