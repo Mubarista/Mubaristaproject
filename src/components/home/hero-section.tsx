@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Play, Trophy, Users, Globe } from "lucide-react";
@@ -45,8 +45,6 @@ export function HeroSection() {
   const [heroBackground, setHeroBackground] = useState<HeroBackground | null>(null);
   const [loading, setLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const imgRef = useRef<HTMLImageElement>(null);
 
   const { user, isLoading: isAuthLoading } = useAuth();
 
@@ -57,18 +55,6 @@ export function HeroSection() {
     const interval = setInterval(fetchHeroData, 10000);
     return () => clearInterval(interval);
   }, []);
-
-  // Reset image state when hero background URL changes
-  useEffect(() => {
-    if (heroBackground?.imageUrl) {
-      setImageError(false);
-      setImageLoaded(false);
-      // If the image is already cached/complete, make it visible immediately
-      if (imgRef.current?.complete) {
-        setImageLoaded(true);
-      }
-    }
-  }, [heroBackground?.imageUrl]);
 
   async function fetchHeroData() {
     try {
@@ -115,12 +101,10 @@ export function HeroSection() {
         />
       ) : heroBackground?.imageUrl && !imageError ? (
         <img
-          ref={imgRef}
           src={heroBackground.imageUrl}
           alt=""
           loading="eager"
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
-          onLoad={() => setImageLoaded(true)}
+          className="absolute inset-0 w-full h-full object-cover"
           onError={() => setImageError(true)}
         />
       ) : (
