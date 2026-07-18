@@ -400,7 +400,7 @@ export default function AdminSettingsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Admin Settings</h1>
+        <h1 className="text-2xl font-bold">MubaristaHub Settings</h1>
         <p className="text-muted text-sm">Manage your account and site settings.</p>
       </div>
 

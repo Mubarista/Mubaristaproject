@@ -112,7 +112,7 @@ function AdminLoginScreen() {
           <h1 className="text-2xl font-bold tracking-tight">
             MUBA<span className="text-blue">RISTA</span>
           </h1>
-          <p className="text-muted text-sm mt-1">Admin Portal</p>
+          <p className="text-muted text-sm mt-1">MubaristaHub Overview</p>
         </div>
 
         {/* Card */}
@@ -381,7 +381,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 )}
               </div>
               <div>
-                <p className="text-sm font-bold">{settings?.adminPortalTitle || "Admin Portal"}</p>
+                <p className="text-sm font-bold">{settings?.adminPortalTitle || "MubaristaHub Overview"}</p>
                 <p className="text-xs text-muted">{settings?.adminPortalSubtitle || "Full CMS Control"}</p>
               </div>
             </div>

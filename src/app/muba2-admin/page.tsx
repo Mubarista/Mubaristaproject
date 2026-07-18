@@ -113,7 +113,7 @@ export default function AdminPage() {
     <div>
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-1">Admin Portal</h1>
+          <h1 className="text-3xl font-bold mb-1">MubaristaHub Overview</h1>
           <p className="text-muted">Full CMS control with real-time data updates.</p>
         </div>
         <div className="flex items-center gap-3">
