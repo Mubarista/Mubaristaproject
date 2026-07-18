@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Scale } from "lucide-react";
+
 
 type SiteSettings = {
   logo?: string;
@@ -20,13 +20,11 @@ export function JudgeLogo({ className = "", iconClassName = "" }: { className?: 
   return (
     <div
       className={`flex items-center justify-center rounded-lg ${className}`}
-      style={{ background: siteLogo ? "transparent" : "linear-gradient(135deg, #c9a227, #f5c842)" }}
+      style={{ background: "transparent" }}
     >
       {siteLogo ? (
         <img src={siteLogo} alt="MUBARISTA" className="h-full w-full object-contain rounded" />
-      ) : (
-        <Scale className={`text-black ${iconClassName}`} strokeWidth={2} />
-      )}
+      ) : null}
     </div>
   );
 }

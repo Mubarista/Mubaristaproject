@@ -9,7 +9,6 @@ import {
   X,
   Sun,
   Moon,
-  Coffee,
   ChevronDown,
   User,
   LogOut,
@@ -101,11 +100,7 @@ export function Navbar() {
           <Link href="/" className="flex items-center gap-2 group">
             {siteLogo ? (
               <img src={siteLogo} alt="MUBARISTA" className="h-10 w-auto bg-transparent transition-transform group-hover:scale-105" />
-            ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue text-white transition-transform group-hover:scale-105">
-                <Coffee className="h-5 w-5" />
-              </div>
-            )}
+            ) : null}
             <span className="text-xl font-bold tracking-tight">
               MUBA<span className="text-blue">RISTA</span>
             </span>

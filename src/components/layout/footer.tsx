@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Coffee, Mail, MapPin, Phone } from "lucide-react";
+import { Mail, MapPin, Phone } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { navLinks } from "@/data/mock-data";
@@ -124,11 +124,7 @@ export function Footer() {
             <Link href="/" className="flex items-center gap-2 mb-4">
               {siteLogo ? (
                 <img src={siteLogo} alt="MUBARISTA" className="h-10 w-auto bg-transparent" />
-              ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue text-white">
-                  <Coffee className="h-5 w-5" />
-                </div>
-              )}
+              ) : null}
               <span className="text-xl font-bold">
                 MUBA<span className="text-blue">RISTA</span>
               </span>
