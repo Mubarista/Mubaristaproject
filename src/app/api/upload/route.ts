@@ -69,15 +69,24 @@ export async function POST(request: Request) {
           }
         }
 
-        buffer = await image
-          .resize(width, height)
-          .jpeg({ quality })
-          .toBuffer();
-          
-        // Update file name and content type for processed images
-        fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
-        contentType = "image/jpeg";
-        console.log(`Processed image: ${file.name} -> ${fileName} (${width}x${height})`);
+        const hasAlpha = metadata.hasAlpha || metadata.channels === 4;
+        if (hasAlpha) {
+          // Preserve transparency for logos/icons
+          buffer = await image
+            .resize(width, height)
+            .png({ compressionLevel: 9 })
+            .toBuffer();
+          fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.png`;
+          contentType = "image/png";
+        } else {
+          buffer = await image
+            .resize(width, height)
+            .jpeg({ quality })
+            .toBuffer();
+          fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
+          contentType = "image/jpeg";
+        }
+        console.log(`Processed image: ${file.name} -> ${fileName} (${width}x${height}, alpha: ${hasAlpha})`);
       } catch (error) {
         console.error("Image processing error:", error);
         // Fall back to original buffer if processing fails
