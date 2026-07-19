@@ -125,15 +125,9 @@ export function Footer() {
               {siteLogo ? (
                 <img src={siteLogo} alt="MUBARISTA" className="h-10 w-auto bg-transparent" />
               ) : null}
-              <span className="text-xl font-bold flex items-start gap-1 leading-none">
-                <span className="gradient-text">MUBARISTA</span>
-                <motion.span
-                  className="gradient-text text-[0.45em] tracking-widest uppercase opacity-80 mt-0.5"
-                  animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  HUB
-                </motion.span>
+              <span className="text-xl font-bold leading-none animate-gradient-text">
+                MUBARISTA
+                <span className="text-[0.45em] tracking-widest uppercase align-top ml-0.5">HUB</span>
               </span>
             </Link>
             <p className="text-muted text-sm leading-relaxed mb-6">

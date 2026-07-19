@@ -5,7 +5,7 @@
   --foreground: #0a0a0a;
   --card: rgba(255, 255, 255, 0.72);
   --card-border: rgba(255, 255, 255, 0.4);
-  --muted: #6b7280;
+  --muted: #374151;
   --muted-bg: #f3f4f6;
 
   /* Brand palette */
@@ -113,6 +113,16 @@ body {
   background-clip: text;
 }
 
+.animate-gradient-text {
+  background: linear-gradient(90deg, var(--blue), var(--green), var(--yellow), var(--red), var(--blue));
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-shift 3s linear infinite;
+}
+
 .hero-gradient {
   background: linear-gradient(
     135deg,
@@ -165,6 +175,11 @@ body {
   0%   { width: 0%; }
   60%  { width: 75%; }
   100% { width: 100%; }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
 }
 
 /* Scrollbar */
