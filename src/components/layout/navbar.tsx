@@ -100,9 +100,9 @@ export function Navbar() {
             {siteLogo ? (
               <img src={siteLogo} alt="MUBARISTA" className="h-10 w-auto bg-transparent transition-transform group-hover:scale-105" />
             ) : null}
-            <span className="text-xl font-bold tracking-tight flex flex-col leading-none">
-              <span className="gradient-text text-[0.45em] tracking-widest uppercase opacity-80 -mb-0.5">HUB</span>
+            <span className="text-xl font-bold tracking-tight flex items-start gap-1 leading-none">
               <span className="gradient-text">MUBARISTA</span>
+              <span className="gradient-text text-[0.45em] tracking-widest uppercase opacity-80 mt-0.5">HUB</span>
             </span>
           </Link>
 
