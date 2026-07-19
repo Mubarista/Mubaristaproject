@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { X, Upload, ImageIcon, Trash2, Search, FileText } from "lucide-react";
+import { X, Upload, ImageIcon, Trash2, Search, FileText, Video as VideoIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdminData } from "@/lib/admin-data-context";
 
@@ -444,6 +444,108 @@ export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "b
           ref={inputRef}
           type="file"
           accept="image/*"
+          className="hidden"
+          onChange={handleFile}
+          disabled={uploading}
+        />
+      </div>
+    </div>
+  );
+}
+
+interface VideoUploadProps {
+  value: string;
+  onChange: (url: string) => void;
+  label?: string;
+}
+
+export function VideoUpload({ value, onChange, label = "Video" }: VideoUploadProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("type", "video");
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        onChange(data.url);
+      } else {
+        console.error("Upload failed:", await res.text());
+        alert("Failed to upload video");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Failed to upload video");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      {value ? (
+        <div className="relative rounded-xl overflow-hidden border border-white/10 bg-black aspect-video">
+          <video
+            key={value}
+            src={value}
+            controls
+            className="w-full h-full object-contain"
+            controlsList="nodownload"
+          />
+          <button
+            type="button"
+            onClick={() => { onChange(""); if (inputRef.current) inputRef.current.value = ""; }}
+            className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white hover:bg-red/80 transition-colors"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ) : (
+        <div
+          onClick={() => !uploading && inputRef.current?.click()}
+          className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-white/15 bg-muted-bg hover:border-blue/50 hover:bg-blue/5 transition-all cursor-pointer h-40 w-full"
+        >
+          {uploading ? (
+            <>
+              <div className="animate-spin h-8 w-8 border-2 border-blue border-t-transparent rounded-full" />
+              <p className="text-xs text-muted">Uploading...</p>
+            </>
+          ) : (
+            <>
+              <VideoIcon className="h-8 w-8 text-muted" />
+              <p className="text-xs text-muted">Click to upload {label}</p>
+              <p className="text-xs text-muted/60">MP4, WEBM, MOV (max 200MB)</p>
+            </>
+          )}
+        </div>
+      )}
+
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => !uploading && inputRef.current?.click()}
+          disabled={uploading}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-muted-bg border border-white/10 text-xs hover:bg-blue/10 hover:border-blue/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Upload className="h-3.5 w-3.5" />
+          {uploading ? "Uploading..." : value ? "Change video" : `Upload ${label}`}
+        </button>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="video/*"
           className="hidden"
           onChange={handleFile}
           disabled={uploading}

@@ -140,14 +140,23 @@ export default function LearnContentPage({ params }: Props) {
           }
           // Regular video URL
           return (
-            <div className="aspect-video bg-black rounded-xl overflow-hidden">
+            <div className="relative aspect-video rounded-2xl overflow-hidden border border-white/10 bg-black shadow-2xl group">
               <video
                 controls
-                className="w-full h-full"
+                className="w-full h-full object-contain"
                 src={content.mediaUrl}
+                controlsList="nodownload"
+                playsInline
+                preload="metadata"
               >
                 Your browser does not support the video tag.
               </video>
+              <div className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/80 via-black/30 to-transparent p-4 pb-12 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                <h2 className="text-white font-semibold text-lg drop-shadow-sm">{content.title}</h2>
+                {content.description && (
+                  <p className="text-white/80 text-sm truncate drop-shadow-sm">{content.description}</p>
+                )}
+              </div>
             </div>
           );
         }

@@ -42,6 +42,17 @@ export async function POST(request: Request) {
       contentType = "application/pdf";
     }
 
+    // Validate video uploads
+    if (type === "video") {
+      if (!file.type.startsWith("video/")) {
+        return NextResponse.json({ error: "Only video files are allowed" }, { status: 400 });
+      }
+      // Limit video size to 200MB
+      if (file.size > 200 * 1024 * 1024) {
+        return NextResponse.json({ error: "Video must be less than 200MB" }, { status: 400 });
+      }
+    }
+
     console.log("Upload request:", { type, fileName: file.name, fileType: file.type, fileSize: file.size, maxWidth, maxHeight, quality });
 
     // Process image if it's an image type
@@ -96,7 +107,16 @@ export async function POST(request: Request) {
     // Upload to Supabase Storage
     // Wrap the sharp Buffer in a Blob to ensure Vercel/Node passes the binary
     // body correctly instead of coercing it to a UTF-8 string.
-    const bucketName = type === "pdf" ? "Documents" : "Images";
+    const bucketName = type === "pdf" ? "Documents" : type === "video" ? "Videos" : "Images";
+
+    if (type === "video") {
+      const { data: buckets } = await supabaseAdmin.storage.listBuckets();
+      const bucketExists = buckets?.some((b) => b.name === "Videos");
+      if (!bucketExists) {
+        await supabaseAdmin.storage.createBucket("Videos", { public: true });
+      }
+    }
+
     const uploadBody = new Blob([buffer], { type: contentType });
     const { error } = await supabaseAdmin
       .storage

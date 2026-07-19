@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { AdminTable } from "@/components/admin/admin-table";
-import { AdminModal, Field, Input, Textarea, Select, ImageUpload } from "@/components/admin/admin-modal";
+import { AdminModal, Field, Input, Textarea, Select, ImageUpload, VideoUpload } from "@/components/admin/admin-modal";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { Badge } from "@/components/ui/badge";
 import { LoadingDots } from "@/components/ui/loading-dots";
@@ -353,11 +353,11 @@ export default function AdminLearnPage() {
             />
           </Field>
           {contentDraft.contentType === "video" && (
-            <Field label="Video URL">
-              <Input 
-                value={contentDraft.mediaUrl || ""} 
-                onChange={(e) => setContentDraft(d => ({ ...d, mediaUrl: e.target.value }))}
-                placeholder="https://..."
+            <Field label="Upload Video">
+              <VideoUpload
+                value={contentDraft.mediaUrl || ""}
+                onChange={(url) => setContentDraft(d => ({ ...d, mediaUrl: url }))}
+                label="learning video"
               />
             </Field>
           )}
