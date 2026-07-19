@@ -101,8 +101,8 @@ export function Navbar() {
             {siteLogo ? (
               <img src={siteLogo} alt="MUBARISTA" className="h-10 w-auto bg-transparent transition-transform group-hover:scale-105" />
             ) : null}
-            <span className="text-xl font-bold tracking-tight">
-              MUBA<span className="text-blue">RISTA</span>
+            <span className="text-xl font-bold tracking-tight gradient-text">
+              MUBARISTA
             </span>
           </Link>
 

@@ -125,8 +125,8 @@ export function Footer() {
               {siteLogo ? (
                 <img src={siteLogo} alt="MUBARISTA" className="h-10 w-auto bg-transparent" />
               ) : null}
-              <span className="text-xl font-bold">
-                MUBA<span className="text-blue">RISTA</span>
+              <span className="text-xl font-bold gradient-text">
+                MUBARISTA
               </span>
             </Link>
             <p className="text-muted text-sm leading-relaxed mb-6">
