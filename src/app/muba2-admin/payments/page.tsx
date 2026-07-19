@@ -8,6 +8,7 @@ import {
   Receipt, FileText, BarChart3, Settings, ArrowRight, Clock, CheckCircle, XCircle, AlertCircle, Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 
 const TYPE_LABELS: Record<string, string> = {
   competition_entry: "Competition Entries",
@@ -65,6 +66,8 @@ export default function AdminPaymentsPage() {
   const [statements, setStatements] = useState<MonthlyStatement[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   async function fetchData() {
     try {
@@ -85,16 +88,19 @@ export default function AdminPaymentsPage() {
   }
 
   async function handleClearAll() {
-    if (!confirm("Are you sure you want to clear all transactions? This cannot be undone.")) return;
+    setClearing(true);
     try {
       const response = await fetch("/api/payments?clear=all", { method: "DELETE" });
       if (response.ok) {
         await fetchData();
+        setShowClearDialog(false);
       } else {
         console.error("Failed to clear transactions");
       }
     } catch (error) {
       console.error("Error clearing transactions:", error);
+    } finally {
+      setClearing(false);
     }
   }
 
@@ -247,7 +253,7 @@ export default function AdminPaymentsPage() {
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
           <h2 className="font-semibold">Recent Transactions</h2>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={handleClearAll} className="text-red hover:text-red hover:bg-red/10 h-8 px-2">
+            <Button variant="ghost" size="sm" onClick={() => setShowClearDialog(true)} className="text-red hover:text-red hover:bg-red/10 h-8 px-2">
               <Trash2 className="h-3.5 w-3.5 mr-1" /> Clear all
             </Button>
             <Link href="/muba2-admin/payments/transactions" className="text-xs text-blue hover:underline flex items-center gap-1">
@@ -290,6 +296,23 @@ export default function AdminPaymentsPage() {
           </table>
         </div>
       </div>
+
+      {showClearDialog && (
+        <ConfirmDialog
+          title="Clear all transactions"
+          message={
+            <>
+              You are about to permanently delete every payment transaction from the system.
+              <br /><br />
+              This action cannot be undone.
+            </>
+          }
+          confirmLabel="Clear all"
+          onConfirm={handleClearAll}
+          onCancel={() => setShowClearDialog(false)}
+          isLoading={clearing}
+        />
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import type { PaymentStatus, PaymentType } from "@/types";
 import { Search, Filter, ArrowLeft, SlidersHorizontal, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 
 const TYPE_LABELS: Record<PaymentType, string> = {
   competition_entry: "Competition Entry",
@@ -42,6 +43,8 @@ export default function TransactionsPage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [noteValue, setNoteValue] = useState("");
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   const filtered = payments
     .filter(p => {
@@ -59,16 +62,19 @@ export default function TransactionsPage() {
     });
 
   async function handleClearAll() {
-    if (!confirm("Are you sure you want to clear all transactions? This cannot be undone.")) return;
+    setClearing(true);
     try {
       const response = await fetch("/api/payments?clear=all", { method: "DELETE" });
       if (response.ok) {
         setPayments([]);
+        setShowClearDialog(false);
       } else {
         console.error("Failed to clear transactions");
       }
     } catch (error) {
       console.error("Error clearing transactions:", error);
+    } finally {
+      setClearing(false);
     }
   }
 
@@ -121,7 +127,7 @@ export default function TransactionsPage() {
             <p className="text-muted text-sm">{filtered.length} records · {fmt(totalFiltered, displayCurrency)} completed revenue in view</p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={handleClearAll} className="text-red hover:text-red hover:bg-red/10 h-8 px-2">
+        <Button variant="ghost" size="sm" onClick={() => setShowClearDialog(true)} className="text-red hover:text-red hover:bg-red/10 h-8 px-2">
           <Trash2 className="h-3.5 w-3.5 mr-1" /> Clear all
         </Button>
       </div>
@@ -228,6 +234,23 @@ export default function TransactionsPage() {
           </table>
         </div>
       </div>
+
+      {showClearDialog && (
+        <ConfirmDialog
+          title="Clear all transactions"
+          message={
+            <>
+              You are about to permanently delete every payment transaction from the system.
+              <br /><br />
+              This action cannot be undone.
+            </>
+          }
+          confirmLabel="Clear all"
+          onConfirm={handleClearAll}
+          onCancel={() => setShowClearDialog(false)}
+          isLoading={clearing}
+        />
+      )}
     </div>
   );
 }
