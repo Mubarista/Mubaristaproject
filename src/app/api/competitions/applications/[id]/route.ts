@@ -17,6 +17,8 @@ export async function GET(
     
     if (error) throw error;
     const app = mapKeysToCamelCase(data);
+    app.email = app.email || app.userEmail;
+    app.fullName = app.fullName || app.userName;
 
     if (app?.competitionId) {
       const { data: comp } = await supabase
@@ -51,10 +53,19 @@ export async function PUT(
       }
     }
 
+    // Map API-level fields to actual table columns and drop enriched/non-column fields
+    const { email, fullName, competitions, competition, ...rest } = body;
+    const updatePayload: Record<string, unknown> = keysToSnakeCase(rest);
+    if (email !== undefined) updatePayload.user_email = email;
+    if (fullName !== undefined) {
+      updatePayload.full_name = fullName;
+      updatePayload.user_name = fullName;
+    }
+
     const { data, error } = await supabase
       .from("competition_applications")
       .update({
-        ...keysToSnakeCase(body),
+        ...updatePayload,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
@@ -62,7 +73,10 @@ export async function PUT(
       .single();
     
     if (error) throw error;
-    return NextResponse.json(mapKeysToCamelCase(data));
+    const updated = mapKeysToCamelCase(data);
+    updated.email = updated.email || updated.userEmail;
+    updated.fullName = updated.fullName || updated.userName;
+    return NextResponse.json(updated);
   } catch (error) {
     console.error("Error updating application:", error);
     return NextResponse.json({ error: "Failed to update application" }, { status: 500 });

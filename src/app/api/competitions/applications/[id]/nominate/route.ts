@@ -31,6 +31,8 @@ export async function POST(
     if (error) throw error;
 
     const app = mapKeysToCamelCase(data);
+    app.email = app.email || app.userEmail;
+    app.fullName = app.fullName || app.userName;
 
     if (app?.competitionId) {
       const { data: comp } = await supabase
