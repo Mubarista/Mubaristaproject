@@ -152,7 +152,7 @@ export function HeroSection() {
                 </Link>
               )}
               <Link href="/competitions">
-                <Button variant="secondary" size="xl" className="w-full sm:w-auto">
+                <Button variant="secondary" size="xl" className="w-full sm:w-auto !bg-black/50 !text-white hover:!bg-white/10">
                   <Trophy className="h-5 w-5 text-yellow" />
                   {heroContent?.ctaSecondary}
                 </Button>
