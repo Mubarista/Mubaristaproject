@@ -160,7 +160,7 @@ export function HeroSection() {
               <Link href="/learn">
                 <Button variant="outline" size="xl" className="w-full sm:w-auto border-white/30 text-white hover:bg-white hover:text-black">
                   <Play className="h-5 w-5" />
-                  Learn Barista Skills
+                  Learn With Mubarista
                 </Button>
               </Link>
             </div>
