@@ -86,7 +86,7 @@ export default function CompetitionsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
             >
-              <Card className="overflow-hidden p-0 h-full flex flex-col">
+              <Card glass={false} className="overflow-hidden p-0 h-full flex flex-col bg-black/60 border-white/10 text-white">
                 <div className="relative h-48">
                   {comp.banner ? (
                     <Image src={comp.banner} alt={comp.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw" className="object-cover" />
@@ -117,7 +117,7 @@ export default function CompetitionsPage() {
                 </div>
                 <div className="p-6 flex flex-col flex-1">
                   <h3 className="text-xl font-semibold mb-2">{comp.title}</h3>
-                  <p className="text-sm text-muted mb-4 flex-1">{comp.description}</p>
+                  <p className="text-sm text-white/70 mb-4 flex-1">{comp.description}</p>
 
                   <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
                     <div className="flex items-center gap-2">
