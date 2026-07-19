@@ -37,9 +37,12 @@ import {
   X,
   Crown,
   ListOrdered,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
 import { useAdminAuth } from "@/lib/admin-auth-context";
+import { useTheme, ThemeProvider } from "@/lib/theme-context";
 
 const sections = [
   { label: "Overview", href: "/muba2-admin", icon: LayoutDashboard },
@@ -182,7 +185,7 @@ function AdminLoginScreen() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-foreground transition-colors"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? "Hide" : "Show"}
                 </button>
               </div>
             </div>
@@ -214,18 +217,21 @@ function AdminLoginScreen() {
   );
 }
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { isAdminAuthed, isLoading, adminLogout, userId } = useAdminAuth();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [settings, setSettings] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
+  const [pendingApplicantsCount, setPendingApplicantsCount] = useState(0);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   const [dataReady, setDataReady] = useState(false);
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     // Wait for auth state to settle and avoid fetching while the dev server may still be starting
@@ -242,6 +248,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       setDataReady(false);
       await Promise.all([
         fetchSettings(),
+        fetchPendingApplicantsCount(),
+        fetchUnreadMessagesCount(),
         userId ? fetchUser() : Promise.resolve(),
       ]);
       if (!cancelled) setDataReady(true);
@@ -294,6 +302,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       }
     } catch (error) {
       console.warn("Error fetching user:", error);
+    }
+  }
+
+  async function fetchPendingApplicantsCount() {
+    try {
+      const res = await fetchWithRetry("/api/competitions/apply");
+      if (res?.ok) {
+        const data = await res.json();
+        const count = (data || []).filter(
+          (app: any) =>
+            app.status === "pending" || app.paymentStatus === "unpaid" || app.paymentStatus === "pending"
+        ).length;
+        setPendingApplicantsCount(count);
+      }
+    } catch (error) {
+      console.warn("Error fetching pending applicants count:", error);
+    }
+  }
+
+  async function fetchUnreadMessagesCount() {
+    try {
+      const res = await fetchWithRetry("/api/messages?status=unread");
+      if (res?.ok) {
+        const data = await res.json();
+        setUnreadMessagesCount(Array.isArray(data) ? data.length : 0);
+      }
+    } catch (error) {
+      console.warn("Error fetching unread messages count:", error);
     }
   }
 
@@ -410,7 +446,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <aside className="fixed top-0 left-0 bottom-0 w-60 bg-background border-r border-white/10 overflow-y-auto z-30 flex flex-col">
+      <aside className="fixed top-0 left-0 bottom-0 w-72 bg-background border-r border-white/10 overflow-y-auto z-30 flex flex-col">
         <div className="px-4 py-4 border-b border-white/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -428,19 +464,35 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <p className="text-xs text-muted">{settings?.adminPortalSubtitle || "Full CMS Control"}</p>
               </div>
             </div>
-            <button
-              onClick={() => setShowGlobalSearch(true)}
-              className="p-2 rounded-lg hover:bg-white/5 text-muted hover:text-foreground transition-colors"
-              title="Global Search"
-            >
-              <Search className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="p-2 rounded-lg hover:bg-white/5 text-muted hover:text-foreground transition-colors"
+                title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                aria-label="Toggle theme"
+              >
+                {theme === "dark" ? (
+                  <Sun className="h-4 w-4 text-yellow" />
+                ) : (
+                  <Moon className="h-4 w-4 text-blue" />
+                )}
+              </button>
+              <button
+                onClick={() => setShowGlobalSearch(true)}
+                className="p-2 rounded-lg hover:bg-white/5 text-muted hover:text-foreground transition-colors"
+                title="Global Search"
+              >
+                <Search className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
 
         <nav className="flex-1 px-2 py-3 space-y-0.5">
           {sections.map((s) => {
             const active = s.href === "/muba2-admin" ? pathname === s.href : pathname.startsWith(s.href);
+            const isApplicants = s.href === "/muba2-admin/applications";
+            const isMessages = s.href === "/muba2-admin/messages";
             return (
               <Link
                 key={s.href}
@@ -452,7 +504,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 }`}
               >
                 <s.icon className="h-4 w-4 shrink-0" />
-                {s.label}
+                <span className="flex-1">{s.label}</span>
+                {isApplicants && pendingApplicantsCount > 0 && (
+                  <span className="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red px-1.5 text-[10px] font-bold text-white">
+                    {pendingApplicantsCount > 99 ? "99+" : pendingApplicantsCount}
+                  </span>
+                )}
+                {isMessages && unreadMessagesCount > 0 && (
+                  <span className="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red px-1.5 text-[10px] font-bold text-white">
+                    {unreadMessagesCount > 99 ? "99+" : unreadMessagesCount}
+                  </span>
+                )}
                 {active && <ChevronRight className="h-3 w-3 ml-auto" />}
               </Link>
             );
@@ -478,7 +540,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 ml-60 p-8 min-h-screen">
+      <main className="flex-1 ml-72 p-8 min-h-screen">
         {children}
       </main>
 
@@ -589,5 +651,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <ThemeProvider storageKey="admin-theme">
+      <AdminLayoutContent>{children}</AdminLayoutContent>
+    </ThemeProvider>
   );
 }
