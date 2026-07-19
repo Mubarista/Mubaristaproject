@@ -94,6 +94,13 @@ export default function ApplyPage() {
     return () => clearInterval(interval);
   }, [slug]);
 
+  // The application experience level is always the competition difficulty.
+  useEffect(() => {
+    if (competition?.difficulty) {
+      setFormData((prev) => ({ ...prev, experience: competition.difficulty }));
+    }
+  }, [competition?.difficulty]);
+
   if (loadingCompetition) {
     return (
       <div className="pt-32 text-center">
@@ -560,16 +567,21 @@ export default function ApplyPage() {
                       setFormData({ ...formData, experience: e.target.value });
                       setFieldErrors({ ...fieldErrors, experience: false });
                     }}
-                    className={`w-full rounded-xl bg-muted-bg border pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 appearance-none ${fieldErrors.experience ? 'border-red focus:ring-red' : 'border-white/10 focus:ring-blue'}`}
+                    disabled
+                    title="Your experience level is fixed to the competition difficulty and cannot be changed"
+                    className={`w-full rounded-xl bg-muted-bg border pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 appearance-none disabled:opacity-70 disabled:cursor-not-allowed ${fieldErrors.experience ? 'border-red focus:ring-red' : 'border-white/10 focus:ring-blue'}`}
                     required
                   >
                     <option value="">Select experience level</option>
-                    <option value="beginner">Beginner (0-2 years)</option>
-                    <option value="intermediate">Intermediate (2-5 years)</option>
-                    <option value="advanced">Advanced (5-10 years)</option>
-                    <option value="expert">Expert (10+ years)</option>
+                    <option value="Beginner">Beginner</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Professional">Professional</option>
+                    <option value="Master">Master</option>
                   </select>
                 </div>
+                <p className="text-xs text-muted mt-1">
+                  This competition requires {competition.difficulty} experience. You can only move up levels, never downgrade.
+                </p>
               </div>
 
               <div>

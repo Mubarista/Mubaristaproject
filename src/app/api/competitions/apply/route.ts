@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     // Check competition status and available slots before accepting applications
     const { data: competition, error: competitionError } = await supabaseAdmin
       .from("competitions")
-      .select("status, total_slots, available_slots")
+      .select("difficulty, status, total_slots, available_slots")
       .eq("id", body.competitionId)
       .single();
 
@@ -145,6 +145,50 @@ export async function POST(request: Request) {
       }
     }
 
+    // Enforce competition difficulty as the applicant's chosen experience level.
+    // Applicants may not apply to a competition below their highest previous level.
+    const LEVELS = ["Beginner", "Intermediate", "Professional", "Master"];
+    const levelIndex = (level: string) => {
+      const normalized = String(level || "").trim().toLowerCase();
+      const map: Record<string, number> = {
+        beginner: 0,
+        intermediate: 1,
+        advanced: 2,
+        professional: 2,
+        expert: 3,
+        master: 3,
+      };
+      return map[normalized] ?? -1;
+    };
+
+    const newLevelIndex = levelIndex(competition?.difficulty);
+    if (newLevelIndex === -1) {
+      return NextResponse.json({ error: "Competition difficulty is not valid" }, { status: 500 });
+    }
+
+    let highestIndex = -1;
+    if (normalizedEmail || normalizedMobile) {
+      const { data: previous } = await supabaseAdmin
+        .from("competition_applications")
+        .select("experience")
+        .or(`user_email.ilike.${normalizedEmail},mobile_number.eq.${normalizedMobile}`);
+
+      if (previous) {
+        highestIndex = previous.reduce((max, app) => Math.max(max, levelIndex(app.experience)), -1);
+      }
+    }
+
+    if (newLevelIndex < highestIndex) {
+      return NextResponse.json(
+        {
+          error: `You cannot downgrade. Your highest recorded level is ${LEVELS[highestIndex]}. You can only apply to ${LEVELS[highestIndex]} or higher competitions.`,
+        },
+        { status: 403 }
+      );
+    }
+
+    const applicationExperience = LEVELS[newLevelIndex];
+
     const { data, error } = await supabaseAdmin.from("competition_applications").insert({
       competition_id: body.competitionId,
       user_id: body.userId,
@@ -156,7 +200,7 @@ export async function POST(request: Request) {
       birth_date: body.birthDate,
       gender: body.gender,
       over18: body.over18,
-      experience: body.experience,
+      experience: applicationExperience,
       skills: body.skills,
       motivation: body.motivation,
       video_url: body.videoUrl,
