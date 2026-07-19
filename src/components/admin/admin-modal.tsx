@@ -5,6 +5,8 @@ import { X, Upload, ImageIcon, Trash2, Search, FileText, Video as VideoIcon } fr
 import { Button } from "@/components/ui/button";
 import { useAdminData } from "@/lib/admin-data-context";
 import { supabase } from "@/lib/supabase";
+import ReactCrop, { type Crop, type PixelCrop, makeAspectCrop, centerCrop } from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
 
 interface AdminModalProps {
   title: string;
@@ -310,12 +312,18 @@ interface ImageUploadProps {
   onChange: (url: string) => void;
   label?: string;
   aspectRatio?: "square" | "banner" | "portrait";
+  allowCrop?: boolean;
 }
 
-export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "banner" }: ImageUploadProps) {
+export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "banner", allowCrop = false }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const cropImageRef = useRef<HTMLImageElement>(null);
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
+  const [cropSelection, setCropSelection] = useState<Crop | undefined>();
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop | undefined>();
 
   useEffect(() => {
     let objectUrl: string | null = null;
@@ -354,6 +362,20 @@ export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "b
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (allowCrop) {
+      // Show crop modal before uploading
+      const reader = new FileReader();
+      reader.onload = () => {
+        setRawImageSrc(reader.result as string);
+        setCropSelection(undefined);
+        setCompletedCrop(undefined);
+        setShowCropModal(true);
+      };
+      reader.readAsDataURL(file);
+      e.target.value = "";
+      return;
+    }
+
     setUploading(true);
     try {
       const formData = new FormData();
@@ -383,7 +405,97 @@ export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "b
     }
   }
 
+  function getCroppedCanvas(image: HTMLImageElement, crop: PixelCrop) {
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.floor(crop.width);
+    canvas.height = Math.floor(crop.height);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(image, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
+    return canvas;
+  }
+
+  function downscaleCanvasToBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
+    const MAX_WIDTH = 1920;
+    const MAX_HEIGHT = 1080;
+    let width = canvas.width;
+    let height = canvas.height;
+    if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+      const scale = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height);
+      width = Math.floor(width * scale);
+      height = Math.floor(height * scale);
+    }
+    const resized = document.createElement("canvas");
+    resized.width = width;
+    resized.height = height;
+    const ctx = resized.getContext("2d");
+    if (ctx) ctx.drawImage(canvas, 0, 0, width, height);
+    return new Promise((resolve) => resized.toBlob(resolve, "image/jpeg", 0.8));
+  }
+
+  function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+    if (!allowCrop) return;
+    const image = e.currentTarget;
+    const aspect = aspectRatio === "square" ? 1 : aspectRatio === "portrait" ? 3 / 4 : 16 / 9;
+    const initial = centerCrop(
+      makeAspectCrop(
+        { unit: "px", width: image.naturalWidth, height: Math.round(image.naturalWidth / aspect) },
+        aspect,
+        image.naturalWidth,
+        image.naturalHeight
+      ),
+      image.naturalWidth,
+      image.naturalHeight
+    );
+    setCropSelection(initial);
+    setCompletedCrop(initial);
+  }
+
+  async function handleCropUpload() {
+    if (!cropImageRef.current || !completedCrop) return;
+    const cropped = getCroppedCanvas(cropImageRef.current, completedCrop);
+    if (!cropped) {
+      alert("Failed to crop image");
+      return;
+    }
+    setUploading(true);
+    try {
+      const blob = await downscaleCanvasToBlob(cropped);
+      if (!blob) throw new Error("Failed to process image");
+      const file = new File([blob], "cropped.jpg", { type: "image/jpeg" });
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("type", "photo");
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      if (res.ok) {
+        const data = await res.json();
+        onChange(data.url);
+        setShowCropModal(false);
+        setRawImageSrc(null);
+        setCropSelection(undefined);
+        setCompletedCrop(undefined);
+      } else {
+        console.error("Upload failed:", await res.text());
+        alert("Failed to upload image");
+      }
+    } catch (error) {
+      console.error("Crop upload error:", error);
+      alert("Failed to upload image");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function cancelCrop() {
+    setShowCropModal(false);
+    setRawImageSrc(null);
+    setCropSelection(undefined);
+    setCompletedCrop(undefined);
+    if (inputRef.current) inputRef.current.value = "";
+  }
+
   const heightClass = aspectRatio === "square" ? "h-40 w-40" : aspectRatio === "portrait" ? "h-52 w-40" : "h-40 w-full";
+  const cropAspect = aspectRatio === "square" ? 1 : aspectRatio === "portrait" ? 3 / 4 : 16 / 9;
 
   return (
     <div className="space-y-2">
@@ -450,6 +562,39 @@ export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "b
           disabled={uploading}
         />
       </div>
+
+      {showCropModal && rawImageSrc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-background rounded-2xl p-6 max-w-3xl w-full border border-white/10 max-h-[90vh] overflow-auto">
+            <h3 className="text-lg font-semibold mb-4">Crop {label}</h3>
+            <div className="rounded-xl overflow-hidden bg-muted-bg border border-white/10 mb-4">
+              <ReactCrop
+                crop={cropSelection}
+                onChange={(c) => setCropSelection(c)}
+                onComplete={(c) => setCompletedCrop(c)}
+                aspect={cropAspect}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  ref={cropImageRef}
+                  src={rawImageSrc}
+                  alt="Crop"
+                  onLoad={onImageLoad}
+                  className="max-w-full max-h-[60vh] object-contain"
+                />
+              </ReactCrop>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="secondary" onClick={cancelCrop} disabled={uploading}>
+                Cancel
+              </Button>
+              <Button onClick={handleCropUpload} disabled={!completedCrop || uploading}>
+                {uploading ? "Uploading..." : "Crop & Upload"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -861,6 +861,7 @@ export default function AdminSettingsPage() {
               value={ctaBackgroundDraft}
               onChange={setCtaBackgroundDraft}
               aspectRatio="banner"
+              allowCrop
             />
           </Field>
         </AdminModal>
