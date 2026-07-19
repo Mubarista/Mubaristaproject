@@ -176,6 +176,12 @@ export default function ApplicationsPage() {
   }
 
   function sendCongratulationEmail(app: Application) {
+    const recipient = app.email?.trim();
+    if (!recipient) {
+      showError("Applicant email is missing. Cannot open email client.");
+      return;
+    }
+
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     const accessUrl = `${origin}/access/${app.accessLink}`;
     const expiry = app.accessLinkExpiresAt
@@ -200,9 +206,8 @@ export default function ApplicationsPage() {
       "Warm regards,",
       "The Mubarista Team",
     ];
-    window.open(
-      `mailto:${app.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines.join("\n"))}`
-    );
+    const mailtoUrl = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines.join("\n"))}`;
+    window.open(mailtoUrl, "_blank", "noopener,noreferrer");
   }
 
   async function updateApplication(id: string, data: Partial<Application>) {
