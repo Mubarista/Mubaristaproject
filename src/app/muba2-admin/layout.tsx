@@ -279,6 +279,21 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showGlobalSearch]);
 
+  // Refresh pending applicant count periodically and when the tab becomes active again
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchPendingApplicantsCount();
+    }, 30000);
+    const handleVisibility = () => {
+      if (!document.hidden) fetchPendingApplicantsCount();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, []);
+
   async function fetchSettings() {
     try {
       const res = await fetchWithRetry("/api/site-settings");
@@ -312,7 +327,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         const data = await res.json();
         const count = (data || []).filter(
           (app: any) =>
-            app.status === "pending" || app.paymentStatus === "unpaid" || app.paymentStatus === "pending"
+            (app.status === "pending" || app.status === "nominated") &&
+            app.paymentStatus !== "paid"
         ).length;
         setPendingApplicantsCount(count);
       }
