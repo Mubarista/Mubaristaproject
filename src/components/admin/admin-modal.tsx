@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { X, Upload, ImageIcon, Trash2, Search, FileText, Video as VideoIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdminData } from "@/lib/admin-data-context";
+import { supabase } from "@/lib/supabase";
 
 interface AdminModalProps {
   title: string;
@@ -469,22 +470,36 @@ export function VideoUpload({ value, onChange, label = "Video" }: VideoUploadPro
 
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("type", "video");
-
-      const res = await fetch("/api/upload", {
+      // Get a presigned URL from the server, then upload directly to Supabase Storage.
+      // This bypasses the Vercel function payload size limit for large videos.
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${file.name.split('.').pop() || "mp4"}`;
+      const presignedRes = await fetch("/api/upload/presigned", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: fileName, contentType: file.type }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        onChange(data.url);
-      } else {
-        console.error("Upload failed:", await res.text());
-        alert("Failed to upload video");
+      if (!presignedRes.ok) {
+        const text = await presignedRes.text();
+        console.error("Presigned URL failed:", text);
+        alert("Failed to get upload URL");
+        return;
       }
+
+      const { path, token, publicUrl } = await presignedRes.json();
+
+      const { error: uploadError } = await supabase.storage.from("Videos").uploadToSignedUrl(path, token, file, {
+        contentType: file.type,
+        cacheControl: "3600",
+      });
+
+      if (uploadError) {
+        console.error("Supabase upload error:", uploadError);
+        alert("Failed to upload video");
+        return;
+      }
+
+      onChange(publicUrl);
     } catch (error) {
       console.error("Upload error:", error);
       alert("Failed to upload video");
