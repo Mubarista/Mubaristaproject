@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useAdminData } from "@/lib/admin-data-context";
 import type { Invoice, InvoiceStatus } from "@/types";
-import { ArrowLeft, X, CheckCircle, Clock, AlertCircle, XCircle, Printer } from "lucide-react";
+import { ArrowLeft, X, CheckCircle, Clock, AlertCircle, XCircle, Printer, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 
 function fmt(n: number) {
   return `RWF ${n.toLocaleString("en-US", { minimumFractionDigits: 0 })}`;
@@ -130,8 +132,27 @@ export default function InvoicesPage() {
   const { invoices, setInvoices } = useAdminData();
   const [viewing, setViewing] = useState<Invoice | null>(null);
   const [filterStatus, setFilterStatus] = useState("all");
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   const filtered = invoices.filter(inv => filterStatus === "all" || inv.status === filterStatus);
+
+  async function handleClearAll() {
+    setClearing(true);
+    try {
+      const response = await fetch("/api/invoices?clear=all", { method: "DELETE" });
+      if (response.ok) {
+        setInvoices([]);
+      } else {
+        console.error("Failed to clear invoices");
+      }
+    } catch (error) {
+      console.error("Error clearing invoices:", error);
+    } finally {
+      setClearing(false);
+      setShowClearDialog(false);
+    }
+  }
 
   function changeStatus(id: string, status: InvoiceStatus) {
     setInvoices(invoices.map(inv => inv.id === id ? { ...inv, status, paidAt: status === "paid" ? new Date().toISOString().slice(0, 10) : inv.paidAt } : inv));
@@ -170,13 +191,16 @@ export default function InvoicesPage() {
       </div>
 
       {/* Filter */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-4">
         {["all", "paid", "pending", "overdue", "cancelled"].map(s => (
           <button key={s} onClick={() => setFilterStatus(s)}
             className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors capitalize ${filterStatus === s ? "bg-blue text-white" : "bg-muted-bg text-muted hover:bg-white/5"}`}>
             {s}
           </button>
         ))}
+        <Button variant="ghost" size="sm" onClick={() => setShowClearDialog(true)} className="ml-auto text-red hover:text-red hover:bg-red/10 h-8 px-2">
+          <Trash2 className="h-3.5 w-3.5 mr-1" /> Clear all
+        </Button>
       </div>
 
       {/* Table */}
@@ -218,6 +242,23 @@ export default function InvoicesPage() {
       </div>
 
       {viewing && <InvoiceModal invoice={viewing} onClose={() => setViewing(null)} onStatusChange={changeStatus} />}
+
+      {showClearDialog && (
+        <ConfirmDialog
+          title="Clear all invoices"
+          message={
+            <>
+              You are about to permanently delete all invoices from the system.
+              <br /><br />
+              This action cannot be undone.
+            </>
+          }
+          confirmLabel="Clear all"
+          onConfirm={handleClearAll}
+          onCancel={() => setShowClearDialog(false)}
+          isLoading={clearing}
+        />
+      )}
     </div>
   );
 }

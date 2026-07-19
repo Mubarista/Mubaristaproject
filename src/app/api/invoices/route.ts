@@ -53,6 +53,14 @@ export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
+    const clearAll = searchParams.get('clear') === 'all';
+
+    if (clearAll) {
+      const { error } = await supabaseAdmin.from("invoices").delete().not('id', 'is', null);
+      if (error) throw error;
+      return NextResponse.json({ success: true });
+    }
+
     if (!id) return NextResponse.json({ error: "Missing invoice ID" }, { status: 400 });
     const { error } = await supabaseAdmin.from("invoices").delete().eq("id", id);
     if (error) throw error;
