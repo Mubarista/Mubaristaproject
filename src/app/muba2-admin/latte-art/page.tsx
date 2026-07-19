@@ -145,7 +145,7 @@ export default function AdminLatteArtPage() {
             <Field label="Artist Barista"><Input value={draft.artist} onChange={set("artist")} /></Field>
           </div>
           <Field label="Image">
-            <ImageUpload value={draft.image} onChange={(url) => setDraft((d: any) => ({ ...d, image: url }))} aspectRatio="square" />
+            <ImageUpload value={draft.image} onChange={(url) => setDraft((d: any) => ({ ...d, image: url }))} aspectRatio="square" allowCrop />
           </Field>
           <Field label="Likes"><Input type="number" value={draft.likes} onChange={set("likes")} /></Field>
         </AdminModal>
