@@ -125,8 +125,9 @@ export function Footer() {
               {siteLogo ? (
                 <img src={siteLogo} alt="MUBARISTA" className="h-10 w-auto bg-transparent" />
               ) : null}
-              <span className="text-xl font-bold gradient-text">
-                MUBARISTA
+              <span className="text-xl font-bold flex flex-col leading-none">
+                <span className="gradient-text text-[0.45em] tracking-widest uppercase opacity-80 -mb-0.5">HUB</span>
+                <span className="gradient-text">MUBARISTA</span>
               </span>
             </Link>
             <p className="text-muted text-sm leading-relaxed mb-6">
