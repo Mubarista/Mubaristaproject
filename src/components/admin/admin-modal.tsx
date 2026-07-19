@@ -406,12 +406,28 @@ export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "b
   }
 
   function getCroppedCanvas(image: HTMLImageElement, crop: PixelCrop) {
+    // react-image-crop returns crop coordinates in CSS pixels, so scale them
+    // to the image's natural resolution for canvas drawImage.
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    const width = Math.floor(crop.width * scaleX);
+    const height = Math.floor(crop.height * scaleY);
     const canvas = document.createElement("canvas");
-    canvas.width = Math.floor(crop.width);
-    canvas.height = Math.floor(crop.height);
+    canvas.width = width;
+    canvas.height = height;
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
-    ctx.drawImage(image, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
+    ctx.drawImage(
+      image,
+      crop.x * scaleX,
+      crop.y * scaleY,
+      width,
+      height,
+      0,
+      0,
+      width,
+      height
+    );
     return canvas;
   }
 
@@ -437,15 +453,16 @@ export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "b
     if (!allowCrop) return;
     const image = e.currentTarget;
     const aspect = aspectRatio === "square" ? 1 : aspectRatio === "portrait" ? 3 / 4 : 16 / 9;
+    // Use the displayed (CSS) dimensions so crop coordinates stay in the same unit.
     const initial = centerCrop(
       makeAspectCrop(
-        { unit: "px", width: image.naturalWidth, height: Math.round(image.naturalWidth / aspect) },
+        { unit: "px", width: image.width, height: Math.round(image.width / aspect) },
         aspect,
-        image.naturalWidth,
-        image.naturalHeight
+        image.width,
+        image.height
       ),
-      image.naturalWidth,
-      image.naturalHeight
+      image.width,
+      image.height
     );
     setCropSelection(initial);
     setCompletedCrop(initial);
