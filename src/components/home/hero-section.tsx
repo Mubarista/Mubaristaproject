@@ -192,7 +192,7 @@ export function HeroSection() {
                 color: "text-green",
               },
             ].map((stat, i) => (
-              <div key={i} className="glass-card rounded-2xl p-6 text-center text-white">
+              <div key={i} className="rounded-2xl p-6 text-center text-white bg-black/50 border border-white/10 backdrop-blur-2xl">
                 <stat.icon className={`h-6 w-6 mx-auto mb-2 ${stat.color}`} />
                 <div className="text-3xl font-bold mb-1 text-white">
                   {formatNumber(stat.value)}
