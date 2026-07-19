@@ -78,7 +78,7 @@ export function Navbar() {
   // Clamp 0–1 over first 120px of scroll
   const scrollProgress = Math.min(scrollY / 120, 1);
   const blurPx = Math.round(8 + scrollProgress * 24);   // 8px → 32px
-  const bgOpacity = (0.4 + scrollProgress * 0.5).toFixed(2); // 0.40 → 0.90
+  const bgOpacity = (0.7 + scrollProgress * 0.25).toFixed(2); // 0.70 → 0.95
 
   return (
     <header
@@ -87,11 +87,10 @@ export function Navbar() {
         scrolled ? "py-3 shadow-2xl" : "py-5"
       )}
       style={{
+        transition: "background-color 0.3s ease, border-color 0.3s ease",
         backdropFilter: scrolled ? `blur(${blurPx}px) saturate(160%)` : undefined,
         WebkitBackdropFilter: scrolled ? `blur(${blurPx}px) saturate(160%)` : undefined,
-        backgroundColor: scrolled
-          ? `rgba(var(--navbar-bg-rgb, 10,10,10), ${bgOpacity})`
-          : "transparent",
+        backgroundColor: `rgba(var(--navbar-bg-rgb, 10,10,10), ${bgOpacity})`,
         borderBottom: scrolled ? "1px solid rgba(128,128,128,0.15)" : "1px solid transparent",
       }}
     >
