@@ -6,6 +6,7 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { Field, Input, Textarea } from "@/components/admin/admin-modal";
 import { CheckCircle, ImageIcon, Film, Upload, Trash2, Crop as CropIcon, X } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
+import { supabase } from "@/lib/supabase";
 import ReactCrop, { type Crop, type PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 
@@ -214,8 +215,25 @@ export default function AdminHeroPage() {
     const canvas = ctx.canvas;
     setUploading(true);
     try {
+      // Downscale the cropped image to avoid hitting the Vercel request payload limit.
+      const MAX_WIDTH = 1920;
+      const MAX_HEIGHT = 1080;
+      let { width, height } = canvas;
+      if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+        const scale = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height);
+        width = Math.floor(width * scale);
+        height = Math.floor(height * scale);
+      }
+      const resizedCanvas = document.createElement("canvas");
+      resizedCanvas.width = width;
+      resizedCanvas.height = height;
+      const rctx = resizedCanvas.getContext("2d");
+      if (rctx) {
+        rctx.drawImage(canvas, 0, 0, width, height);
+      }
+
       const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/jpeg", 0.85)
+        resizedCanvas.toBlob(resolve, "image/jpeg", 0.8)
       );
       if (!blob) {
         alert("Failed to process image.");
@@ -304,23 +322,33 @@ export default function AdminHeroPage() {
   async function handleVideoFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setSaving(true);
+    setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("type", "video");
-      const response = await fetch("/api/upload", { method: "POST", body: formData });
-      if (response.ok) {
-        const data = await response.json();
-        setBg((b) => ({ ...b, type: "video", videoUrl: data.url, imageUrl: "" }));
-      } else {
-        alert("Failed to upload video. Please try a smaller file.");
+      // Use presigned Supabase Storage upload to bypass the Vercel function payload limit.
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${file.name.split('.').pop() || "mp4"}`;
+      const presignedRes = await fetch("/api/upload/presigned", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: fileName, contentType: file.type }),
+      });
+      if (!presignedRes.ok) {
+        const text = await presignedRes.text();
+        console.error("Presigned URL failed:", text);
+        alert("Failed to get upload URL");
+        return;
       }
+      const { path, token, publicUrl } = await presignedRes.json();
+      const { error } = await supabase.storage.from("Videos").uploadToSignedUrl(path, token, file, {
+        contentType: file.type,
+        cacheControl: "3600",
+      });
+      if (error) throw error;
+      setBg((b) => ({ ...b, type: "video", videoUrl: publicUrl, imageUrl: "" }));
     } catch (error) {
       console.error("Upload error:", error);
       alert("Failed to upload video.");
     } finally {
-      setSaving(false);
+      setUploading(false);
     }
   }
 
