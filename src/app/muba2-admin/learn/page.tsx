@@ -183,6 +183,9 @@ export default function AdminLearnPage() {
       if (res.ok) {
         await fetchData();
         closeContentModal();
+      } else {
+        const data = await res.json().catch(() => ({ error: "Failed to save content" }));
+        alert(data.error || "Failed to save content");
       }
     } catch (error) {
       console.error("Error saving content:", error);
