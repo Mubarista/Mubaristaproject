@@ -80,6 +80,26 @@ function AdminLoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoLoading, setLogoLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/site-settings")
+      .then((res) => (res.ok ? res.json() : ({} as any)))
+      .then((data: any) => {
+        if (!cancelled) {
+          setLogoUrl(data?.logo || null);
+          setLogoLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLogoLoading(false);
+        }
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -106,8 +126,12 @@ function AdminLoginScreen() {
       <div className="relative w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-red to-red/60 shadow-lg shadow-red/20 mb-4">
-            <Sparkles className="h-8 w-8 text-white" />
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl overflow-hidden bg-muted-bg mb-4">
+            {logoLoading ? (
+              <div className="h-8 w-8 rounded-full border-2 border-muted border-t-transparent animate-spin" />
+            ) : logoUrl ? (
+              <img src={logoUrl} alt="MUBARISTA" className="h-full w-full object-contain" />
+            ) : null}
           </div>
           <h1 className="text-2xl font-bold tracking-tight">
             MUBA<span className="text-blue">RISTA</span>
@@ -122,7 +146,7 @@ function AdminLoginScreen() {
               <Lock className="h-4 w-4 text-blue" />
             </div>
             <div>
-              <h2 className="font-semibold text-base">Administrator Login</h2>
+              <h2 className="font-semibold text-base">MubaristaHub Login</h2>
               <p className="text-xs text-muted">Restricted access — authorised personnel only</p>
             </div>
           </div>
@@ -181,7 +205,7 @@ function AdminLoginScreen() {
 
           <div className="mt-6 pt-4 border-t border-white/10 text-center">
             <Link href="/" className="text-xs text-muted hover:text-foreground transition-colors">
-              ← Back to MUBARISTA site
+              ← Back to MUBARISTAHUB Site
             </Link>
           </div>
         </div>
@@ -197,6 +221,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [settings, setSettings] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
+  const [dataReady, setDataReady] = useState(false);
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -205,11 +230,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     // Wait for auth state to settle and avoid fetching while the dev server may still be starting
     if (isLoading) return;
-    fetchSettings();
-    if (userId) {
-      fetchUser();
+
+    if (!isAdminAuthed) {
+      setDataReady(true);
+      return;
     }
-  }, [isLoading, userId]);
+
+    let cancelled = false;
+
+    async function loadAdminData() {
+      setDataReady(false);
+      await Promise.all([
+        fetchSettings(),
+        userId ? fetchUser() : Promise.resolve(),
+      ]);
+      if (!cancelled) setDataReady(true);
+    }
+
+    loadAdminData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoading, isAdminAuthed, userId]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -354,7 +397,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }
 
-  if (isLoading) {
+  if (isLoading || (isAdminAuthed && !dataReady)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <LoadingDots />
