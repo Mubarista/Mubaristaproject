@@ -28,17 +28,17 @@ function getSystemTheme(): "light" | "dark" {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
+export function ThemeProvider({ children, storageKey = "theme" }: { children: ReactNode; storageKey?: string }) {
   const [theme, setThemeState] = useState<Theme>("dark");
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("dark");
 
   // Load saved theme on mount
   useEffect(() => {
-    const saved = safeLocalStorage.getItem("theme") as Theme | null;
+    const saved = safeLocalStorage.getItem(storageKey) as Theme | null;
     if (saved === "light" || saved === "dark" || saved === "system") {
       setThemeState(saved);
     }
-  }, []);
+  }, [storageKey]);
 
   // Apply theme to <html> whenever it changes
   useEffect(() => {
@@ -69,7 +69,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   function setTheme(next: Theme) {
     setThemeState(next);
-    safeLocalStorage.setItem("theme", next);
+    safeLocalStorage.setItem(storageKey, next);
   }
 
   return (

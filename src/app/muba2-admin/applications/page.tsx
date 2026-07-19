@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Check, X, Mail, ExternalLink, Clock, Trash2, Archive, Ban, CheckCircle } from "lucide-react";
+import { Search, Check, X, Mail, ExternalLink, Clock, Trash2, Archive, Ban, CheckCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +50,7 @@ export default function ApplicationsPage() {
   const [editData, setEditData] = useState<Partial<Application>>({});
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   function showError(msg: string) {
     setErrorMsg(msg);
@@ -97,10 +98,14 @@ export default function ApplicationsPage() {
     if (ids.length === 0) return;
 
     if (action === "delete") {
-      const confirmed = window.confirm(`Are you sure you want to delete ${selectedCount} selected application(s)? This action cannot be undone.`);
-      if (!confirmed) return;
+      setShowDeleteConfirm(true);
+      return;
     }
 
+    await executeBulkAction(action, ids);
+  }
+
+  async function executeBulkAction(action: "delete" | "archive" | "revoke" | "activate", ids: string[]) {
     try {
       const response = await fetch("/api/competitions/applications/bulk", {
         method: "POST",
@@ -119,6 +124,17 @@ export default function ApplicationsPage() {
       console.error("Bulk action error:", error);
       showError("Failed to perform bulk action");
     }
+  }
+
+  async function confirmDelete() {
+    setShowDeleteConfirm(false);
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    await executeBulkAction("delete", ids);
+  }
+
+  function cancelDelete() {
+    setShowDeleteConfirm(false);
   }
 
   function getStatusBadgeVariant(status: string) {
@@ -490,6 +506,42 @@ export default function ApplicationsPage() {
             <div className="text-center py-8 text-muted">No applications found</div>
           )}
         </Card>
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+            <Card className="max-w-md w-full p-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="h-14 w-14 rounded-full bg-red/15 flex items-center justify-center mb-4">
+                  <AlertTriangle className="h-7 w-7 text-red" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Confirm Deletion</h3>
+                <p className="text-sm text-muted mb-6">
+                  You are about to permanently delete{" "}
+                  <span className="font-semibold text-foreground">{selectedCount} selected application{selectedCount !== 1 ? "s" : ""}</span>.
+                  This action cannot be undone, and all associated data will be removed.
+                </p>
+                <div className="flex gap-3 w-full">
+                  <Button
+                    variant="secondary"
+                    onClick={cancelDelete}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="red"
+                    onClick={confirmDelete}
+                    className="flex-1"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
 
         {/* Application Detail Modal */}
         {showModal && selectedApp && (
