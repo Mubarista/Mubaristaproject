@@ -60,7 +60,7 @@ export function CTASection() {
             style={{
               backgroundImage: ctaSettings.backgroundImage
                 ? `url('${ctaSettings.backgroundImage}')`
-                : "url('https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=1200&q=60')",
+                : "none",
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}
