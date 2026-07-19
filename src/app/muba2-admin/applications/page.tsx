@@ -223,7 +223,7 @@ export default function ApplicationsPage() {
       "The Mubarista Team",
     ];
     const mailtoUrl = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines.join("\n"))}`;
-    window.open(mailtoUrl, "_blank", "noopener,noreferrer");
+    window.location.href = mailtoUrl;
   }
 
   async function updateApplication(id: string, data: Partial<Application>) {
