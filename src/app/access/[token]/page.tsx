@@ -151,7 +151,7 @@ export default function AccessPage() {
               <h3 className="text-sm font-medium mb-3">Payment Methods</h3>
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { name: "MoMo Rwanda", icon: <MtnMomoIcon className="h-8 w-12 mx-auto" /> },
+                  { name: "MomoPay", icon: <MtnMomoIcon className="h-8 w-12 mx-auto" /> },
                   { name: "Visa", icon: <VisaIcon className="h-8 w-12 mx-auto" /> },
                   { name: "Mastercard", icon: <MastercardIcon className="h-8 w-12 mx-auto" /> },
                 ].map((method) => (

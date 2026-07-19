@@ -11,7 +11,7 @@ type Period = "daily" | "monthly" | "yearly";
 
 const METHOD_META: Record<PaymentMethod, { label: string; icon: React.ReactNode; color: string; bar: string }> = {
   card:          { label: "Visa / Mastercard", icon: <CreditCard className="h-4 w-4" />,  color: "text-blue",   bar: "bg-blue" },
-  mobile_money:  { label: "MTN Mobile Money",  icon: <Smartphone className="h-4 w-4" />,  color: "text-yellow", bar: "bg-yellow" },
+  mobile_money:  { label: "MomoPay",  icon: <Smartphone className="h-4 w-4" />,  color: "text-yellow", bar: "bg-yellow" },
   bank_transfer: { label: "Bank Transfer",     icon: <Building2 className="h-4 w-4" />,   color: "text-green",  bar: "bg-green" },
   paypal:        { label: "PayPal",            icon: <Wallet className="h-4 w-4" />,      color: "text-purple", bar: "bg-purple" },
 };

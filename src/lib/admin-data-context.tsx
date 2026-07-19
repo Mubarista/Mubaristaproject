@@ -203,7 +203,7 @@ const defaultCurrencySettings: CurrencyContextSettings[] = [
 
 const ALL_METHODS: PaymentContextSettings["methods"] = [
   { method: "card", enabled: true, label: "Visa / Mastercard", regions: "global" },
-  { method: "mobile_money", enabled: true, label: "MTN Mobile Money", regions: "global" },
+  { method: "mobile_money", enabled: true, label: "MomoPay", regions: "global" },
   { method: "bank_transfer", enabled: true, label: "Bank Transfer", regions: "global" },
   { method: "paypal", enabled: true, label: "PayPal", regions: "global" },
 ];

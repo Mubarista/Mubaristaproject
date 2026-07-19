@@ -276,7 +276,7 @@ export const faqs = [
   {
     question: "What payment methods are accepted?",
     answer:
-      "We accept MoMoPay (Rwanda), VPay, DusuPay, Visa, Mastercard, and major credit cards.",
+      "We accept MomoPay (Rwanda), VPay, DusuPay, Visa, Mastercard, and major credit cards.",
   },
   {
     question: "Is there free content available?",

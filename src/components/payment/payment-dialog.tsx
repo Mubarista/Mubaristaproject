@@ -76,7 +76,7 @@ function MethodCard({
   );
 }
 
-/* ─── MTN MoMo logo ────────────────────────────────────────────── */
+/* ─── MomoPay logo ────────────────────────────────────────────── */
 function MomoLogo() {
   return <MtnMomoIcon className="h-8 w-12" />;
 }
@@ -163,12 +163,12 @@ function MomoForm({ onSubmit, loading }: { onSubmit: (e: React.FormEvent) => voi
       <div className="rounded-2xl bg-yellow/5 border border-yellow/20 p-4 flex items-start gap-3">
         <MomoLogo />
         <div>
-          <p className="text-sm font-semibold text-yellow">MTN Mobile Money</p>
+          <p className="text-sm font-semibold text-yellow">MomoPay</p>
           <p className="text-xs text-muted mt-0.5">A USSD prompt will be sent to your phone to confirm the payment.</p>
         </div>
       </div>
       <div>
-        <label className="text-xs text-muted mb-1 block">MTN MoMo Phone Number</label>
+        <label className="text-xs text-muted mb-1 block">MomoPay Phone Number</label>
         <PhoneInput
           value={momoPhone}
           onChange={(value) => {
@@ -189,7 +189,7 @@ function MomoForm({ onSubmit, loading }: { onSubmit: (e: React.FormEvent) => voi
         <input required placeholder="Iraguha Mugisha" className="w-full rounded-xl bg-muted-bg border border-white/10 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue" />
       </div>
       <Button type="submit" variant="primary" className="w-full" disabled={loading}>
-        {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending prompt…</> : <>Send MoMo Prompt <Smartphone className="h-4 w-4 ml-1" /></>}
+        {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending prompt…</> : <>Send MomoPay Prompt <Smartphone className="h-4 w-4 ml-1" /></>}
       </Button>
     </form>
   );
@@ -244,7 +244,7 @@ export function PaymentDialog({
   );
 
   const ALL_METHODS: { id: PaymentMethod; name: string; sub: string; logo: React.ReactNode; badge?: string; adminKey: string }[] = [
-    { id: "mtn_momo" as PaymentMethod, adminKey: "mobile_money", name: "MTN Mobile Money", sub: "Pay via MTN MoMo USSD prompt (Rwanda only)", logo: <MomoLogo />, badge: "Rwanda" },
+    { id: "mtn_momo" as PaymentMethod, adminKey: "mobile_money", name: "MomoPay", sub: "Pay via MomoPay USSD prompt (Rwanda only)", logo: <MomoLogo />, badge: "Rwanda" },
     { id: "card" as PaymentMethod,     adminKey: "card",         name: "Visa / Mastercard", sub: "Credit or debit card — accepted worldwide", logo: <CardLogos /> },
     { id: "paypal" as PaymentMethod,   adminKey: "paypal",       name: "PayPal", sub: "International payments via PayPal", logo: <PayPalLogo /> },
   ];
@@ -321,7 +321,7 @@ export function PaymentDialog({
             <div>
               <h2 className="font-bold text-base">
                 {step === "method" && "Choose Payment Method"}
-                {step === "form" && (method === "mtn_momo" ? "MTN Mobile Money" : method === "card" ? "Card Payment" : "PayPal")}
+                {step === "form" && (method === "mtn_momo" ? "MomoPay" : method === "card" ? "Card Payment" : "PayPal")}
                 {step === "processing" && "Processing Payment"}
                 {step === "success" && "Payment Successful"}
                 {step === "failed" && "Payment Failed"}
@@ -418,7 +418,7 @@ export function PaymentDialog({
                 <p className="font-bold text-lg text-green">Payment Complete!</p>
                 <p className="text-sm text-muted mt-1">{description}</p>
                 <p className="text-xs text-muted mt-1">
-                  {method === "mtn_momo" ? "Paid via MTN Mobile Money" : method === "card" ? "Paid via Card" : "Paid via PayPal"}
+                  {method === "mtn_momo" ? "Paid via MomoPay" : method === "card" ? "Paid via Card" : "Paid via PayPal"}
                 </p>
               </div>
               <div className="w-full rounded-2xl bg-muted-bg border border-white/10 px-4 py-3 text-left space-y-1">

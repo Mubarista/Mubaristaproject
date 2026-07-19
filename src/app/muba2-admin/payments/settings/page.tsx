@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 
 const METHOD_META: Record<PaymentMethod, { label: string; icon: React.ReactNode; color: string; desc: string }> = {
   card:          { label: "Visa / Mastercard", icon: <CreditCard className="h-4 w-4" />,  color: "text-blue",   desc: "International credit/debit cards" },
-  mobile_money:  { label: "MTN Mobile Money",  icon: <Smartphone className="h-4 w-4" />,  color: "text-yellow", desc: "Rwanda MoMo USSD payments" },
+  mobile_money:  { label: "MomoPay",  icon: <Smartphone className="h-4 w-4" />,  color: "text-yellow", desc: "MomoPay USSD payments" },
   bank_transfer: { label: "Bank Transfer",     icon: <Building2 className="h-4 w-4" />,   color: "text-green",  desc: "Direct bank wire transfer" },
   paypal:        { label: "PayPal",            icon: <Wallet className="h-4 w-4" />,      color: "text-purple", desc: "PayPal for international users" },
 };

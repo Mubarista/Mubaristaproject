@@ -362,7 +362,7 @@ export default function CheckoutPage() {
                           <Smartphone className="h-6 w-6 text-yellow" />
                         </div>
                         <div className="flex-1">
-                          <h3 className="font-medium">MTN Mobile Money</h3>
+                          <h3 className="font-medium">MomoPay</h3>
                           <p className="text-sm text-muted">Pay with your mobile money account</p>
                         </div>
                         <MtnMomoIcon className="h-8 w-12" />
@@ -390,7 +390,7 @@ export default function CheckoutPage() {
                 <Card className="p-6">
                   <CardTitle className="mb-6 flex items-center gap-2">
                     <Smartphone className="h-5 w-5 text-yellow" />
-                    MTN Mobile Money
+                    MomoPay
                   </CardTitle>
                   <form onSubmit={handleMomoSubmit} className="space-y-4">
                     {momoStep === "phone" && (
@@ -410,7 +410,7 @@ export default function CheckoutPage() {
                           {momoPhoneError && (
                             <p className="text-xs text-red mt-1">{momoPhoneError}</p>
                           )}
-                          <p className="text-xs text-muted mt-1">Enter your MTN Mobile Money number with country code (e.g. +250 788 123 456)</p>
+                          <p className="text-xs text-muted mt-1">Enter your MomoPay number with country code (e.g. +250 788 123 456)</p>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted mt-4">
                           <Lock className="h-3 w-3" />
