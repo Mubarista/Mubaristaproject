@@ -120,7 +120,7 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   color: transparent;
-  animation: gradient-shift 3s linear infinite;
+  animation: gradient-shift 5s linear infinite;
 }
 
 .hero-gradient {
