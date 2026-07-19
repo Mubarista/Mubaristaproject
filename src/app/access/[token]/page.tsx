@@ -9,7 +9,23 @@ import { Badge } from "@/components/ui/badge";
 import { MtnMomoIcon } from "@/components/icons/mtn-momo";
 import { VisaIcon } from "@/components/icons/visa";
 import { MastercardIcon } from "@/components/icons/mastercard";
+import { formatCurrency } from "@/lib/utils";
 import type { CompetitionApplication } from "@/types";
+
+function formatCountdown(target: string) {
+  const diff = new Date(target).getTime() - Date.now();
+  if (diff <= 0) return "Expired";
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+  const parts = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0 || days > 0) parts.push(`${hours}h`);
+  if (minutes > 0 || hours > 0 || days > 0) parts.push(`${minutes}m`);
+  parts.push(`${seconds}s`);
+  return parts.join(" ");
+}
 
 export default function AccessPage() {
   const params = useParams();
@@ -20,6 +36,15 @@ export default function AccessPage() {
   const [valid, setValid] = useState(false);
   const [expired, setExpired] = useState(false);
   const [application, setApplication] = useState<CompetitionApplication | null>(null);
+  const [countdown, setCountdown] = useState("");
+
+  useEffect(() => {
+    if (!application?.accessLinkExpiresAt) return;
+    const update = () => setCountdown(formatCountdown(application.accessLinkExpiresAt as string));
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [application?.accessLinkExpiresAt]);
 
   async function validateAccessLink() {
     try {
@@ -102,12 +127,12 @@ export default function AccessPage() {
             <div className="flex justify-between items-center p-4 rounded-xl bg-muted-bg">
               <span className="text-muted">Entry Fee</span>
               <span className="text-2xl font-bold text-green">
-                ${application?.competition?.entryFee}
+                {formatCurrency(application?.competition?.entryFee ?? 0, "RWF")}
               </span>
             </div>
             {application?.paymentStatus !== "paid" && (
               <p className="text-sm text-muted">
-                You have <strong className="text-red">3 days</strong> to complete payment before this access link expires.
+                You have <strong className="text-red">{countdown || "..."}</strong> to complete payment before this access link expires.
               </p>
             )}
             {application?.paymentStatus === "paid" && (
