@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, MoreVertical, Check, X, Mail, ExternalLink, Clock, Trash2, Archive, Ban, CheckCircle } from "lucide-react";
+import { Search, Check, X, Mail, ExternalLink, Clock, Trash2, Archive, Ban, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -420,17 +420,24 @@ export default function ApplicationsPage() {
                   <th className="text-center px-4 py-3 text-xs font-medium text-muted">Status</th>
                   <th className="text-center px-4 py-3 text-xs font-medium text-muted">Payment</th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-muted">Applied</th>
-                  <th className="text-center px-4 py-3 text-xs font-medium text-muted">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((app) => (
-                  <tr key={app.id} className="border-b border-white/5 hover:bg-white/5">
-                    <td className="px-4 py-3 text-center">
+                  <tr
+                    key={app.id}
+                    onClick={() => {
+                      setSelectedApp(app);
+                      setShowModal(true);
+                    }}
+                    className="border-b border-white/5 hover:bg-white/5 cursor-pointer"
+                  >
+                    <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selectedIds.has(app.id)}
                         onChange={() => toggleRow(app.id)}
+                        onClick={(e) => e.stopPropagation()}
                         className="h-4 w-4 rounded border-white/20 cursor-pointer"
                       />
                     </td>
@@ -468,19 +475,6 @@ export default function ApplicationsPage() {
                     </td>
                     <td className="px-4 py-3 text-xs text-muted">
                       {new Date(app.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          onClick={() => {
-                            setSelectedApp(app);
-                            setShowModal(true);
-                          }}
-                          className="p-1.5 rounded-lg hover:bg-white/10 text-muted hover:text-foreground transition-colors"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
-                      </div>
                     </td>
                   </tr>
                 ))}
@@ -640,109 +634,136 @@ export default function ApplicationsPage() {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-4 mb-6">
-                  <div>
-                    <p className="text-sm text-muted mb-1">Applicant</p>
-                    <p className="font-medium">{selectedApp.fullName || "N/A"}</p>
-                    <p className="text-sm text-muted">{selectedApp.email || "N/A"}</p>
-                    {selectedApp.mobileNumber && <p className="text-sm text-muted">{selectedApp.mobileNumber}</p>}
-                    {selectedApp.birthDate && <p className="text-sm text-muted">DOB: {new Date(selectedApp.birthDate).toLocaleDateString()}</p>}
-                    {selectedApp.country && <p className="text-sm text-muted">{selectedApp.country}</p>}
-                  </div>
-
-                  <div>
-                    <p className="text-sm text-muted mb-1">Competition</p>
-                    <p className="font-medium">{selectedApp.competitions?.title || "N/A"}</p>
-                    <p className="text-sm text-muted">Entry Fee: {formatCurrency(selectedApp.competitions?.entryFee ?? 0, "RWF")}</p>
-                  </div>
-
-                  <div>
-                    <p className="text-sm text-muted mb-1">Experience Level</p>
-                    <Badge variant="blue" className="capitalize">
-                      {selectedApp.experience}
-                    </Badge>
-                  </div>
-
-                  <div>
-                    <p className="text-sm text-muted mb-1">Skills</p>
-                    <p className="text-sm">{selectedApp.skills}</p>
-                  </div>
-
-                  <div>
-                    <p className="text-sm text-muted mb-1">Motivation</p>
-                    <p className="text-sm">{selectedApp.motivation}</p>
-                  </div>
-
-                  {selectedApp.videoUrl && (
-                    <div>
-                      <p className="text-sm text-muted mb-1">Video Rules</p>
-                      <a
-                        href={selectedApp.videoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue hover:underline"
-                      >
-                        View Video
-                      </a>
-                    </div>
-                  )}
-
-                  {selectedApp.profilePhotoUrl && (
-                    <div>
-                      <p className="text-sm text-muted mb-1">Profile Photo</p>
-                      <img
-                        src={selectedApp.profilePhotoUrl}
-                        alt="Profile"
-                        className="w-20 h-20 rounded-lg object-cover"
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex gap-4 text-sm">
-                    <div>
-                      <p className="text-muted mb-1">Status</p>
-                      <Badge
-                        variant={getStatusBadgeVariant(selectedApp.status)}
-                        className="capitalize"
-                      >
-                        {selectedApp.status}
-                      </Badge>
-                    </div>
-                    <div>
-                      <p className="text-muted mb-1">Payment Status</p>
-                      <Badge
-                        variant={selectedApp.paymentStatus === "paid" ? "green" : "yellow"}
-                        className="capitalize"
-                      >
-                        {selectedApp.paymentStatus}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {selectedApp.status === "nominated" && selectedApp.accessLink && (
-                    <div className="p-3 rounded-xl bg-blue/10 border border-blue/30">
-                      <p className="text-sm text-muted mb-1">Temporary Access Link</p>
-                      <div className="flex items-center gap-2">
-                        <code className="text-xs flex-1 break-all">
-                          {typeof window !== "undefined" ? window.location.origin : ""}/access/{selectedApp.accessLink}
-                        </code>
-                        <a
-                          href={`/access/${selectedApp.accessLink}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 rounded-lg hover:bg-blue/20 text-blue"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </a>
-                      </div>
-                      {selectedApp.accessLinkExpiresAt && (
-                        <p className="text-xs text-muted mt-1 flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          Expires: {new Date(selectedApp.accessLinkExpiresAt).toLocaleString()}
-                        </p>
+                <div className="space-y-6 mb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Media column */}
+                    <div className="space-y-4">
+                      {selectedApp.profilePhotoUrl && (
+                        <div className="aspect-square rounded-2xl overflow-hidden bg-muted-bg border border-white/10">
+                          <img
+                            src={selectedApp.profilePhotoUrl}
+                            alt={selectedApp.fullName || "Applicant"}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      )}
+                      {selectedApp.videoUrl ? (
+                        <div className="rounded-2xl overflow-hidden border border-white/10 bg-black">
+                          <video
+                            src={selectedApp.videoUrl}
+                            controls
+                            preload="metadata"
+                            className="w-full max-h-[320px]"
+                          >
+                            Your browser does not support the video tag.
+                          </video>
+                        </div>
+                      ) : (
+                        <div className="rounded-2xl bg-muted-bg border border-white/10 p-6 text-center text-sm text-muted">
+                          No video uploaded
+                        </div>
                       )}
                     </div>
-                  )}
+
+                    {/* Details column */}
+                    <div className="md:col-span-2 space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="p-4 rounded-xl bg-muted-bg/30 border border-white/5">
+                          <p className="text-xs text-muted mb-1">Full Name</p>
+                          <p className="font-medium">{selectedApp.fullName || "N/A"}</p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-muted-bg/30 border border-white/5">
+                          <p className="text-xs text-muted mb-1">Email</p>
+                          <a
+                            href={selectedApp.email ? `mailto:${selectedApp.email}` : undefined}
+                            className="text-sm text-blue hover:underline flex items-center gap-1.5"
+                          >
+                            <Mail className="h-3.5 w-3.5" />
+                            {selectedApp.email || "N/A"}
+                          </a>
+                        </div>
+                        <div className="p-4 rounded-xl bg-muted-bg/30 border border-white/5">
+                          <p className="text-xs text-muted mb-1">Mobile</p>
+                          <p className="text-sm">{selectedApp.mobileNumber || "N/A"}</p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-muted-bg/30 border border-white/5">
+                          <p className="text-xs text-muted mb-1">Country</p>
+                          <p className="text-sm">{selectedApp.country || "N/A"}</p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-muted-bg/30 border border-white/5">
+                          <p className="text-xs text-muted mb-1">Date of Birth</p>
+                          <p className="text-sm">{selectedApp.birthDate ? new Date(selectedApp.birthDate).toLocaleDateString() : "N/A"}</p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-muted-bg/30 border border-white/5">
+                          <p className="text-xs text-muted mb-1">Applied On</p>
+                          <p className="text-sm">{new Date(selectedApp.createdAt).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-muted-bg/30 border border-white/5">
+                        <p className="text-xs text-muted mb-1">Competition</p>
+                        <p className="font-medium">{selectedApp.competitions?.title || "N/A"}</p>
+                        <p className="text-sm text-muted">Entry Fee: {formatCurrency(selectedApp.competitions?.entryFee ?? 0, "RWF")}</p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="p-4 rounded-xl bg-muted-bg/30 border border-white/5">
+                          <p className="text-xs text-muted mb-1">Status</p>
+                          <Badge variant={getStatusBadgeVariant(selectedApp.status)} className="capitalize">
+                            {selectedApp.status}
+                          </Badge>
+                        </div>
+                        <div className="p-4 rounded-xl bg-muted-bg/30 border border-white/5">
+                          <p className="text-xs text-muted mb-1">Payment</p>
+                          <Badge variant={selectedApp.paymentStatus === "paid" ? "green" : "yellow"} className="capitalize">
+                            {selectedApp.paymentStatus}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-muted-bg/30 border border-white/5">
+                        <p className="text-xs text-muted mb-1">Experience Level</p>
+                        <Badge variant="blue" className="capitalize">
+                          {selectedApp.experience || "N/A"}
+                        </Badge>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-muted-bg/30 border border-white/5">
+                        <p className="text-xs text-muted mb-1">Skills</p>
+                        <p className="text-sm whitespace-pre-wrap">{selectedApp.skills || "N/A"}</p>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-muted-bg/30 border border-white/5">
+                        <p className="text-xs text-muted mb-1">Motivation</p>
+                        <p className="text-sm whitespace-pre-wrap">{selectedApp.motivation || "N/A"}</p>
+                      </div>
+
+                      {selectedApp.status === "nominated" && selectedApp.accessLink && (
+                        <div className="p-4 rounded-xl bg-blue/10 border border-blue/30">
+                          <p className="text-sm text-muted mb-1">Temporary Access Link</p>
+                          <div className="flex items-center gap-2">
+                            <code className="text-xs flex-1 break-all">
+                              {typeof window !== "undefined" ? window.location.origin : ""}/access/{selectedApp.accessLink}
+                            </code>
+                            <a
+                              href={`/access/${selectedApp.accessLink}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1.5 rounded-lg hover:bg-blue/20 text-blue"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                          </div>
+                          {selectedApp.accessLinkExpiresAt && (
+                            <p className="text-xs text-muted mt-1 flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              Expires: {new Date(selectedApp.accessLinkExpiresAt).toLocaleString()}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 

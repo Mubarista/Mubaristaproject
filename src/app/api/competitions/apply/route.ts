@@ -41,6 +41,8 @@ export async function GET(request: Request) {
 
     const enriched = apps.map((a) => ({
       ...a,
+      email: a.email || a.userEmail,
+      fullName: a.fullName || a.userName,
       competitions: (a.competitionId && competitionsMap[a.competitionId]) || null,
     }));
 
