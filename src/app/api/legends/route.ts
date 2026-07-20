@@ -2,11 +2,25 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase, keysToSnakeCase } from "@/lib/supabase-utils";
 
+function mapLegend(data: any) {
+  const mapped = mapKeysToCamelCase(data);
+  if (mapped && "orderColumn" in mapped) {
+    mapped.order = mapped.orderColumn;
+    delete mapped.orderColumn;
+  }
+  return mapped;
+}
+
+function prepareLegend(body: any) {
+  const { order, ...rest } = body;
+  return { ...keysToSnakeCase(rest), order_column: order };
+}
+
 export async function GET() {
   try {
     const { data, error } = await supabaseAdmin.from("legends").select("*").order("created_at", { ascending: false });
     if (error) throw error;
-    return NextResponse.json(mapKeysToCamelCase(data) || []);
+    return NextResponse.json((data || []).map(mapLegend));
   } catch (error) {
     console.error("Error fetching legends:", error);
     return NextResponse.json([]);
@@ -16,9 +30,9 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { data, error } = await supabaseAdmin.from("legends").insert({ ...keysToSnakeCase(body), created_at: new Date().toISOString() }).select().single();
+    const { data, error } = await supabaseAdmin.from("legends").insert({ ...prepareLegend(body), created_at: new Date().toISOString() }).select().single();
     if (error) throw error;
-    return NextResponse.json(mapKeysToCamelCase(data));
+    return NextResponse.json(mapLegend(data));
   } catch (error) {
     console.error("Error creating legend:", error);
     return NextResponse.json({ error: "Failed to create legend" }, { status: 500 });
@@ -29,9 +43,9 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json();
     const { id, ...updateData } = body;
-    const { data, error } = await supabaseAdmin.from("legends").update({ ...keysToSnakeCase(updateData), updated_at: new Date().toISOString() }).eq("id", id).select().single();
+    const { data, error } = await supabaseAdmin.from("legends").update({ ...prepareLegend(updateData), updated_at: new Date().toISOString() }).eq("id", id).select().single();
     if (error) throw error;
-    return NextResponse.json(mapKeysToCamelCase(data));
+    return NextResponse.json(mapLegend(data));
   } catch (error) {
     console.error("Error updating legend:", error);
     return NextResponse.json({ error: "Failed to update legend" }, { status: 500 });
