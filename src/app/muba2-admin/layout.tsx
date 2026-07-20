@@ -294,6 +294,21 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // Refresh unread message count periodically, on visibility, and when messages are marked as read
+  useEffect(() => {
+    const refresh = () => {
+      if (!document.hidden) fetchUnreadMessagesCount();
+    };
+    const interval = setInterval(refresh, 30000);
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("unread-count-changed", refresh);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("unread-count-changed", refresh);
+    };
+  }, []);
+
   async function fetchSettings() {
     try {
       const res = await fetchWithRetry("/api/site-settings");

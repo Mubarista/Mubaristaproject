@@ -82,6 +82,15 @@ export default function AdminMessagesPage() {
     }
   }
 
+  async function handleSelectMessage(msg: Message) {
+    setSelectedMessage(msg);
+    if (msg.status === "unread") {
+      await updateStatus(msg.id, "read");
+      setSelectedMessage((prev) => (prev && prev.id === msg.id ? { ...prev, status: "read" } : prev));
+      window.dispatchEvent(new Event("unread-count-changed"));
+    }
+  }
+
   async function deleteMessage(id: string) {
     console.log("deleteMessage called with ID:", id);
     setDeletingId(id);
@@ -258,7 +267,7 @@ export default function AdminMessagesPage() {
                   className={`cursor-pointer p-4 transition-all ${
                     selectedMessage?.id === msg.id ? "border-blue bg-blue/5" : "hover:border-blue/30"
                   }`}
-                  onClick={() => setSelectedMessage(msg)}
+                  onClick={() => handleSelectMessage(msg)}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
