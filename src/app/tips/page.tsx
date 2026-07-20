@@ -2,11 +2,14 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { Search } from "lucide-react";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { LoadingDots } from "@/components/ui/loading-dots";
+import { useAuth } from "@/lib/auth-context";
 
 interface Tip {
   id: string;
@@ -31,6 +34,7 @@ const levelColor: Record<string, "green" | "blue" | "yellow" | "red"> = {
 };
 
 export default function TipsPage() {
+  const { user } = useAuth();
   const [tips, setTips] = useState<Tip[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -73,6 +77,28 @@ export default function TipsPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center py-12">
             <LoadingDots />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="pt-24 pb-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SectionHeading
+            eyebrow="Skills"
+            title="Tips & Skills"
+            description="Log in or register to view barista tips and skills."
+          />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 py-12">
+            <Link href="/login">
+              <Button variant="secondary">Log In</Button>
+            </Link>
+            <Link href="/register">
+              <Button variant="primary">Register</Button>
+            </Link>
           </div>
         </div>
       </div>
