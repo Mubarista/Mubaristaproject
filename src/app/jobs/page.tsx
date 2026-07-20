@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MapPin, Briefcase, Bookmark, DollarSign, Lock } from "lucide-react";
+import { MapPin, Briefcase, Bookmark, Lock } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -295,7 +295,7 @@ export default function JobsPage() {
                             <MapPin className="h-4 w-4 text-green" /> {job.country}
                           </span>
                           <span className="flex items-center gap-1">
-                            <DollarSign className="h-4 w-4 text-yellow" /> {job.salary}
+                            {job.salary}
                           </span>
                           <span className="flex items-center gap-1">
                             <Briefcase className="h-4 w-4 text-blue" /> {job.experience}
@@ -347,7 +347,7 @@ export default function JobsPage() {
                               <MapPin className="h-4 w-4 text-green" /> {job.country}
                             </span>
                             <span className="flex items-center gap-1">
-                              <DollarSign className="h-4 w-4 text-yellow" /> {job.salary}
+                              {job.salary}
                             </span>
                             <span className="flex items-center gap-1">
                               <Briefcase className="h-4 w-4 text-blue" /> {job.experience}
