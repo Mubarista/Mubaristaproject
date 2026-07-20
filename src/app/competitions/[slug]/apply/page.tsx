@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { validatePhoneNumber, parsePhoneValue } from "@/lib/phone-utils";
 import { ApplicationConfirmDialog } from "@/components/competitions/application-confirm-dialog";
+import { ImageUpload } from "@/components/admin/admin-modal";
+import { supabase } from "@/lib/supabase";
 import type { Competition } from "@/types";
 
 type Step = "terms" | "application" | "submitted";
@@ -47,6 +49,10 @@ export default function ApplyPage() {
     profilePhotoUrl: "",
   });
   const [videoInputMethod, setVideoInputMethod] = useState<"url" | "upload">("url");
+  const [siteSettings, setSiteSettings] = useState<any>({});
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
+  const [videoDuration, setVideoDuration] = useState<number | null>(null);
 
   useEffect(() => {
     // First try to find in context
@@ -100,6 +106,18 @@ export default function ApplyPage() {
       setFormData((prev) => ({ ...prev, experience: competition.difficulty }));
     }
   }, [competition?.difficulty]);
+
+  useEffect(() => {
+    async function fetchSiteSettings() {
+      try {
+        const res = await fetch("/api/site-settings");
+        if (res.ok) setSiteSettings(await res.json());
+      } catch (error) {
+        console.error("Error fetching site settings:", error);
+      }
+    }
+    fetchSiteSettings();
+  }, []);
 
   if (loadingCompetition) {
     return (
@@ -184,37 +202,73 @@ export default function ApplyPage() {
   const currentStepIndex = steps.findIndex((s) => s.id === step);
   const today = new Date().toISOString().split("T")[0];
 
-  const handleFileUpload = async (file: File, type: "video" | "photo") => {
-    const uploadFormData = new FormData();
-    uploadFormData.append("file", file);
-    uploadFormData.append("type", type);
+  const maxVideoDuration = siteSettings.maxApplicationVideoDuration ?? 300;
+  const maxVideoSize = siteSettings.maxApplicationVideoSize ?? 100;
 
-    const uploadUrl = type === "video" ? "/api/upload" : "/api/upload";
+  useEffect(() => {
+    return () => {
+      if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+    };
+  }, [videoPreviewUrl]);
 
-    try {
-      const response = await fetch(uploadUrl, {
-        method: "POST",
-        body: uploadFormData,
-      });
+  const handleVideoSelect = (file: File) => {
+    setErrorMessage(null);
+    setFormData((prev) => ({ ...prev, videoUrl: "" }));
+    setFieldErrors((prev) => ({ ...prev, videoUrl: false }));
 
-      if (response.ok) {
-        const data = await response.json();
-        setErrorMessage(null);
-        if (type === "video") {
-          setFormData({ ...formData, videoUrl: data.url });
-        } else {
-          setFormData({ ...formData, profilePhotoUrl: data.url });
-        }
-        return data.url;
-      } else {
-        const error = await response.json();
-        setErrorMessage(error.error || "Upload failed. Please try again.");
-        return null;
+    const maxSizeBytes = maxVideoSize * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+      setErrorMessage(`Video is too large. Maximum size is ${maxVideoSize} MB. Please trim or compress the video.`);
+      return;
+    }
+
+    const preview = URL.createObjectURL(file);
+    setVideoPreviewUrl(preview);
+    setSelectedVideo(file);
+    setVideoDuration(null);
+
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      const duration = video.duration;
+      setVideoDuration(duration);
+      if (duration > maxVideoDuration) {
+        setErrorMessage(`Video is too long (${Math.round(duration)}s). Maximum duration is ${maxVideoDuration}s (${Math.floor(maxVideoDuration / 60)} minutes). Please trim the video.`);
       }
+    };
+    video.onerror = () => {
+      setErrorMessage("Unable to read video. Please try a different file.");
+    };
+    video.src = preview;
+  };
+
+  const uploadVideo = async () => {
+    if (!selectedVideo) return;
+    setUploadingVideo(true);
+    setErrorMessage(null);
+    try {
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${selectedVideo.name.split('.').pop() || "mp4"}`;
+      const presignedRes = await fetch("/api/upload/presigned", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: fileName, contentType: selectedVideo.type }),
+      });
+      if (!presignedRes.ok) throw new Error("Failed to get upload URL");
+      const { path, token, publicUrl } = await presignedRes.json();
+      const { error: uploadError } = await supabase.storage.from("Videos").uploadToSignedUrl(path, token, selectedVideo, {
+        contentType: selectedVideo.type,
+        cacheControl: "3600",
+      });
+      if (uploadError) throw uploadError;
+      setFormData((prev) => ({ ...prev, videoUrl: publicUrl }));
+      setVideoPreviewUrl(null);
+      setSelectedVideo(null);
+      setVideoDuration(null);
     } catch (error) {
-      console.error("Upload error:", error);
-      setErrorMessage("Upload failed. Please try again.");
-      return null;
+      console.error("Video upload error:", error);
+      setErrorMessage("Failed to upload video. Please try again.");
+    } finally {
+      setUploadingVideo(false);
     }
   };
 
@@ -663,25 +717,61 @@ export default function ApplyPage() {
                     />
                   </div>
                 ) : (
-                  <div className="relative">
-                    <Video className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-                    <input
-                      type="file"
-                      accept="video/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          setUploadingVideo(true);
-                          handleFileUpload(file, "video").finally(() => setUploadingVideo(false));
-                        }
-                      }}
-                      className={`w-full rounded-xl bg-muted-bg border pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 ${fieldErrors.videoUrl ? 'border-red focus:ring-red' : 'border-white/10 focus:ring-blue'}`}
-                      required={!formData.videoUrl}
-                    />
-                    {uploadingVideo && (
-                      <p className="text-xs text-muted mt-1">Uploading video...</p>
+                  <div className="space-y-3">
+                    {!videoPreviewUrl && !formData.videoUrl ? (
+                      <div className="relative">
+                        <Video className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+                        <input
+                          type="file"
+                          accept="video/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleVideoSelect(file);
+                          }}
+                          className={`w-full rounded-xl bg-muted-bg border pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 ${fieldErrors.videoUrl ? 'border-red focus:ring-red' : 'border-white/10 focus:ring-blue'}`}
+                        />
+                      </div>
+                    ) : (
+                      <div className="rounded-xl overflow-hidden border border-white/10 bg-black aspect-video">
+                        <video
+                          src={videoPreviewUrl || formData.videoUrl}
+                          controls
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
                     )}
-                    {formData.videoUrl && !uploadingVideo && (
+                    {videoPreviewUrl && (
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted">
+                          {videoDuration !== null
+                            ? `Duration: ${Math.round(videoDuration)}s / max ${maxVideoDuration}s (${maxVideoSize} MB max)`
+                            : "Loading video metadata..."}
+                        </p>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => {
+                              setVideoPreviewUrl(null);
+                              setSelectedVideo(null);
+                              setVideoDuration(null);
+                              setFormData((prev) => ({ ...prev, videoUrl: "" }));
+                            }}
+                          >
+                            Change
+                          </Button>
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            disabled={uploadingVideo || !selectedVideo || (videoDuration !== null && videoDuration > maxVideoDuration)}
+                            onClick={uploadVideo}
+                          >
+                            {uploadingVideo ? "Uploading..." : "Upload Video"}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    {formData.videoUrl && !videoPreviewUrl && (
                       <p className="text-xs text-green mt-1">Video uploaded successfully</p>
                     )}
                   </div>
@@ -690,28 +780,17 @@ export default function ApplyPage() {
 
               <div>
                 <label className="text-sm text-muted mb-1 block">Profile Photo Upload *</label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        setUploadingPhoto(true);
-                        handleFileUpload(file, "photo").finally(() => setUploadingPhoto(false));
-                      }
-                    }}
-                    className={`w-full rounded-xl bg-muted-bg border pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 ${fieldErrors.profilePhotoUrl ? 'border-red focus:ring-red' : 'border-white/10 focus:ring-blue'}`}
-                    required={!formData.profilePhotoUrl}
-                  />
-                  {uploadingPhoto && (
-                    <p className="text-xs text-muted mt-1">Uploading photo...</p>
-                  )}
-                  {formData.profilePhotoUrl && !uploadingPhoto && (
-                    <p className="text-xs text-green mt-1">Photo uploaded successfully</p>
-                  )}
-                </div>
+                <ImageUpload
+                  value={formData.profilePhotoUrl}
+                  onChange={(url) => {
+                    setFormData((prev) => ({ ...prev, profilePhotoUrl: url }));
+                    setFieldErrors((prev) => ({ ...prev, profilePhotoUrl: false }));
+                  }}
+                  aspectRatio="square"
+                  allowCrop
+                  label="Profile photo"
+                />
+                <p className="text-xs text-muted mt-1">Upload a clear photo of yourself. Crop to a 1:1 square.</p>
               </div>
             </div>
 

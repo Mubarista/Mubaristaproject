@@ -23,7 +23,9 @@ export default function AdminSiteSettingsPage() {
     shippingInfo2Title: "",
     shippingInfo2Description: "",
     shippingInfo3Title: "",
-    shippingInfo3Description: ""
+    shippingInfo3Description: "",
+    maxApplicationVideoDuration: "300",
+    maxApplicationVideoSize: "100",
   });
 
   useEffect(() => {
@@ -49,7 +51,9 @@ export default function AdminSiteSettingsPage() {
         shippingInfo2Title: data?.shippingInfo2Title || "",
         shippingInfo2Description: data?.shippingInfo2Description || "",
         shippingInfo3Title: data?.shippingInfo3Title || "",
-        shippingInfo3Description: data?.shippingInfo3Description || ""
+        shippingInfo3Description: data?.shippingInfo3Description || "",
+        maxApplicationVideoDuration: String(data?.maxApplicationVideoDuration ?? 300),
+        maxApplicationVideoSize: String(data?.maxApplicationVideoSize ?? 100),
       });
     } catch (error) {
       console.error("Error fetching site settings:", error);
@@ -61,10 +65,15 @@ export default function AdminSiteSettingsPage() {
   async function save() {
     setSaving(true);
     try {
+      const body = {
+        ...draft,
+        maxApplicationVideoDuration: Number(draft.maxApplicationVideoDuration) || 300,
+        maxApplicationVideoSize: Number(draft.maxApplicationVideoSize) || 100,
+      };
       const res = await fetch("/api/site-settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draft),
+        body: JSON.stringify(body),
       });
       if (res.ok) {
         await fetchSettings();
@@ -159,6 +168,20 @@ export default function AdminSiteSettingsPage() {
               <p className="text-sm font-medium">{settings.shippingInfo3Title || "Not set"}</p>
               <label className="text-xs text-muted mb-1 block mt-2">Info 3 Description</label>
               <p className="text-sm">{settings.shippingInfo3Description || "Not set"}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-white/10 pt-6">
+          <h3 className="font-semibold mb-4">Application Video Rules</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-muted mb-1 block">Max Duration</label>
+              <p className="text-sm font-medium">{settings.maxApplicationVideoDuration ?? 300} seconds</p>
+            </div>
+            <div>
+              <label className="text-xs text-muted mb-1 block">Max Size</label>
+              <p className="text-sm font-medium">{settings.maxApplicationVideoSize ?? 100} MB</p>
             </div>
           </div>
         </div>
@@ -320,6 +343,32 @@ export default function AdminSiteSettingsPage() {
                     className="w-full rounded-lg bg-muted-bg border border-white/10 px-3 py-2 text-sm"
                   />
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-white/10 pt-4 mt-4">
+            <h4 className="font-semibold mb-4">Application Video Rules</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-muted mb-1 block">Max Duration (seconds)</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={draft.maxApplicationVideoDuration}
+                  onChange={(e) => setDraft({ ...draft, maxApplicationVideoDuration: e.target.value })}
+                  className="w-full rounded-lg bg-muted-bg border border-white/10 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted mb-1 block">Max Size (MB)</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={draft.maxApplicationVideoSize}
+                  onChange={(e) => setDraft({ ...draft, maxApplicationVideoSize: e.target.value })}
+                  className="w-full rounded-lg bg-muted-bg border border-white/10 px-3 py-2 text-sm"
+                />
               </div>
             </div>
           </div>
