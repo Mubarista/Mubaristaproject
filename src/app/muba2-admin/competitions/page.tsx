@@ -15,7 +15,7 @@ const blank: Competition = {
   prizePool: 0, countriesAllowed: ["All Countries"], registrationDeadline: "",
   eventTimeline: [], requiredSkills: [], entryFee: 0, availableSlots: 0,
   totalSlots: 0, status: "upcoming", organizer: "", rules: [],
-  judgingCriteria: [], description: "",
+  judgingCriteria: [], description: "", maxVideoDuration: 300, maxVideoSize: 100,
 };
 
 const diffColors: Record<string, "green" | "blue" | "yellow" | "red"> = {
@@ -143,7 +143,8 @@ export default function AdminCompetitionsPage() {
   }
 
   const set = (k: keyof Competition) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setDraft((d) => ({ ...d, [k]: e.target.value }));
+    const value = (e.target as HTMLInputElement).type === "number" ? Number(e.target.value) : e.target.value;
+    setDraft((d) => ({ ...d, [k]: value }));
   };
 
   const filteredCompetitions = competitions.filter(c =>
@@ -234,6 +235,14 @@ export default function AdminCompetitionsPage() {
           <Field label="Banner Image">
             <ImageUpload value={draft.banner} onChange={(url) => setDraft(d => ({ ...d, banner: url }))} aspectRatio="banner" allowCrop />
           </Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Max Video Duration (sec)">
+              <Input type="number" min={1} value={draft.maxVideoDuration} onChange={set("maxVideoDuration")} />
+            </Field>
+            <Field label="Max Video Size (MB)">
+              <Input type="number" min={1} value={draft.maxVideoSize} onChange={set("maxVideoSize")} />
+            </Field>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Organizer"><Input value={draft.organizer} onChange={set("organizer")} /></Field>
             <Field label="Difficulty">

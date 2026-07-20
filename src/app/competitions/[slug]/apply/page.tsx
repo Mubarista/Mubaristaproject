@@ -208,8 +208,8 @@ export default function ApplyPage() {
   const currentStepIndex = steps.findIndex((s) => s.id === step);
   const today = new Date().toISOString().split("T")[0];
 
-  const maxVideoDuration = siteSettings.maxApplicationVideoDuration ?? 300;
-  const maxVideoSize = siteSettings.maxApplicationVideoSize ?? 100;
+  const maxVideoDuration = competition?.maxVideoDuration ?? siteSettings.maxApplicationVideoDuration ?? 300;
+  const maxVideoSize = competition?.maxVideoSize ?? siteSettings.maxApplicationVideoSize ?? 100;
 
   const handleVideoSelect = (file: File) => {
     setErrorMessage(null);

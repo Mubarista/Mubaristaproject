@@ -179,6 +179,8 @@ export interface Competition {
   rules: string[];
   judgingCriteria: string[];
   description: string;
+  maxVideoDuration?: number;
+  maxVideoSize?: number;
 }
 
 export interface Application {
