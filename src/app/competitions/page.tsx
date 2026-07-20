@@ -95,7 +95,7 @@ export default function CompetitionsPage() {
                       <span className="text-muted">No image</span>
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent" />
                   <Badge
                     variant={difficultyColors[comp.difficulty]}
                     className="absolute top-4 left-4"
