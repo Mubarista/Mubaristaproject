@@ -14,6 +14,7 @@ const defaultPaymentSettings = [
   { context: "premium_subscription", label: "Premium Memberships", methods: ALL_METHODS },
   { context: "book_purchase", label: "Book / eBook Purchases", methods: ALL_METHODS },
   { context: "tool_purchase", label: "Barista Tools / Products", methods: ALL_METHODS },
+  { context: "job_access", label: "Job Access Purchases", methods: ALL_METHODS },
 ];
 
 const defaultCurrencySettings = [
@@ -21,31 +22,52 @@ const defaultCurrencySettings = [
   { context: "premium_subscription", label: "Premium Memberships", acceptedCurrencies: ["RWF"] },
   { context: "book_purchase", label: "Book / eBook Purchases", acceptedCurrencies: ["RWF"] },
   { context: "tool_purchase", label: "Barista Tools / Products", acceptedCurrencies: ["RWF"] },
+  { context: "job_access", label: "Job Access Purchases", acceptedCurrencies: ["RWF"] },
 ];
 
 const DEFAULT_EXCHANGE_RATE = 1370;
+const DEFAULT_CURRENCY = "RWF";
+
+function ensureContexts(methods: any[], currencies: any[]) {
+  const methodContexts = new Set(methods.map((m: any) => m.context));
+  const missingMethods = defaultPaymentSettings.filter((d) => !methodContexts.has(d.context));
+  const currencyContexts = new Set(currencies.map((c: any) => c.context));
+  const missingCurrencies = defaultCurrencySettings.filter((d) => !currencyContexts.has(d.context));
+  return {
+    paymentMethods: [...methods, ...missingMethods],
+    currencySettings: [...currencies, ...missingCurrencies],
+  };
+}
 
 export async function GET() {
   try {
     const { data, error } = await supabaseAdmin.from("payment_settings").select("*").limit(1).single();
+    const fallback = {
+      paymentMethods: defaultPaymentSettings,
+      currencySettings: defaultCurrencySettings,
+      exchangeRate: DEFAULT_EXCHANGE_RATE,
+      currency: DEFAULT_CURRENCY,
+      minimumAmount: 0,
+    };
     if (error || !data) {
       return NextResponse.json({
-        paymentMethods: defaultPaymentSettings,
-        currencySettings: defaultCurrencySettings,
-        exchangeRate: DEFAULT_EXCHANGE_RATE,
+        ...fallback,
         stripePublishableKey: "",
         stripeSecretKey: "",
         stripeWebhookSecret: "",
-        currency: "RWF",
-        minimumAmount: 0,
       });
     }
     const settings = mapKeysToCamelCase(data);
+    const { paymentMethods, currencySettings } = ensureContexts(
+      settings.paymentMethods || [],
+      settings.currencySettings || []
+    );
     return NextResponse.json({
       ...settings,
-      paymentMethods: settings.paymentMethods || defaultPaymentSettings,
-      currencySettings: settings.currencySettings || defaultCurrencySettings,
+      paymentMethods,
+      currencySettings,
       exchangeRate: settings.exchangeRate || DEFAULT_EXCHANGE_RATE,
+      currency: settings.currency || DEFAULT_CURRENCY,
     });
   } catch (error) {
     console.error("Error fetching payment settings:", error);
@@ -53,6 +75,7 @@ export async function GET() {
       paymentMethods: defaultPaymentSettings,
       currencySettings: defaultCurrencySettings,
       exchangeRate: DEFAULT_EXCHANGE_RATE,
+      currency: DEFAULT_CURRENCY,
     });
   }
 }
@@ -72,6 +95,7 @@ export async function PUT(request: Request) {
       paymentMethods: settings.paymentMethods || defaultPaymentSettings,
       currencySettings: settings.currencySettings || defaultCurrencySettings,
       exchangeRate: settings.exchangeRate || DEFAULT_EXCHANGE_RATE,
+      currency: settings.currency || DEFAULT_CURRENCY,
     });
   } catch (error) {
     console.error("Error updating payment settings:", error);

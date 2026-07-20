@@ -28,11 +28,12 @@ interface Job {
   purchased?: boolean;
 }
 
-const METHOD_OPTIONS = [
-  { value: "mobile_money", label: "Mobile Money" },
-  { value: "card", label: "Card" },
-  { value: "paypal", label: "PayPal" },
-];
+const METHOD_LABELS: Record<string, string> = {
+  mobile_money: "Mobile Money",
+  card: "Card",
+  bank_transfer: "Bank Transfer",
+  paypal: "PayPal",
+};
 
 export default function JobsPage() {
   const { user } = useAuth();
@@ -41,10 +42,13 @@ export default function JobsPage() {
   const [saved, setSaved] = useState<string[]>([]);
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [paymentMethods, setPaymentMethods] = useState<Record<string, string>>({});
+  const [methodOptions, setMethodOptions] = useState<{ value: string; label: string }[]>([]);
+  const [currency, setCurrency] = useState("RWF");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchJobs();
+    fetchPaymentSettings();
   }, [user?.id]);
 
   async function fetchJobs() {
@@ -63,12 +67,31 @@ export default function JobsPage() {
     }
   }
 
+  async function fetchPaymentSettings() {
+    try {
+      const res = await fetch("/api/payment-settings");
+      if (res.ok) {
+        const data = await res.json();
+        setCurrency(data.currency || "RWF");
+        const jobCtx = (data.paymentMethods || []).find((c: any) => c.context === "job_access");
+        if (jobCtx?.methods) {
+          const enabled = jobCtx.methods
+            .filter((m: any) => m.enabled)
+            .map((m: any) => ({ value: m.method, label: METHOD_LABELS[m.method] || m.method }));
+          if (enabled.length) setMethodOptions(enabled);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching payment settings:", err);
+    }
+  }
+
   async function handlePurchase(job: Job) {
     if (!user) {
       setError("Please log in to purchase job access.");
       return;
     }
-    const method = paymentMethods[job.id] || "mobile_money";
+    const method = paymentMethods[job.id] || methodOptions[0]?.value || "mobile_money";
     setPurchasing(job.id);
     setError(null);
     try {
@@ -83,7 +106,7 @@ export default function JobsPage() {
           userCountry: user.country,
           method,
           amount: job.price,
-          currency: "RWF",
+          currency,
         }),
       });
       const data = await res.json();
@@ -121,18 +144,20 @@ export default function JobsPage() {
       }
       return (
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-          <span className="text-sm font-medium text-yellow">{job.price.toLocaleString()} RWF</span>
-          <select
-            value={paymentMethods[job.id] || "mobile_money"}
-            onChange={(e) => setPaymentMethods((m) => ({ ...m, [job.id]: e.target.value }))}
-            className="rounded-lg bg-muted-bg border border-white/10 px-2 py-1 text-sm"
-          >
-            {METHOD_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+          <span className="text-sm font-medium text-yellow">{job.price.toLocaleString()} {currency}</span>
+          {methodOptions.length > 0 ? (
+            <select
+              value={paymentMethods[job.id] || methodOptions[0]?.value}
+              onChange={(e) => setPaymentMethods((m) => ({ ...m, [job.id]: e.target.value }))}
+              className="rounded-lg bg-muted-bg border border-white/10 px-2 py-1 text-sm"
+            >
+              {methodOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          ) : null}
           <Button
             variant="premium"
             size="sm"

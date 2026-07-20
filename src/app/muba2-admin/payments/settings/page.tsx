@@ -34,6 +34,7 @@ export default function PaymentSettingsPage() {
   const [local, setLocal] = useState<any[]>([]);
   const [localCurrency, setLocalCurrency] = useState<any[]>([]);
   const [localRate, setLocalRate] = useState("1300");
+  const [localSymbol, setLocalSymbol] = useState("RWF");
 
   useEffect(() => {
     fetchSettings();
@@ -50,6 +51,7 @@ export default function PaymentSettingsPage() {
         setLocal(JSON.parse(JSON.stringify(data.paymentMethods || [])));
         setLocalCurrency(JSON.parse(JSON.stringify(data.currencySettings || [])));
         setLocalRate(String(data.exchangeRate || 1370));
+        setLocalSymbol(data.currency || "RWF");
       }
     } catch (error) {
       console.error("Error fetching payment settings:", error);
@@ -68,6 +70,7 @@ export default function PaymentSettingsPage() {
           paymentMethods: local,
           currencySettings: localCurrency,
           exchangeRate: parseFloat(localRate),
+          currency: localSymbol,
         }),
       });
       if (res.ok) {
@@ -173,6 +176,17 @@ export default function PaymentSettingsPage() {
             <p>Example: 50,000 RWF</p>
             <p className="font-semibold text-foreground">= {(50 * (parseFloat(localRate) || 0)).toLocaleString()} RWF</p>
           </div>
+        </div>
+        <div className="mt-4">
+          <label className="text-sm font-medium mb-1.5 block">Default Currency Symbol</label>
+          <input
+            type="text"
+            value={localSymbol}
+            onChange={(e) => setLocalSymbol(e.target.value.toUpperCase())}
+            className="rounded-xl bg-muted-bg border border-white/10 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue w-32"
+            placeholder="RWF"
+          />
+          <p className="text-xs text-muted mt-1">This symbol is displayed for prices across the site.</p>
         </div>
       </div>
 
