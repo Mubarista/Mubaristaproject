@@ -149,7 +149,7 @@ export default function CompetitionsPage() {
                         Full
                       </Button>
                     ) : (
-                      <Link href={`/competitions/${comp.slug}`}>
+                      <Link href={`/competitions/${encodeURIComponent(comp.slug)}`}>
                         <Button variant="primary" size="sm">
                           View Details
                           <ArrowRight className="h-4 w-4" />

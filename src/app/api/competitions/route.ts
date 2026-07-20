@@ -8,12 +8,17 @@ export async function GET(request: Request) {
     const slug = searchParams.get('slug');
 
     if (slug) {
+      const normalized = normalizeSlug(slug);
+      const values = Array.from(new Set([slug, normalized].filter(Boolean)));
       const { data, error } = await supabaseAdmin
         .from("competitions")
         .select("*")
-        .eq("slug", slug)
-        .single();
-      if (error) throw error;
+        .in("slug", values)
+        .maybeSingle();
+      if (error) {
+        console.error("Error fetching competition by slug:", error);
+        return NextResponse.json({ error: "Failed to fetch competition" }, { status: 500 });
+      }
       if (!data) return NextResponse.json({ error: "Competition not found" }, { status: 404 });
       return NextResponse.json(mapKeysToCamelCase(data));
     }
@@ -36,7 +41,14 @@ export async function POST(request: Request) {
     const { id, created_at, updated_at, ...cleanData } = body;
     const snakeCaseData = keysToSnakeCase(cleanData);
     console.log("Snake case data:", snakeCaseData);
-    
+
+    // Normalize slug: URL-safe, lowercased, hyphenated. Generate from title if missing.
+    if (snakeCaseData.title && !snakeCaseData.slug) {
+      snakeCaseData.slug = normalizeSlug(snakeCaseData.title);
+    } else if (snakeCaseData.slug) {
+      snakeCaseData.slug = normalizeSlug(snakeCaseData.slug);
+    }
+
     const { data, error } = await supabaseAdmin.from("competitions").insert({
       ...snakeCaseData,
       created_at: new Date().toISOString(),
@@ -64,6 +76,11 @@ export async function PUT(request: Request) {
     const { id, created_at, updated_at, ...updateData } = body;
     const snakeCaseData = keysToSnakeCase(updateData);
     console.log("Snake case update data:", snakeCaseData);
+
+    // Normalize slug when provided.
+    if (snakeCaseData.slug) {
+      snakeCaseData.slug = normalizeSlug(snakeCaseData.slug);
+    }
     
     const { data, error } = await supabaseAdmin.from("competitions").update({
       ...snakeCaseData,
@@ -106,4 +123,15 @@ export async function DELETE(request: Request) {
     console.error("Error deleting competition:", error);
     return NextResponse.json({ error: "Failed to delete competition", details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
+}
+
+function normalizeSlug(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-+/g, "-");
 }
