@@ -119,6 +119,12 @@ export default function ApplyPage() {
     fetchSiteSettings();
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+    };
+  }, [videoPreviewUrl]);
+
   if (loadingCompetition) {
     return (
       <div className="pt-32 text-center">
@@ -204,12 +210,6 @@ export default function ApplyPage() {
 
   const maxVideoDuration = siteSettings.maxApplicationVideoDuration ?? 300;
   const maxVideoSize = siteSettings.maxApplicationVideoSize ?? 100;
-
-  useEffect(() => {
-    return () => {
-      if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
-    };
-  }, [videoPreviewUrl]);
 
   const handleVideoSelect = (file: File) => {
     setErrorMessage(null);
