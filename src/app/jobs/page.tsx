@@ -8,6 +8,7 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
+import Link from "next/link";
 
 interface Job {
   id: string;
@@ -41,7 +42,7 @@ const METHOD_LABELS: Record<string, string> = {
 };
 
 export default function JobsPage() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState<string[]>([]);
@@ -55,9 +56,14 @@ export default function JobsPage() {
   const [emailStatus, setEmailStatus] = useState<{ jobId?: string; message: string; type: "success" | "error" } | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     fetchJobs();
     fetchPaymentSettings();
-  }, [user?.id]);
+  }, [user?.id, authLoading]);
 
   async function fetchJobs() {
     setLoading(true);
@@ -242,7 +248,7 @@ export default function JobsPage() {
     );
   }
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="pt-24 pb-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -253,6 +259,28 @@ export default function JobsPage() {
           />
           <div className="flex items-center justify-center py-12">
             <LoadingDots />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="pt-24 pb-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SectionHeading
+            eyebrow="Careers"
+            title="Barista Jobs"
+            description="Log in or register to view and apply for barista jobs."
+          />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 py-12">
+            <Link href="/login">
+              <Button variant="secondary">Log In</Button>
+            </Link>
+            <Link href="/register">
+              <Button variant="primary">Register</Button>
+            </Link>
           </div>
         </div>
       </div>
