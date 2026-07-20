@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { sendEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
   try {
@@ -50,30 +51,14 @@ export async function POST(request: Request) {
       </div>
     `;
 
-    const resendApiKey = process.env.RESEND_API_KEY;
-    const fromEmail = process.env.RESEND_FROM_EMAIL || "mubarista@platform.com";
-    if (!resendApiKey) {
-      return NextResponse.json({ error: "Email provider not configured" }, { status: 503 });
-    }
-
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${resendApiKey}`,
-      },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: userEmail,
-        subject: `Your purchased job details: ${job.title}`,
-        html,
-      }),
+    const result = await sendEmail({
+      to: userEmail,
+      subject: `Your purchased job details: ${job.title}`,
+      html,
     });
 
-    if (!response.ok) {
-      const text = await response.text();
-      console.error("Resend error:", text);
-      return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
+    if (!result.sent) {
+      return NextResponse.json({ error: result.error || "Failed to send email" }, { status: 503 });
     }
 
     return NextResponse.json({ success: true });

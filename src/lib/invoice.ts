@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase, keysToSnakeCase } from "@/lib/supabase-utils";
+import { sendEmail } from "@/lib/email";
 import type { Payment, Invoice } from "@/types";
 
 function formatDate(date: Date) {
@@ -104,40 +105,13 @@ export function buildInvoiceHtml(invoice: Invoice) {
 }
 
 export async function sendInvoiceEmail(invoice: Invoice) {
-  const resendApiKey = process.env.RESEND_API_KEY;
-  const fromEmail = process.env.RESEND_FROM_EMAIL || "mubarista@platform.com";
-
-  if (!resendApiKey) {
-    console.warn("RESEND_API_KEY not configured; invoice email not sent.");
-    return { sent: false, error: "Email provider not configured" };
-  }
-
-  try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${resendApiKey}`,
-      },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: invoice.userEmail,
-        subject: `Your MUBARISTA Invoice ${invoice.invoiceNumber}`,
-        html: buildInvoiceHtml(invoice),
-      }),
-    });
-
-    if (!response.ok) {
-      const text = await response.text();
-      console.error("Resend API error:", text);
-      return { sent: false, error: text };
-    }
-
-    return { sent: true };
-  } catch (error) {
-    console.error("Failed to send invoice email:", error);
-    return { sent: false, error: String(error) };
-  }
+  return sendEmail({
+    to: invoice.userEmail,
+    subject: `Your MUBARISTA Invoice ${invoice.invoiceNumber}`,
+    html: buildInvoiceHtml(invoice),
+    fromEmail: process.env.SMTP_FROM_EMAIL || process.env.RESEND_FROM_EMAIL,
+    fromName: process.env.SMTP_FROM_NAME || process.env.RESEND_FROM_NAME || "MUBARISTA",
+  });
 }
 
 export async function createInvoiceFromPayment(payment: Payment) {
