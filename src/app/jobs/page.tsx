@@ -359,17 +359,19 @@ export default function JobsPage() {
                           </div>
                         </div>
                         <div className="flex gap-2 shrink-0 items-start md:items-center">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              setSaved((s) =>
-                                s.includes(job.id) ? s.filter((id) => id !== job.id) : [...s, job.id]
-                              )
-                            }
-                          >
-                            <Bookmark className={`h-4 w-4 ${saved.includes(job.id) ? "fill-yellow text-yellow" : ""}`} />
-                          </Button>
+                          {!job.sold && !job.purchased && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                setSaved((s) =>
+                                  s.includes(job.id) ? s.filter((id) => id !== job.id) : [...s, job.id]
+                                )
+                              }
+                            >
+                              <Bookmark className={`h-4 w-4 ${saved.includes(job.id) ? "fill-yellow text-yellow" : ""}`} />
+                            </Button>
+                          )}
                           <JobActions job={job} />
                         </div>
                       </Card>
