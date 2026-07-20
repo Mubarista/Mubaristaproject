@@ -232,7 +232,7 @@ export default function AdminCompetitionsPage() {
           </div>
           <Field label="Description"><Textarea value={draft.description} onChange={set("description")} /></Field>
           <Field label="Banner Image">
-            <ImageUpload value={draft.banner} onChange={(url) => setDraft(d => ({ ...d, banner: url }))} aspectRatio="banner" />
+            <ImageUpload value={draft.banner} onChange={(url) => setDraft(d => ({ ...d, banner: url }))} aspectRatio="banner" allowCrop />
           </Field>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Organizer"><Input value={draft.organizer} onChange={set("organizer")} /></Field>
