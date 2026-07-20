@@ -12,13 +12,16 @@ export async function GET(request: Request) {
     if (error) throw error;
     
     let purchasedIds = new Set<string>();
-    if (userId) {
-      const { data: purchases } = await supabaseAdmin
-        .from("job_purchases")
-        .select("job_id")
-        .eq("user_id", userId)
-        .eq("status", "paid");
-      if (purchases) purchasedIds = new Set(purchases.map((p: any) => p.job_id));
+    let soldIds = new Set<string>();
+    const { data: purchases } = await supabaseAdmin
+      .from("job_purchases")
+      .select("job_id, user_id")
+      .eq("status", "paid");
+    if (purchases) {
+      soldIds = new Set(purchases.map((p: any) => p.job_id));
+      if (userId) {
+        purchasedIds = new Set(purchases.filter((p: any) => p.user_id === userId).map((p: any) => p.job_id));
+      }
     }
     
     // Filter active jobs unless includeInactive is true, then map order_column back to order
@@ -29,6 +32,7 @@ export async function GET(request: Request) {
         order: job.orderColumn || 0,
         orderColumn: undefined,
         purchased: purchasedIds.has(job.id),
+        sold: soldIds.has(job.id),
       }));
     
     return NextResponse.json(mappedData);

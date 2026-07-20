@@ -30,6 +30,7 @@ interface Job {
   createdAt: string;
   updatedAt: string;
   purchased?: boolean;
+  sold?: boolean;
 }
 
 const METHOD_LABELS: Record<string, string> = {
@@ -180,6 +181,9 @@ export default function JobsPage() {
             </Button>
           </div>
         );
+      }
+      if (job.sold) {
+        return <Badge variant="green">Purchased</Badge>;
       }
       return (
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
@@ -337,7 +341,7 @@ export default function JobsPage() {
                           <div className="flex items-center gap-3 mb-2">
                             <CardTitle className="text-lg">{job.title}</CardTitle>
                             <Badge variant="blue">{job.type}</Badge>
-                            {job.purchased ? <Badge variant="green">Purchased</Badge> : <Badge variant="yellow">Paid</Badge>}
+                            {(job.purchased || job.sold) ? <Badge variant="green">Purchased</Badge> : <Badge variant="yellow">Paid</Badge>}
                             {job.status === "not_available" && <Badge variant="red">Not available</Badge>}
                           </div>
                           <p className="text-muted text-sm mb-3">{job.company}</p>

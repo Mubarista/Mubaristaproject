@@ -22,6 +22,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "This job is no longer available" }, { status: 400 });
     }
 
+    const { data: soldCheck } = await supabaseAdmin
+      .from("job_purchases")
+      .select("id")
+      .eq("job_id", jobId)
+      .eq("status", "paid")
+      .limit(1)
+      .maybeSingle();
+    if (soldCheck) {
+      return NextResponse.json({ error: "This job has already been purchased" }, { status: 400 });
+    }
+
     if (job.category !== "paid") {
       return NextResponse.json({ error: "This job does not require payment" }, { status: 400 });
     }
