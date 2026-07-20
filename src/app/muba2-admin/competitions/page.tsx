@@ -279,6 +279,21 @@ export default function AdminCompetitionsPage() {
             <Field label="Total Slots"><Input type="number" value={draft.totalSlots} onChange={(e) => setDraft(d => ({ ...d, totalSlots: Number(e.target.value) }))} /></Field>
           </div>
           <Field label="Registration Deadline"><Input type="date" value={draft.registrationDeadline} onChange={set("registrationDeadline")} /></Field>
+          <Field label="Event Timeline (one per line: date | event)">
+            <Textarea
+              rows={4}
+              value={draft.eventTimeline.map((e) => `${e.date} | ${e.event}`).join("\n")}
+              onChange={(e) =>
+                setDraft((d) => ({
+                  ...d,
+                  eventTimeline: e.target.value.split("\n").map((line) => {
+                    const [date, ...eventParts] = line.split("|");
+                    return { date: (date || "").trim(), event: eventParts.join("|").trim() };
+                  }).filter((e) => e.date || e.event),
+                }))
+              }
+            />
+          </Field>
           <Field label="Rules (one per line)">
             <Textarea rows={4} value={draft.rules.join("\n")} onChange={(e) => setDraft(d => ({ ...d, rules: e.target.value.split("\n") }))} />
           </Field>
