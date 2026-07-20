@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Lock, Play, Image as ImageIcon, FileText } from "lucide-react";
 import { Card, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { PremiumGate } from "@/components/shared/premium-gate";
 import { LoadingDots } from "@/components/ui/loading-dots";
@@ -82,6 +83,30 @@ export default function LearnContentPage({ params }: Props) {
       <div className="pt-24 pb-16">
         <div className="flex items-center justify-center py-12">
           <LoadingDots />
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="pt-24 pb-16">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          <Link href="/learn" className="inline-flex items-center gap-2 text-muted hover:text-foreground mb-6 text-sm">
+            <ArrowLeft className="h-4 w-4" /> Back to Learning Center
+          </Link>
+          <div className="glass-card rounded-2xl p-8 text-center">
+            <h2 className="text-xl font-semibold mb-2">Registration Required</h2>
+            <p className="text-muted mb-6">Log in or register to access learning content.</p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link href="/login">
+                <Button variant="secondary">Log In</Button>
+              </Link>
+              <Link href="/register">
+                <Button variant="primary">Register</Button>
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );

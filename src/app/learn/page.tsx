@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { Card, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { PremiumGate } from "@/components/shared/premium-gate";
 import { LoadingDots } from "@/components/ui/loading-dots";
 
@@ -22,7 +23,7 @@ interface LearnCategory {
 }
 
 export default function LearnPage() {
-  const { isPremium } = useAuth();
+  const { user, isPremium } = useAuth();
   const [learnCategories, setLearnCategories] = useState<LearnCategory[]>([]);
   const [learnSettings, setLearnSettings] = useState({
     badgeText: "Education",
@@ -71,6 +72,28 @@ export default function LearnPage() {
       <div className="pt-24 pb-16">
         <div className="flex items-center justify-center py-12">
           <LoadingDots />
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="pt-24 pb-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SectionHeading
+            eyebrow="Education"
+            title="Learning Center"
+            description="Log in or register to access the learning center."
+          />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 py-12">
+            <Link href="/login">
+              <Button variant="secondary">Log In</Button>
+            </Link>
+            <Link href="/register">
+              <Button variant="primary">Register</Button>
+            </Link>
+          </div>
         </div>
       </div>
     );
