@@ -19,6 +19,10 @@ interface Job {
   category: string;
   price: number;
   status: string;
+  companyEmail: string;
+  companyPhone: string;
+  companyWebsite: string;
+  companySocials: { platform: string; url: string }[];
   description: string;
   active: boolean;
   order: number;
@@ -26,7 +30,7 @@ interface Job {
   updatedAt: string;
 }
 
-const blank: Omit<Job, 'id' | 'createdAt' | 'updatedAt'> = { title: "", company: "", country: "", salary: "", experience: "", type: "Full-time", category: "free", price: 0, status: "available", description: "", active: true, order: 0 };
+const blank: Omit<Job, 'id' | 'createdAt' | 'updatedAt'> = { title: "", company: "", country: "", salary: "", experience: "", type: "Full-time", category: "free", price: 0, status: "available", companyEmail: "", companyPhone: "", companyWebsite: "", companySocials: [], description: "", active: true, order: 0 };
 
 export default function AdminJobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -56,7 +60,7 @@ export default function AdminJobsPage() {
   }
 
   function openAdd() { setDraft({ ...blank }); setEditing({ ...blank, id: "new", createdAt: "", updatedAt: "" }); }
-  function openEdit(j: Job) { setDraft({ title: j.title, company: j.company, country: j.country, salary: j.salary, experience: j.experience, type: j.type, category: j.category, price: j.price, status: j.status, description: j.description, active: j.active, order: j.order }); setEditing(j); }
+  function openEdit(j: Job) { setDraft({ title: j.title, company: j.company, country: j.country, salary: j.salary, experience: j.experience, type: j.type, category: j.category, price: j.price, status: j.status, companyEmail: j.companyEmail, companyPhone: j.companyPhone, companyWebsite: j.companyWebsite, companySocials: j.companySocials, description: j.description, active: j.active, order: j.order }); setEditing(j); }
   function closeModal() { setEditing(null); }
   function del(j: Job) { setDeleting(j); }
 
@@ -195,6 +199,34 @@ export default function AdminJobsPage() {
                 { value: "not_available", label: "Not available" },
               ]} />
             </Field>
+          </div>
+          <div className="border-t border-white/10 pt-4 mt-2">
+            <h4 className="font-semibold mb-3">Company Contact Details</h4>
+            <p className="text-xs text-muted mb-3">These details are only shown to users after they purchase access.</p>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Company Email"><Input type="email" value={draft.companyEmail} onChange={set("companyEmail")} /></Field>
+              <Field label="Company Phone"><Input value={draft.companyPhone} onChange={set("companyPhone")} /></Field>
+            </div>
+            <div className="mt-3">
+              <Field label="Company Website"><Input value={draft.companyWebsite} onChange={set("companyWebsite")} placeholder="https://example.com" /></Field>
+            </div>
+            <div className="mt-3">
+              <Field label="Social Media (one per line: platform | url)">
+                <Textarea
+                  rows={3}
+                  value={draft.companySocials.map((s) => `${s.platform} | ${s.url}`).join("\n")}
+                  onChange={(e) =>
+                    setDraft((d) => ({
+                      ...d,
+                      companySocials: e.target.value.split("\n").map((line) => {
+                        const [platform, ...urlParts] = line.split("|");
+                        return { platform: (platform || "").trim(), url: urlParts.join("|").trim() };
+                      }).filter((s) => s.platform || s.url),
+                    }))
+                  }
+                />
+              </Field>
+            </div>
           </div>
         </AdminModal>
       )}

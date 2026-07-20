@@ -279,6 +279,10 @@ export interface Job {
   category: string;
   price: number;
   status: string;
+  companyEmail: string;
+  companyPhone: string;
+  companyWebsite: string;
+  companySocials: { platform: string; url: string }[];
   description: string;
   active: boolean;
   order: number;
