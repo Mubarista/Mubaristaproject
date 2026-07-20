@@ -38,6 +38,7 @@ function buildGeneratedStatements(payments: Record<string, unknown>[]): MonthlyS
           premium_subscription: 0,
           book_purchase: 0,
           tool_purchase: 0,
+          job_access: 0,
           refund: 0,
         },
       });

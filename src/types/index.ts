@@ -1,4 +1,4 @@
-export type PaymentType = "competition_entry" | "premium_subscription" | "book_purchase" | "tool_purchase" | "refund";
+export type PaymentType = "competition_entry" | "premium_subscription" | "book_purchase" | "tool_purchase" | "job_access" | "refund";
 export type PaymentMethod = "card" | "mobile_money" | "bank_transfer" | "paypal";
 export type InvoiceStatus = "paid" | "pending" | "overdue" | "cancelled";
 
@@ -277,11 +277,14 @@ export interface Job {
   experience: string;
   type: string;
   category: string;
+  price: number;
+  status: string;
   description: string;
   active: boolean;
   order: number;
   createdAt: string;
   updatedAt: string;
+  purchased?: boolean;
 }
 
 export interface School {

@@ -13,6 +13,7 @@ const TYPE_LABELS: Record<PaymentType, string> = {
   premium_subscription: "Premium Sub",
   book_purchase: "Book",
   tool_purchase: "Tool",
+  job_access: "Job Access",
   refund: "Refund",
 };
 
@@ -21,6 +22,7 @@ const TYPE_COLORS: Record<PaymentType, string> = {
   premium_subscription: "text-blue bg-blue/10",
   book_purchase: "text-green bg-green/10",
   tool_purchase: "text-purple bg-purple/10",
+  job_access: "text-orange bg-orange/10",
   refund: "text-red bg-red/10",
 };
 

@@ -16,6 +16,9 @@ interface Job {
   salary: string;
   experience: string;
   type: string;
+  category: string;
+  price: number;
+  status: string;
   description: string;
   active: boolean;
   order: number;
@@ -23,7 +26,7 @@ interface Job {
   updatedAt: string;
 }
 
-const blank: Omit<Job, 'id' | 'createdAt' | 'updatedAt'> = { title: "", company: "", country: "", salary: "", experience: "", type: "Full-time", description: "", active: true, order: 0 };
+const blank: Omit<Job, 'id' | 'createdAt' | 'updatedAt'> = { title: "", company: "", country: "", salary: "", experience: "", type: "Full-time", category: "free", price: 0, status: "available", description: "", active: true, order: 0 };
 
 export default function AdminJobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -53,7 +56,7 @@ export default function AdminJobsPage() {
   }
 
   function openAdd() { setDraft({ ...blank }); setEditing({ ...blank, id: "new", createdAt: "", updatedAt: "" }); }
-  function openEdit(j: Job) { setDraft({ title: j.title, company: j.company, country: j.country, salary: j.salary, experience: j.experience, type: j.type, description: j.description, active: j.active, order: j.order }); setEditing(j); }
+  function openEdit(j: Job) { setDraft({ title: j.title, company: j.company, country: j.country, salary: j.salary, experience: j.experience, type: j.type, category: j.category, price: j.price, status: j.status, description: j.description, active: j.active, order: j.order }); setEditing(j); }
   function closeModal() { setEditing(null); }
   function del(j: Job) { setDeleting(j); }
 
@@ -96,8 +99,10 @@ export default function AdminJobsPage() {
     }
   }
 
-  const set = (k: keyof Omit<Job, 'id' | 'createdAt' | 'updatedAt'>) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-    setDraft((d) => ({ ...d, [k]: e.target.value }));
+  const set = (k: keyof Omit<Job, 'id' | 'createdAt' | 'updatedAt'>) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const value = (e.target as HTMLInputElement).type === "number" ? Number(e.target.value) : e.target.value;
+    setDraft((d) => ({ ...d, [k]: value }));
+  };
 
   const filteredJobs = jobs.filter(j =>
     j.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -144,6 +149,8 @@ export default function AdminJobsPage() {
           { label: "Location", render: (j) => j.country },
           { label: "Salary", render: (j) => <span className="text-green text-sm">{j.salary}</span> },
           { label: "Type", render: (j) => <Badge variant="blue">{j.type}</Badge> },
+          { label: "Category", render: (j) => <Badge variant={j.category === "free" ? "green" : "yellow"}>{j.category}</Badge> },
+          { label: "Status", render: (j) => <Badge variant={j.status === "available" ? "green" : "red"}>{j.status}</Badge> },
           { label: "Experience", render: (j) => <span className="text-xs text-muted">{j.experience}</span> },
         ]}
       />
@@ -169,6 +176,23 @@ export default function AdminJobsPage() {
                 { value: "Part-time", label: "Part-time" },
                 { value: "Contract", label: "Contract" },
                 { value: "Remote", label: "Remote" },
+              ]} />
+            </Field>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Access">
+              <Select value={draft.category} onChange={set("category")} options={[
+                { value: "free", label: "Free to apply" },
+                { value: "paid", label: "Paid to apply" },
+              ]} />
+            </Field>
+            <Field label="Price/Commission (RWF)">
+              <Input type="number" min={0} value={draft.price} onChange={set("price")} />
+            </Field>
+            <Field label="Status">
+              <Select value={draft.status} onChange={set("status")} options={[
+                { value: "available", label: "Available" },
+                { value: "not_available", label: "Not available" },
               ]} />
             </Field>
           </div>

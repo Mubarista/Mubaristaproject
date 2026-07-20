@@ -6,9 +6,20 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const includeInactive = searchParams.get('includeInactive') === 'true';
+    const userId = searchParams.get('userId');
     
     const { data, error } = await supabaseAdmin.from("jobs").select("*").order("order_column", { ascending: true });
     if (error) throw error;
+    
+    let purchasedIds = new Set<string>();
+    if (userId) {
+      const { data: purchases } = await supabaseAdmin
+        .from("job_purchases")
+        .select("job_id")
+        .eq("user_id", userId)
+        .eq("status", "paid");
+      if (purchases) purchasedIds = new Set(purchases.map((p: any) => p.job_id));
+    }
     
     // Filter active jobs unless includeInactive is true, then map order_column back to order
     const mappedData = (mapKeysToCamelCase(data) || [])
@@ -16,7 +27,8 @@ export async function GET(request: Request) {
       .map((job: any) => ({
         ...job,
         order: job.orderColumn || 0,
-        orderColumn: undefined
+        orderColumn: undefined,
+        purchased: purchasedIds.has(job.id),
       }));
     
     return NextResponse.json(mappedData);
