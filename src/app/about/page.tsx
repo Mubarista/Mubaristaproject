@@ -66,7 +66,7 @@ export default function AboutPage() {
     <div className="pt-24 pb-16">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeading
-          eyebrow="Our Story"
+          eyebrow="About"
           title={about?.title}
           description="Building the world's leading platform for barista excellence."
         />
