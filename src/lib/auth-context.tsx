@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import type { User, UserRole } from "@/types";
 import { supabase } from "@/lib/supabase";
 
@@ -42,6 +43,7 @@ function mapSupabaseUser(authUser: any, profile?: any): User {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   async function ensureUserProfile(authUser: any) {
     // Try to fetch existing profile using maybeSingle to avoid empty-row errors
@@ -166,9 +168,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "global" });
     setUser(null);
-  }, []);
+    router.push("/");
+  }, [router]);
 
   const upgradeToPremium = useCallback(async (_planId: string, _duration: "weekly" | "monthly" | "yearly") => {
     if (!user) return;
