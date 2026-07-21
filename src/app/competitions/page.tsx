@@ -115,7 +115,7 @@ export default function CompetitionsPage() {
                   >
                     {comp.status === "judging" ? "judging" : comp.status}
                   </Badge>
-                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10">
+                  <div className="absolute bottom-3 left-4 z-10">
                     <Countdown deadline={comp.registrationDeadline} />
                   </div>
                 </div>
