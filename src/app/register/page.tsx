@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Coffee, Mail, Lock, User, ArrowRight } from "lucide-react";
+import { Mail, Lock, User, ArrowRight } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useAdminData } from "@/lib/admin-data-context";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,18 @@ export default function RegisterPage() {
   const { register, loginWithGoogle, isLoading } = useAuth();
   const { supportedCountries, defaultCountryCode } = useAdminData();
   const router = useRouter();
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoLoading, setLogoLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/site-settings")
+      .then((res) => res.json())
+      .then((data) => {
+        setLogoUrl(data?.logo || null);
+        setLogoLoading(false);
+      })
+      .catch(() => setLogoLoading(false));
+  }, []);
 
   const passwordRequirements = {
     minLength: password.length >= 8,
@@ -110,8 +122,12 @@ export default function RegisterPage() {
     <div className="pt-24 pb-16 min-h-screen flex items-center justify-center px-4">
       <Card className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue text-white mx-auto mb-4">
-            <Coffee className="h-7 w-7" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl overflow-hidden bg-muted-bg mx-auto mb-4">
+            {logoLoading ? (
+              <div className="h-7 w-7 rounded-full border-2 border-muted border-t-transparent animate-spin" />
+            ) : logoUrl ? (
+              <img src={logoUrl} alt="MUBARISTA" className="h-full w-full object-contain" />
+            ) : null}
           </div>
           <CardTitle className="text-2xl mb-1">Join MUBARISTA</CardTitle>
           <p className="text-muted text-sm">Create your account and start competing</p>

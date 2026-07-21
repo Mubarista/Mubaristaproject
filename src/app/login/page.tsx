@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Coffee, Mail, Lock } from "lucide-react";
+import { Mail, Lock } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -12,8 +12,20 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoLoading, setLogoLoading] = useState(true);
   const { login, loginWithGoogle, isLoading } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    fetch("/api/site-settings")
+      .then((res) => res.json())
+      .then((data) => {
+        setLogoUrl(data?.logo || null);
+        setLogoLoading(false);
+      })
+      .catch(() => setLogoLoading(false));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,8 +51,12 @@ export default function LoginPage() {
     <div className="pt-24 pb-16 min-h-screen flex items-center justify-center px-4">
       <Card className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue text-white mx-auto mb-4">
-            <Coffee className="h-7 w-7" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl overflow-hidden bg-muted-bg mx-auto mb-4">
+            {logoLoading ? (
+              <div className="h-7 w-7 rounded-full border-2 border-muted border-t-transparent animate-spin" />
+            ) : logoUrl ? (
+              <img src={logoUrl} alt="MUBARISTA" className="h-full w-full object-contain" />
+            ) : null}
           </div>
           <CardTitle className="text-2xl mb-1">Welcome Back</CardTitle>
           <p className="text-muted text-sm">Sign in to your MUBARISTA account</p>
