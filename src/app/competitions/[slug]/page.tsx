@@ -14,6 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Countdown } from "@/components/shared/countdown";
 import { formatCurrency } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -112,6 +113,10 @@ export default function CompetitionDetailPage({ params }: Props) {
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-8">
           <div className="mx-auto max-w-7xl">
+            <div className="inline-flex items-center gap-1.5 bg-black/60 backdrop-blur-sm rounded-lg p-1 mb-3">
+              <span className="text-[10px] text-white/80 uppercase tracking-wide leading-none">End-In:</span>
+              <Countdown deadline={competition.registrationDeadline} />
+            </div>
             <Badge variant="yellow" className="mb-3">
               {competition.difficulty}
             </Badge>
