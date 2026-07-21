@@ -160,14 +160,29 @@ export default function AboutPage() {
                           f.icon === "GraduationCap" ? GraduationCap :
                           f.icon === "Briefcase" ? Briefcase :
                           f.icon === "Globe" ? Globe : Trophy;
-              return (
-                <div key={i} className="group flex items-start gap-3 p-4 rounded-xl bg-muted-bg/40 cursor-default transition-all duration-300 hover:-translate-y-0.5 hover:bg-muted-bg/70 hover:shadow-lg">
+              const href =
+                f.label === "Global Competitions" ? "/competitions" :
+                f.label === "Learning Resources" ? "/learn" :
+                f.label === "Community" ? "/contact" :
+                f.label === "Career Growth" ? "/tips" :
+                f.label === "Job Opportunities" ? "/jobs" :
+                f.label === "International Network" ? "/schools" :
+                undefined;
+              const content = (
+                <div className="group flex items-start gap-3 p-4 rounded-xl bg-muted-bg/40 cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:bg-muted-bg/70 hover:shadow-lg">
                   <Icon className="h-5 w-5 text-blue shrink-0 mt-0.5 transition-transform duration-300 group-hover:scale-110" />
                   <div>
                     <p className="font-semibold text-sm transition-colors duration-300 group-hover:text-foreground">{f.label}</p>
                     <p className="text-xs text-muted">{f.desc}</p>
                   </div>
                 </div>
+              );
+              return href ? (
+                <Link key={i} href={href} className="block">
+                  {content}
+                </Link>
+              ) : (
+                <div key={i}>{content}</div>
               );
             })}
           </div>
