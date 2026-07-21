@@ -8,6 +8,7 @@ import { LoadingDots } from "@/components/ui/loading-dots";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { SectionHeading } from "@/components/shared/section-heading";
+import { Countdown } from "@/components/shared/countdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -132,7 +133,7 @@ export default function CompetitionsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-red" />
-                      <span>{comp.registrationDeadline}</span>
+                      <Countdown deadline={comp.registrationDeadline} />
                     </div>
                     <div className="flex items-center gap-2">
                       <Globe className="h-4 w-4 text-green" />
