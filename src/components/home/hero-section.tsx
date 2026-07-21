@@ -192,14 +192,20 @@ export function HeroSection() {
                 color: "text-green",
               },
             ].map((stat, i) => (
-              <div key={i} className="rounded-2xl p-6 text-center text-white bg-black/50 border border-white/10 backdrop-blur-2xl">
+              <motion.div
+                key={i}
+                whileHover={{ scale: 1.05, y: -4 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="rounded-2xl p-6 text-center text-white bg-black/50 border border-white/10 backdrop-blur-2xl hover:bg-white/10 transition-colors cursor-pointer"
+              >
                 <stat.icon className={`h-6 w-6 mx-auto mb-2 ${stat.color}`} />
                 <div className="text-3xl font-bold mb-1 text-white">
                   {formatNumber(stat.value)}
                   {stat.label === "Live Competitions" && "+"}
                 </div>
                 <div className="text-sm text-white/60">{stat.label}</div>
-              </div>
+              </motion.div>
             ))}
           </motion.div>
         </div>
