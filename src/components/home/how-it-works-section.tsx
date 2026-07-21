@@ -171,7 +171,7 @@ export function HowItWorksSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.15 }}
-                className="relative"
+                className="relative group"
               >
                 {i < steps.length - 1 && (
                   <div
@@ -179,14 +179,14 @@ export function HowItWorksSection() {
                     style={{ width: "calc(100% - 80px)", left: "calc(100% - 0px)" }}
                   />
                 )}
-                <div className="glass-card rounded-2xl p-6 h-full relative z-10">
+                <div className="glass-card rounded-2xl p-6 h-full relative z-10 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:border-white/30 cursor-default">
                   <div className="flex items-center justify-between mb-4">
                     <div
-                      className={`flex h-12 w-12 items-center justify-center rounded-xl border ${step.bg}`}
+                      className={`flex h-12 w-12 items-center justify-center rounded-xl border transition-transform duration-300 group-hover:scale-110 ${step.bg}`}
                     >
-                      <Icon className={`h-6 w-6 ${step.color}`} />
+                      <Icon className={`h-6 w-6 transition-transform duration-300 group-hover:scale-110 ${step.color}`} />
                     </div>
-                    <span className="text-4xl font-bold text-foreground/10 font-display">
+                    <span className="text-4xl font-bold text-foreground/10 font-display transition-colors duration-300 group-hover:text-foreground/20">
                       {step.number}
                     </span>
                   </div>
