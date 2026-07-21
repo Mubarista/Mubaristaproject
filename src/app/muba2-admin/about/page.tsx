@@ -111,7 +111,7 @@ export default function AdminAboutPage() {
           <Input
             value={draft.title}
             onChange={(e) => setDraft(d => ({ ...d, title: e.target.value }))}
-            placeholder="About MUBARISTA"
+            placeholder="Enter page title"
           />
         </Field>
 

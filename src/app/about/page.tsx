@@ -51,11 +51,6 @@ export default function AboutPage() {
     return (
       <div className="pt-24 pb-16">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <SectionHeading
-            eyebrow="Our Story"
-            title="About MUBARISTA"
-            description="Building the world's leading platform for barista excellence."
-          />
           <div className="flex items-center justify-center py-12">
             <LoadingDots />
           </div>
