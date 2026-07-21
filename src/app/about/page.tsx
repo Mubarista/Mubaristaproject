@@ -97,17 +97,17 @@ export default function AboutPage() {
               </Button>
             </Link>
           </div>
-          <div className="relative aspect-video rounded-2xl overflow-hidden">
+          <div className="relative aspect-video rounded-2xl overflow-hidden group">
             {about?.imageUrl && (
               <Image
                 src={about.imageUrl}
                 alt="Barista crafting latte art"
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-cover"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
               />
             )}
-            <div className="absolute inset-0 bg-gradient-to-tr from-blue/30 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-blue/30 to-transparent transition-opacity duration-300 group-hover:from-blue/50" />
           </div>
         </div>
 
@@ -118,8 +118,8 @@ export default function AboutPage() {
             { label: "Past Winners", value: formatNumber(platformStats.totalWinners), color: "text-yellow" },
             { label: "Live Events", value: String(platformStats.liveCompetitions), color: "text-red" },
           ].map((stat) => (
-            <Card key={stat.label} className="text-center">
-              <p className={`text-3xl font-bold mb-1 ${stat.color}`}>{stat.value}</p>
+            <Card key={stat.label} className="text-center group">
+              <p className={`text-3xl font-bold mb-1 transition-transform duration-300 group-hover:scale-110 ${stat.color}`}>{stat.value}</p>
               <p className="text-sm text-muted">{stat.label}</p>
             </Card>
           )) : null}
@@ -134,10 +134,10 @@ export default function AboutPage() {
                           v.icon === "BookOpen" ? BookOpen :
                           v.icon === "Briefcase" ? Briefcase : Globe;
               return (
-                <Card key={i}>
+                <Card key={i} className="group">
                   <div className="flex items-start gap-4">
-                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${v.bg}`}>
-                      <Icon className={`h-6 w-6 ${v.color}`} />
+                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110 ${v.bg}`}>
+                      <Icon className={`h-6 w-6 transition-transform duration-300 group-hover:rotate-3 ${v.color}`} />
                     </div>
                     <div>
                       <CardTitle className="text-lg mb-2">{v.title}</CardTitle>
@@ -161,10 +161,10 @@ export default function AboutPage() {
                           f.icon === "Briefcase" ? Briefcase :
                           f.icon === "Globe" ? Globe : Trophy;
               return (
-                <div key={i} className="flex items-start gap-3 p-4 rounded-xl bg-muted-bg/40">
-                  <Icon className="h-5 w-5 text-blue shrink-0 mt-0.5" />
+                <div key={i} className="group flex items-start gap-3 p-4 rounded-xl bg-muted-bg/40 cursor-default transition-all duration-300 hover:-translate-y-0.5 hover:bg-muted-bg/70 hover:shadow-lg">
+                  <Icon className="h-5 w-5 text-blue shrink-0 mt-0.5 transition-transform duration-300 group-hover:scale-110" />
                   <div>
-                    <p className="font-semibold text-sm">{f.label}</p>
+                    <p className="font-semibold text-sm transition-colors duration-300 group-hover:text-foreground">{f.label}</p>
                     <p className="text-xs text-muted">{f.desc}</p>
                   </div>
                 </div>
