@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -13,6 +13,14 @@ interface ImageCarouselProps {
 export function ImageCarousel({ images, alt, aspectRatio = "3/4" }: ImageCarouselProps) {
   const [index, setIndex] = useState(0);
   const touchStartX = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (images.length <= 1) return;
+    const id = setInterval(() => {
+      setIndex((i) => (i + 1) % images.length);
+    }, 4000);
+    return () => clearInterval(id);
+  }, [images.length]);
 
   if (!images || images.length === 0) return null;
 
@@ -52,6 +60,7 @@ export function ImageCarousel({ images, alt, aspectRatio = "3/4" }: ImageCarouse
             fill
             sizes="(max-width: 1024px) 100vw, 50vw"
             className="object-cover"
+            loading="eager"
           />
         </div>
       ))}

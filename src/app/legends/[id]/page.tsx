@@ -4,6 +4,7 @@ import { ArrowLeft, Trophy, Award } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardTitle } from "@/components/ui/card";
 import { ImageCarousel } from "@/components/shared/image-carousel";
+import { ExpandableText } from "@/components/shared/expandable-text";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase } from "@/lib/supabase-utils";
 
@@ -64,7 +65,7 @@ export default async function LegendDetailPage({ params }: Props) {
 
             <Card>
               <CardTitle className="mb-3">Biography</CardTitle>
-              <p className="text-muted leading-relaxed">{legend.biography}</p>
+              <ExpandableText text={legend.biography} maxLength={300} className="text-muted leading-relaxed" />
             </Card>
 
             {achievements.length > 0 && (
