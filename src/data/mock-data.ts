@@ -681,6 +681,7 @@ export const legends: Legend[] = [
     awards: ["World Latte Art Championship Gold", "UK Barista Championship"],
     legacy:
       "Pioneered advanced multi-layer techniques that define modern competition latte art.",
+    images: [],
   },
   {
     id: "2",
@@ -697,6 +698,7 @@ export const legends: Legend[] = [
     awards: ["WBC Latte Art Gold", "Japan Coffee Excellence Award"],
     legacy:
       "Known for impossible symmetry and the iconic 'Tanaka Pour' technique.",
+    images: [],
   },
   {
     id: "3",
@@ -713,6 +715,7 @@ export const legends: Legend[] = [
     awards: ["Australian Barista Champion", "Global Coffee Impact Award"],
     legacy:
       "Transformed the competitive landscape by advocating for diversity and mentorship.",
+    images: [],
   },
 ];
 

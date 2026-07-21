@@ -316,6 +316,7 @@ export interface Legend {
   achievements: string[];
   awards: string[];
   legacy: string;
+  images: string[];
 }
 
 export interface Article {

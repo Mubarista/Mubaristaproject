@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Trophy, Award } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardTitle } from "@/components/ui/card";
+import { ImageCarousel } from "@/components/shared/image-carousel";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase } from "@/lib/supabase-utils";
 
@@ -50,15 +50,11 @@ export default async function LegendDetailPage({ params }: Props) {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1">
-            <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-muted-bg">
-              {legend.image ? (
-                <Image src={legend.image} alt={legend.name} fill sizes="(max-width: 1024px) 100vw, 33vw" className="object-cover" />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-muted">
-                  No image available
-                </div>
-              )}
-            </div>
+            <ImageCarousel
+              images={(legend.images?.length ? legend.images : [legend.image]).filter(Boolean)}
+              alt={legend.name}
+              aspectRatio="3/4"
+            />
           </div>
           <div className="lg:col-span-2 space-y-6">
             <div>
