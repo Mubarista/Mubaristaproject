@@ -157,7 +157,7 @@ export function TestimonialsSection() {
           {!showForm ? (
             <div className="text-center">
               <h3 className="text-xl font-semibold mb-2">Share Your Experience</h3>
-              <p className="text-muted mb-6">Tell us how MUBARISTA has helped your barista journey</p>
+              <p className="text-muted mb-6">Tell us how MUBARISTAHUB has helped your barista journey</p>
               <Button
                 variant="primary"
                 onClick={() => {
