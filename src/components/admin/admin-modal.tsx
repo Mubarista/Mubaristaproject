@@ -376,14 +376,29 @@ export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "b
       return;
     }
 
+    await resizeAndUpload(file);
+    e.target.value = "";
+  }
+
+  async function resizeAndUpload(file: File) {
     setUploading(true);
     try {
+      const image = await loadImageFile(file);
+      const { width, height } = fitWithinMax(image.naturalWidth, image.naturalHeight, 1920, 1080);
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Failed to create canvas context");
+      ctx.drawImage(image, 0, 0, width, height);
+
+      const blob = await downscaleCanvasToBlob(canvas);
+      if (!blob) throw new Error("Failed to process image");
+      const resized = new File([blob], file.name, { type: "image/jpeg" });
+
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", resized);
       formData.append("type", "photo");
-      formData.append("maxWidth", "1920");
-      formData.append("maxHeight", "1080");
-      formData.append("quality", "85");
 
       const res = await fetch("/api/upload", {
         method: "POST",
@@ -403,6 +418,26 @@ export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "b
     } finally {
       setUploading(false);
     }
+  }
+
+  function loadImageFile(file: File): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = reader.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function fitWithinMax(w: number, h: number, maxW: number, maxH: number) {
+    if (w <= maxW && h <= maxH) return { width: w, height: h };
+    const scale = Math.min(maxW / w, maxH / h);
+    return { width: Math.floor(w * scale), height: Math.floor(h * scale) };
   }
 
   function getCroppedCanvas(image: HTMLImageElement, crop: PixelCrop) {
