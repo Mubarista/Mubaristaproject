@@ -59,7 +59,7 @@ export function ImageCarousel({ images, alt, aspectRatio = "3/4" }: ImageCarouse
             alt={`${alt} ${i + 1}`}
             fill
             sizes="(max-width: 1024px) 100vw, 50vw"
-            className="object-contain"
+            className="object-cover"
             loading="eager"
           />
         </div>
