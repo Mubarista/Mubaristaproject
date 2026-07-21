@@ -115,6 +115,9 @@ export default function CompetitionsPage() {
                   >
                     {comp.status === "judging" ? "judging" : comp.status}
                   </Badge>
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10">
+                    <Countdown deadline={comp.registrationDeadline} />
+                  </div>
                 </div>
                 <div className="p-6 flex flex-col flex-1">
                   <h3 className="text-xl font-semibold mb-2">{comp.title}</h3>
@@ -133,7 +136,7 @@ export default function CompetitionsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-red" />
-                      <Countdown deadline={comp.registrationDeadline} />
+                      <span>{comp.registrationDeadline}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Globe className="h-4 w-4 text-green" />
