@@ -12,6 +12,7 @@ interface ImageCarouselProps {
 
 export function ImageCarousel({ images, alt, aspectRatio = "3/4" }: ImageCarouselProps) {
   const [index, setIndex] = useState(0);
+  const [imageAspects, setImageAspects] = useState<Record<number, string>>({});
   const touchStartX = useRef<number | null>(null);
 
   useEffect(() => {
@@ -41,10 +42,12 @@ export function ImageCarousel({ images, alt, aspectRatio = "3/4" }: ImageCarouse
     touchStartX.current = null;
   }
 
+  const activeAspect = imageAspects[index] || aspectRatio;
+
   return (
     <div
       className="relative w-full overflow-hidden rounded-2xl bg-muted-bg"
-      style={{ aspectRatio }}
+      style={{ aspectRatio: activeAspect }}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
@@ -59,8 +62,16 @@ export function ImageCarousel({ images, alt, aspectRatio = "3/4" }: ImageCarouse
             alt={`${alt} ${i + 1}`}
             fill
             sizes="(max-width: 1024px) 100vw, 50vw"
-            className="object-cover"
+            className="object-contain"
             loading="eager"
+            onLoadingComplete={(img) => {
+              const ratio = img.naturalWidth / img.naturalHeight;
+              const minRatio = 9 / 16;
+              setImageAspects((aspects) => ({
+                ...aspects,
+                [i]: ratio < minRatio ? "9/16" : `${img.naturalWidth}/${img.naturalHeight}`,
+              }));
+            }}
           />
         </div>
       ))}
