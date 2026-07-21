@@ -170,7 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     await supabase.auth.signOut({ scope: "global" });
     setUser(null);
-    router.push("/");
+    await router.push("/");
   }, [router]);
 
   const upgradeToPremium = useCallback(async (_planId: string, _duration: "weekly" | "monthly" | "yearly") => {

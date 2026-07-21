@@ -102,7 +102,12 @@ export default function SettingsPage() {
                 <CardDescription className="text-sm">Sign out of your account</CardDescription>
               </div>
             </div>
-            <Button variant="outline" onClick={logout}>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                await logout();
+              }}
+            >
               Sign Out
             </Button>
           </div>
