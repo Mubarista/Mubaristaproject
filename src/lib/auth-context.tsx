@@ -124,6 +124,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
     if (data.user) {
+      if (!data.user.email_confirmed_at) {
+        await supabase.auth.signOut();
+        throw new Error("Please verify your email before logging in.");
+      }
       const profile = await ensureUserProfile(data.user);
       setUser(mapSupabaseUser(data.user, profile));
     }
@@ -145,8 +149,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     if (error) throw error;
     if (data.user) {
-      const profile = await ensureUserProfile(data.user);
-      setUser(mapSupabaseUser(data.user, profile));
+      // If autoconfirm is enabled, sign out so the user must verify with OTP first
+      if (data.session) await supabase.auth.signOut();
+      await ensureUserProfile(data.user);
+      // Send email OTP for verification
+      const { error: otpError } = await supabase.auth.signInWithOtp({ email });
+      if (otpError) throw otpError;
     }
   }, []);
 
@@ -178,12 +186,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const verifyOTP = useCallback(async (identifier: string, code: string) => {
-    if (identifier.startsWith("+")) {
-      const { error } = await supabase.auth.verifyOtp({ phone: identifier, token: code, type: "sms" });
-      return { success: !error, message: error?.message || "OTP verified" };
+    const result = identifier.startsWith("+")
+      ? await supabase.auth.verifyOtp({ phone: identifier, token: code, type: "sms" })
+      : await supabase.auth.verifyOtp({ email: identifier, token: code, type: "email" });
+    if (!result.error && result.data?.user) {
+      const profile = await ensureUserProfile(result.data.user);
+      setUser(mapSupabaseUser(result.data.user, profile));
     }
-    const { error } = await supabase.auth.verifyOtp({ email: identifier, token: code, type: "email" });
-    return { success: !error, message: error?.message || "OTP verified" };
+    return { success: !result.error, message: result.error?.message || "OTP verified" };
   }, []);
 
   const reloadUser = useCallback(async () => {

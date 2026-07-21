@@ -17,8 +17,11 @@ export default function RegisterPage() {
   const [country, setCountry] = useState("");
   const [error, setError] = useState("");
   const [emailError, setEmailError] = useState("");
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const { register, loginWithGoogle, isLoading } = useAuth();
+  const [showOtpForm, setShowOtpForm] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [countdown, setCountdown] = useState(60);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const { register, loginWithGoogle, isLoading, sendOTP, verifyOTP } = useAuth();
   const { supportedCountries, defaultCountryCode } = useAdminData();
   const router = useRouter();
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -47,6 +50,12 @@ export default function RegisterPage() {
   useEffect(() => {
     if (defaultCountryCode) setCountry(defaultCountryCode);
   }, [defaultCountryCode]);
+
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const timer = setInterval(() => setCountdown((c) => c - 1), 1000);
+    return () => clearInterval(timer);
+  }, [countdown]);
 
   // Real-time email validation
   useEffect(() => {
@@ -98,15 +107,39 @@ export default function RegisterPage() {
     try {
       await register(email, password, name, "", country);
       setError("");
-      setShowSuccessModal(true);
+      setShowOtpForm(true);
+      setCountdown(60);
     } catch (err: any) {
       setError(err.message);
     }
   };
 
-  const handleSuccessModalClose = () => {
-    setShowSuccessModal(false);
-    router.push("/login");
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setOtpLoading(true);
+    try {
+      const result = await verifyOTP(email, otp);
+      if (result.success) {
+        router.push("/dashboard");
+      } else {
+        setError(result.message || "Invalid OTP");
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (countdown > 0) return;
+    const result = await sendOTP(email);
+    if (result.success) {
+      setCountdown(60);
+      setError("");
+    } else {
+      setError(result.message || "Failed to resend OTP");
+    }
   };
 
   const handleGoogleLogin = async () => {
@@ -303,28 +336,51 @@ export default function RegisterPage() {
         </p>
       </Card>
 
-      {/* Success Modal */}
-      {showSuccessModal && (
+      {/* OTP Verification Modal */}
+      {showOtpForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-2xl p-6 max-w-md w-full border border-green/30">
+          <div className="bg-card rounded-2xl p-6 max-w-md w-full border border-white/10">
             <div className="text-center mb-6">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green/10 border border-green/30">
-                <svg className="h-8 w-8 text-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-2">Registration Successful!</h3>
+              <h3 className="text-xl font-bold mb-2">Verify your email</h3>
               <p className="text-muted">
-                Please check your email for a verification link. You need to verify your email before you can access your account.
+                We sent a 6-digit code to <span className="text-foreground">{email}</span>. Enter it below to complete your registration.
               </p>
             </div>
-            <Button
-              variant="primary"
-              className="w-full"
-              onClick={handleSuccessModalClose}
-            >
-              Go to Login
-            </Button>
+            <form onSubmit={handleVerify} className="space-y-4">
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                placeholder="123456"
+                className="w-full rounded-xl bg-muted-bg border border-white/10 px-4 py-3 text-center text-lg tracking-[0.5em] font-mono focus:outline-none focus:ring-2 focus:ring-blue"
+                required
+              />
+              {error && (
+                <div className="bg-red/10 border border-red/30 rounded-lg p-3 text-sm text-red">
+                  {error}
+                </div>
+              )}
+              <div className="flex flex-col gap-3">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="w-full"
+                  disabled={otpLoading || otp.length !== 6}
+                >
+                  {otpLoading ? "Verifying..." : "Verify Email"}
+                </Button>
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={countdown > 0}
+                  className="text-sm text-blue hover:underline disabled:text-muted disabled:no-underline"
+                >
+                  {countdown > 0 ? `Resend OTP in ${countdown}s` : "Resend OTP"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
