@@ -24,6 +24,11 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+function isRegistrationClosed(deadline: string) {
+  const d = new Date(deadline);
+  return !isNaN(d.getTime()) && d.getTime() < Date.now();
+}
+
 export default function CompetitionDetailPage({ params }: Props) {
   const [slug, setSlug] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -99,6 +104,8 @@ export default function CompetitionDetailPage({ params }: Props) {
   }
 
   if (!competition) notFound();
+
+  const registrationClosed = isRegistrationClosed(competition.registrationDeadline);
 
   return (
     <div className="pt-24 pb-16">
@@ -214,18 +221,25 @@ export default function CompetitionDetailPage({ params }: Props) {
               <p className="text-xs text-muted mb-6">
                 Organizer: {competition.organizer}
               </p>
+              {registrationClosed && (
+                <Badge variant="red" className="mb-4">
+                  Registration Closed
+                </Badge>
+              )}
               {competition.status === "judging" && (
                 <Badge variant="yellow" className="mb-4">
                   Judging
                 </Badge>
               )}
-              {competition.status === "completed" || competition.status === "judging" ? (
+              {registrationClosed || competition.status === "completed" || competition.status === "judging" ? (
                 <>
                   <Button variant="secondary" className="w-full" size="lg" disabled>
-                    Applications Closed
+                    {registrationClosed ? "Registration Closed" : "Applications Closed"}
                   </Button>
                   <p className="text-xs text-muted text-center mt-3">
-                    {competition.status === "judging"
+                    {registrationClosed
+                      ? "Registration has closed for this competition"
+                      : competition.status === "judging"
                       ? "Judging is in progress"
                       : "This competition has already ended"}
                   </p>

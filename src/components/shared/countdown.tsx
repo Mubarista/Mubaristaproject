@@ -29,7 +29,7 @@ function getTimeLeft(deadline: string): TimeLeft {
   return { days, hours, minutes, seconds, expired: false };
 }
 
-export function Countdown({ deadline, closedText = "Registration closed" }: CountdownProps) {
+export function Countdown({ deadline, closedText = "Registration Closed" }: CountdownProps) {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(() => getTimeLeft(deadline));
 
   useEffect(() => {

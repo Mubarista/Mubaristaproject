@@ -22,6 +22,11 @@ const difficultyColors: Record<string, "blue" | "green" | "yellow" | "red"> = {
   Master: "red",
 };
 
+function isRegistrationClosed(deadline: string) {
+  const d = new Date(deadline);
+  return !isNaN(d.getTime()) && d.getTime() < Date.now();
+}
+
 export default function CompetitionsPage() {
   const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,7 +110,9 @@ export default function CompetitionsPage() {
                   </Badge>
                   <Badge
                     variant={
-                      comp.status === "open"
+                      isRegistrationClosed(comp.registrationDeadline)
+                        ? "red"
+                        : comp.status === "open"
                         ? "green"
                         : comp.status === "judging"
                         ? "yellow"
@@ -113,7 +120,11 @@ export default function CompetitionsPage() {
                     }
                     className="absolute top-4 right-4"
                   >
-                    {comp.status === "judging" ? "judging" : comp.status}
+                    {isRegistrationClosed(comp.registrationDeadline)
+                      ? "Registration Closed"
+                      : comp.status === "judging"
+                      ? "judging"
+                      : comp.status}
                   </Badge>
                   <div className="absolute bottom-2 left-2 z-10 bg-black/60 backdrop-blur-sm rounded-lg p-1 flex items-center gap-1.5">
                     <span className="text-[10px] text-white/80 uppercase tracking-wide leading-none">End-In:</span>
@@ -149,9 +160,9 @@ export default function CompetitionsPage() {
                     <span className="font-semibold text-green">
                       Entry: {formatCurrency(comp.entryFee)}
                     </span>
-                    {comp.status === "judging" || comp.availableSlots <= 0 ? (
+                    {comp.status === "judging" || comp.availableSlots <= 0 || isRegistrationClosed(comp.registrationDeadline) ? (
                       <Button variant="secondary" size="sm" disabled>
-                        Full
+                        {isRegistrationClosed(comp.registrationDeadline) ? "Registration Closed" : "Full"}
                       </Button>
                     ) : (
                       <Link href={`/competitions/${encodeURIComponent(comp.slug)}`}>
