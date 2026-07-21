@@ -115,7 +115,8 @@ export default function CompetitionsPage() {
                   >
                     {comp.status === "judging" ? "judging" : comp.status}
                   </Badge>
-                  <div className="absolute bottom-3 left-4 z-10 bg-black/60 backdrop-blur-sm rounded-xl p-1.5">
+                  <div className="absolute bottom-2 left-2 z-10 bg-black/60 backdrop-blur-sm rounded-lg p-1 flex items-center gap-1.5">
+                    <span className="text-[10px] text-white/80 uppercase tracking-wide leading-none">End-In:</span>
                     <Countdown deadline={comp.registrationDeadline} />
                   </div>
                 </div>

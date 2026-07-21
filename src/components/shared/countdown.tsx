@@ -40,15 +40,15 @@ export function Countdown({ deadline, closedText = "Registration closed" }: Coun
   }, [deadline]);
 
   if (timeLeft.expired) {
-    return <span className="text-red text-sm font-medium">{closedText}</span>;
+    return <span className="text-red text-xs font-medium">{closedText}</span>;
   }
 
   return (
-    <div className="flex items-center gap-1.5 text-sm font-medium">
-      <span className="bg-red/10 text-red px-2 py-1 rounded-lg">{timeLeft.days}d</span>
-      <span className="bg-blue/10 text-blue px-2 py-1 rounded-lg">{timeLeft.hours}h</span>
-      <span className="bg-yellow/10 text-yellow px-2 py-1 rounded-lg">{timeLeft.minutes}m</span>
-      <span className="bg-green/10 text-green px-2 py-1 rounded-lg">{timeLeft.seconds}s</span>
+    <div className="flex items-center gap-1 text-xs font-medium">
+      <span className="bg-red/10 text-red px-1.5 py-0.5 rounded">{timeLeft.days}d</span>
+      <span className="bg-blue/10 text-blue px-1.5 py-0.5 rounded">{timeLeft.hours}h</span>
+      <span className="bg-yellow/10 text-yellow px-1.5 py-0.5 rounded">{timeLeft.minutes}m</span>
+      <span className="bg-green/10 text-green px-1.5 py-0.5 rounded">{timeLeft.seconds}s</span>
     </div>
   );
 }
