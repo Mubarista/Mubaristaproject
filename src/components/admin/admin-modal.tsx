@@ -311,7 +311,7 @@ interface ImageUploadProps {
   value: string;
   onChange: (url: string) => void;
   label?: string;
-  aspectRatio?: "square" | "banner" | "portrait";
+  aspectRatio?: "square" | "banner" | "portrait" | "story";
   allowCrop?: boolean;
 }
 
@@ -487,7 +487,7 @@ export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "b
   function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
     if (!allowCrop) return;
     const image = e.currentTarget;
-    const aspect = aspectRatio === "square" ? 1 : aspectRatio === "portrait" ? 3 / 4 : 16 / 9;
+    const aspect = aspectRatio === "square" ? 1 : aspectRatio === "story" ? 9 / 16 : aspectRatio === "portrait" ? 3 / 4 : 16 / 9;
     // Use the displayed (CSS) dimensions so crop coordinates stay in the same unit.
     const initial = centerCrop(
       makeAspectCrop(
@@ -546,8 +546,8 @@ export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "b
     if (inputRef.current) inputRef.current.value = "";
   }
 
-  const heightClass = aspectRatio === "square" ? "h-40 w-40" : aspectRatio === "portrait" ? "h-52 w-40" : "h-40 w-full";
-  const cropAspect = aspectRatio === "square" ? 1 : aspectRatio === "portrait" ? 3 / 4 : 16 / 9;
+  const heightClass = aspectRatio === "square" ? "h-40 w-40" : aspectRatio === "story" ? "h-64 w-36" : aspectRatio === "portrait" ? "h-52 w-40" : "h-40 w-full";
+  const cropAspect = aspectRatio === "square" ? 1 : aspectRatio === "story" ? 9 / 16 : aspectRatio === "portrait" ? 3 / 4 : 16 / 9;
 
   return (
     <div className="space-y-2">
