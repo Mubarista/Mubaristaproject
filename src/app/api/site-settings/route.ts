@@ -10,6 +10,7 @@ export async function GET() {
         learnBadgeText: "Education",
         learnTitle: "Learning Center",
         learnDescription: "Free educational content for baristas at every level. Upgrade for premium courses and certifications.",
+        termsContent: "",
       });
     }
     return NextResponse.json(mapKeysToCamelCase(data));

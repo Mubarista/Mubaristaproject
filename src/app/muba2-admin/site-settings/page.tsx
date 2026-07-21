@@ -12,6 +12,7 @@ export default function AdminSiteSettingsPage() {
   const [draft, setDraft] = useState({ 
     footerDescription: "", 
     privacyContent: "",
+    termsContent: "",
     instagram: "", 
     facebook: "", 
     youtube: "", 
@@ -40,6 +41,7 @@ export default function AdminSiteSettingsPage() {
       setDraft({ 
         footerDescription: data?.footerDescription || "",
         privacyContent: data?.privacyContent || "",
+        termsContent: data?.termsContent || "",
         instagram: data?.instagram || "",
         facebook: data?.facebook || "",
         youtube: data?.youtube || "",
@@ -116,6 +118,11 @@ export default function AdminSiteSettingsPage() {
         <div className="border-t border-white/10 pt-6">
           <h3 className="font-semibold mb-4">Privacy Policy Content</h3>
           <p className="text-sm text-muted line-clamp-4">{settings.privacyContent || "Not set"}</p>
+        </div>
+
+        <div className="border-t border-white/10 pt-6">
+          <h3 className="font-semibold mb-4">Terms of Service Content</h3>
+          <p className="text-sm text-muted line-clamp-4">{settings.termsContent || "Not set"}</p>
         </div>
 
         <div className="border-t border-white/10 pt-6">
@@ -205,6 +212,14 @@ export default function AdminSiteSettingsPage() {
             <Textarea
               value={draft.privacyContent}
               onChange={(e) => setDraft({ ...draft, privacyContent: e.target.value })}
+              rows={10}
+            />
+          </Field>
+
+          <Field label="Terms of Service Content">
+            <Textarea
+              value={draft.termsContent}
+              onChange={(e) => setDraft({ ...draft, termsContent: e.target.value })}
               rows={10}
             />
           </Field>
