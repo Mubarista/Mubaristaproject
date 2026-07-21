@@ -553,12 +553,12 @@ export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "b
     <div className="space-y-2">
       {/* Preview area */}
       {value ? (
-        <div className={`relative rounded-xl overflow-hidden border border-white/10 bg-muted-bg ${heightClass}`}>
+        <div className={`relative rounded-xl overflow-hidden border border-white/10 bg-muted-bg flex items-center justify-center ${heightClass}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={previewUrl || value}
             alt={label}
-            className="w-full h-full object-cover"
+            className="max-w-full max-h-full object-contain mx-auto"
             onError={() => {
               if (previewUrl) {
                 URL.revokeObjectURL(previewUrl);
