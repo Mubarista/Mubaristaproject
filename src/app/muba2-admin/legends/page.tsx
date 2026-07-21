@@ -228,7 +228,7 @@ export default function AdminLegendsPage() {
                 <button
                   type="button"
                   onClick={addImage}
-                  className="aspect-[3/4] rounded-xl border border-dashed border-white/20 flex items-center justify-center text-sm text-muted hover:border-blue hover:text-blue transition-colors"
+                  className="aspect-[9/16] rounded-xl border border-dashed border-white/20 flex items-center justify-center text-sm text-muted hover:border-blue hover:text-blue transition-colors"
                 >
                   + Add Photo
                 </button>

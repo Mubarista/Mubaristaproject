@@ -58,46 +58,30 @@ export async function POST(request: Request) {
     // Process image if it's an image type
     if (type === "photo" && file.type.startsWith("image/")) {
       try {
-        // Resize and optimize image using sharp
         const image = sharp(buffer);
         const metadata = await image.metadata();
-        
-        // Calculate dimensions to maintain aspect ratio
-        let width = maxWidth;
-        let height = maxHeight;
-        
-        if (metadata.width && metadata.height) {
-          const aspectRatio = metadata.width / metadata.height;
-          
-          if (metadata.width > maxWidth) {
-            width = maxWidth;
-            height = Math.round(width / aspectRatio);
-          }
-          
-          if (height > maxHeight) {
-            height = maxHeight;
-            width = Math.round(height * aspectRatio);
-          }
-        }
-
         const hasAlpha = metadata.hasAlpha || metadata.channels === 4;
+        const resizeOptions = { width: maxWidth, height: maxHeight, fit: "inside" as const, withoutEnlargement: true };
+
         if (hasAlpha) {
-          // Preserve transparency for logos/icons
-          buffer = await image
-            .resize(width, height)
+          const { data, info } = await image
+            .resize(resizeOptions)
             .png({ compressionLevel: 9 })
-            .toBuffer();
+            .toBuffer({ resolveWithObject: true });
+          buffer = data;
           fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.png`;
           contentType = "image/png";
+          console.log(`Processed image: ${file.name} -> ${fileName} (${info.width}x${info.height}, alpha: ${hasAlpha})`);
         } else {
-          buffer = await image
-            .resize(width, height)
+          const { data, info } = await image
+            .resize(resizeOptions)
             .jpeg({ quality })
-            .toBuffer();
+            .toBuffer({ resolveWithObject: true });
+          buffer = data;
           fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
           contentType = "image/jpeg";
+          console.log(`Processed image: ${file.name} -> ${fileName} (${info.width}x${info.height}, alpha: ${hasAlpha})`);
         }
-        console.log(`Processed image: ${file.name} -> ${fileName} (${width}x${height}, alpha: ${hasAlpha})`);
       } catch (error) {
         console.error("Image processing error:", error);
         // Fall back to original buffer if processing fails
