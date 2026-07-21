@@ -212,6 +212,7 @@ export default function AdminLegendsPage() {
                     value={img}
                     onChange={(url) => updateImage(i, url)}
                     aspectRatio="portrait"
+                    allowCrop
                   />
                   <button
                     type="button"
