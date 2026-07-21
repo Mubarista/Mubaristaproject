@@ -3,14 +3,35 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import Link from "next/link";
 import { Trophy } from "lucide-react";
-import { LoadingDots } from "@/components/ui/loading-dots";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { Badge } from "@/components/ui/badge";
+import { LoadingDots } from "@/components/ui/loading-dots";
 
-export function WinnersSection() {
-  const [winners, setWinners] = useState<any[]>([]);
+interface Winner {
+  id: string;
+  name: string;
+  country: string;
+  image: string;
+  artImage: string;
+  competition: string;
+  winDate: string;
+  winType: string;
+  prize: string;
+  currency: string;
+}
+
+function winLabel(type: string) {
+  if (type === "today") return "Winner of today";
+  if (type === "week") return "Winner of the week";
+  if (type === "season") return "Winner of the season";
+  if (type === "month") return "Winner of the month";
+  if (type === "year") return "Winner of the year";
+  return "Winner";
+}
+
+export default function WinnersPage() {
+  const [winners, setWinners] = useState<Winner[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,41 +54,41 @@ export function WinnersSection() {
 
   if (loading) {
     return (
-      <section className="section-padding">
-        <div className="mx-auto max-w-7xl">
+      <div className="pt-24 pb-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeading
             eyebrow="Hall of Fame"
-            title="Winners Showcase"
+            title="Past Winners"
             description="Celebrating the baristas who pushed the boundaries of latte art excellence."
           />
           <div className="flex items-center justify-center py-12">
             <LoadingDots />
           </div>
         </div>
-      </section>
+      </div>
     );
   }
 
   return (
-    <section className="section-padding">
-      <div className="mx-auto max-w-7xl">
+    <div className="pt-24 pb-16">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
           eyebrow="Hall of Fame"
-          title="Winners Showcase"
+          title="Past Winners"
           description="Celebrating the baristas who pushed the boundaries of latte art excellence."
         />
 
         {winners.length === 0 ? (
           <p className="text-center text-muted py-16">No winners yet.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {winners.map((winner, i) => (
               <motion.div
                 key={winner.id}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.15 }}
+                transition={{ delay: i * 0.1 }}
                 className="group glass-card rounded-2xl overflow-hidden"
               >
                 <div className="relative h-48 overflow-hidden">
@@ -97,7 +118,7 @@ export function WinnersSection() {
                         <Image src={winner.image} alt={winner.name} fill sizes="48px" className="object-cover" />
                       ) : (
                         <div className="w-full h-full bg-muted-bg flex items-center justify-center">
-                          <span className="text-muted text-xs">{winner.name.charAt(0)}</span>
+                          <span className="text-muted text-xs">{winner.name?.charAt(0)}</span>
                         </div>
                       )}
                     </div>
@@ -108,27 +129,17 @@ export function WinnersSection() {
                   </div>
                   <p className="text-sm text-muted mb-2">{winner.competition}</p>
                   <p className="text-xs text-muted mb-2">
-                    {winner.winType === "today" ? "Winner of today" : 
-                     winner.winType === "week" ? "Winner of the week" : 
-                     winner.winType === "season" ? "Winner of the season" :
-                     winner.winType === "month" ? "Winner of the month" :
-                     winner.winType === "year" ? "Winner of the year" : "Winner"} - {new Date(winner.winDate).toLocaleDateString()}
+                    {winLabel(winner.winType)} - {winner.winDate ? new Date(winner.winDate).toLocaleDateString() : ""}
                   </p>
                   <p className="text-lg font-bold text-green">
-                    RWF {winner.prize}
+                    {winner.currency || "RWF"} {winner.prize}
                   </p>
                 </div>
               </motion.div>
             ))}
           </div>
         )}
-
-        <div className="text-center mt-10">
-          <Link href="/winners" className="text-blue hover:underline font-medium">
-            View all past winners →
-          </Link>
-        </div>
       </div>
-    </section>
+    </div>
   );
 }
