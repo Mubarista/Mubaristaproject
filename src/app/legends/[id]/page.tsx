@@ -41,6 +41,8 @@ export default async function LegendDetailPage({ params }: Props) {
   const legend = mapKeysToCamelCase(data) as any;
   const awards = parseStringArray(legend.awards);
   const achievements = parseStringArray(legend.achievements || legend.awards);
+  const galleryImages = (legend.images || []).filter(Boolean);
+  const displayImages = galleryImages.length ? galleryImages : [legend.image].filter(Boolean);
 
   return (
     <div className="pt-24 pb-16">
@@ -52,9 +54,9 @@ export default async function LegendDetailPage({ params }: Props) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1">
             <ImageCarousel
-              images={(legend.images?.length ? legend.images : [legend.image]).filter(Boolean)}
+              images={displayImages}
               alt={legend.name}
-              aspectRatio="3/4"
+              aspectRatio={galleryImages.length ? "9/16" : "1/1"}
             />
           </div>
           <div className="lg:col-span-2 space-y-6">
