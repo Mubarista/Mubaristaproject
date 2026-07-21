@@ -384,6 +384,12 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
         }).catch(() => {}),
         fetch("/api/tips").then(r => r.ok ? r.json() : []).then(d => { /* tips stored in context if needed */ }).catch(() => {}),
         fetch("/api/subscription-plans?includeInactive=true").then(r => r.ok ? r.json() : []).then(d => setSubscriptionPlans(d)).catch(() => {}),
+        fetch("/api/site-settings").then(r => r.ok ? r.json() : null).then(d => {
+          if (d) {
+            if (Array.isArray(d.supportedCountries)) setSupportedCountries(d.supportedCountries);
+            if (d.defaultCountryCode) setDefaultCountryCode(d.defaultCountryCode);
+          }
+        }).catch(() => {}),
       ];
       await Promise.all(fetches);
     }

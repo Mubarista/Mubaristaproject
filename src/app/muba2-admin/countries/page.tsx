@@ -36,16 +36,31 @@ export default function AdminCountriesPage() {
   }
   function closeModal() { setEditing(null); }
 
-  function save() {
+  async function save() {
+    const next = [...supportedCountries];
     if (editing!.id === "new") {
-      setSupportedCountries([...supportedCountries, draft]);
+      next.push(draft);
     } else {
       const idx = Number(editing!.id);
-      const updated = [...supportedCountries];
-      updated[idx] = draft;
-      setSupportedCountries(updated);
+      next[idx] = draft;
     }
+    setSupportedCountries(next);
+    await updateSiteSettings(next, defaultCountryCode);
     closeModal();
+  }
+
+  async function updateSiteSettings(countries: SupportedCountry[], defaultCode: string) {
+    try {
+      const res = await fetch("/api/site-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ supportedCountries: countries, defaultCountryCode: defaultCode }),
+      });
+      if (!res.ok) throw new Error("Failed to save country settings");
+    } catch (error) {
+      console.error("Error saving country settings:", error);
+      alert("Failed to save changes. Please try again.");
+    }
   }
 
   function del(c: SupportedCountry & { id: string }) {
@@ -57,11 +72,26 @@ export default function AdminCountriesPage() {
     setDeleting(c);
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     if (deleting) {
       const idx = Number(deleting.id);
-      setSupportedCountries(supportedCountries.filter((_, i) => i !== idx));
+      const next = supportedCountries.filter((_, i) => i !== idx);
+      setSupportedCountries(next);
+      await updateSiteSettings(next, defaultCountryCode);
       setDeleting(null);
+    }
+  }
+
+  async function handleSetDefault(c: SupportedCountry & { id: string }) {
+    const res = await fetch("/api/site-settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ supportedCountries, defaultCountryCode: c.code }),
+    });
+    if (res.ok) {
+      setDefaultCountryCode(c.code);
+    } else {
+      alert("Failed to update default country");
     }
   }
 
@@ -148,7 +178,7 @@ export default function AdminCountriesPage() {
                       <div className="flex items-center justify-end gap-2">
                         {!isDefault && (
                           <button
-                            onClick={() => setDefaultCountryCode(c.code)}
+                            onClick={() => handleSetDefault(c)}
                             className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs hover:bg-yellow/10 text-yellow transition-colors"
                             title="Set as default"
                           >
