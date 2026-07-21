@@ -112,16 +112,18 @@ export default function CompetitionDetailPage({ params }: Props) {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-8">
-          <div className="mx-auto max-w-7xl">
-            <div className="inline-flex items-center gap-1.5 bg-black/60 backdrop-blur-sm rounded-lg p-1 mb-3">
+          <div className="mx-auto max-w-7xl flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div>
+              <Badge variant="yellow" className="mb-3">
+                {competition.difficulty}
+              </Badge>
+              <h1 className="text-3xl md:text-5xl font-bold mb-2">{competition.title}</h1>
+              <p className="text-muted max-w-2xl">{competition.description}</p>
+            </div>
+            <div className="inline-flex items-center gap-1.5 bg-black/60 backdrop-blur-sm rounded-lg p-1 self-start md:self-auto">
               <span className="text-[10px] text-white/80 uppercase tracking-wide leading-none">End-In:</span>
               <Countdown deadline={competition.registrationDeadline} />
             </div>
-            <Badge variant="yellow" className="mb-3">
-              {competition.difficulty}
-            </Badge>
-            <h1 className="text-3xl md:text-5xl font-bold mb-2">{competition.title}</h1>
-            <p className="text-muted max-w-2xl">{competition.description}</p>
           </div>
         </div>
       </div>
