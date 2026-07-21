@@ -95,7 +95,7 @@ export default function AboutPage() {
               </Button>
             </Link>
           </div>
-          <div className="relative aspect-video rounded-2xl overflow-hidden group">
+          <div className="relative aspect-[210/297] rounded-2xl overflow-hidden group">
             {about?.imageUrl && (
               <Image
                 src={about.imageUrl}
