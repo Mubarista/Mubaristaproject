@@ -66,7 +66,7 @@ export default function LegendsPage() {
             >
               <Link href={`/legends/${legend.id}`}>
                 <div className="group glass-card rounded-2xl overflow-hidden cursor-pointer">
-                  <div className="relative aspect-[9/16] overflow-hidden bg-muted-bg">
+                  <div className="relative h-64 overflow-hidden bg-muted-bg">
                     {legend.image ? (
                       <Image
                         src={legend.image}
