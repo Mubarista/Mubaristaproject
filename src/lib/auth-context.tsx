@@ -122,11 +122,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    if (error) {
+      if (error.message === "Email not confirmed") {
+        await supabase.auth.signInWithOtp({ email });
+        throw new Error("OTP_SENT");
+      }
+      throw error;
+    }
     if (data.user) {
       if (!data.user.email_confirmed_at) {
         await supabase.auth.signOut();
-        throw new Error("Please verify your email before logging in.");
+        await supabase.auth.signInWithOtp({ email });
+        throw new Error("OTP_SENT");
       }
       const profile = await ensureUserProfile(data.user);
       setUser(mapSupabaseUser(data.user, profile));

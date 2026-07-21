@@ -34,6 +34,10 @@ export default function LoginPage() {
       await login(email, password);
       router.push("/dashboard");
     } catch (err: any) {
+      if (err.message === "OTP_SENT") {
+        router.push(`/verify-otp?email=${encodeURIComponent(email)}`);
+        return;
+      }
       setError(err.message || "Login failed. Please try again.");
     }
   };
