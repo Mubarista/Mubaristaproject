@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Trophy, Globe, BookOpen, Briefcase, GraduationCap, Coffee, ArrowRight } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
 import { SectionHeading } from "@/components/shared/section-heading";
+import { ExpandableText } from "@/components/shared/expandable-text";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -72,9 +73,11 @@ export default function AboutPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-20">
           <div>
-            <p className="text-muted leading-relaxed text-lg mb-6">
-              {about?.description}
-            </p>
+            <ExpandableText
+              text={about?.description || ""}
+              maxLength={300}
+              className="text-muted leading-relaxed text-lg mb-6"
+            />
             {about?.mission && (
               <p className="text-muted leading-relaxed text-lg mb-6">
                 <strong>Mission:</strong> {about.mission}
