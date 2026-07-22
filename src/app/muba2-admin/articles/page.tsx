@@ -14,7 +14,7 @@ interface Category {
   orderIndex: number;
 }
 
-const blank = { id: "", title: "", excerpt: "", category: "", categoryId: null, publishedDate: "", coverImage: "", author: "" };
+const blank = { id: "", title: "", excerpt: "", content: "", category: "", categoryId: null, publishedDate: "", coverImage: "", author: "" };
 
 export default function AdminArticlesPage() {
   const [articles, setArticles] = useState<any[]>([]);
@@ -65,7 +65,7 @@ export default function AdminArticlesPage() {
       a.category.toLowerCase().includes(search.toLowerCase())
   );
 
-  function openAdd() { const d = { ...blank, id: String(Date.now()) }; setDraft(d); setEditing(d); }
+  function openAdd() { const d = { ...blank, id: "new" }; setDraft(d); setEditing(d); }
   function openEdit(a: any) { setDraft({ ...a, publishedDate: a.publishedDate || "", coverImage: a.coverImage || "", categoryId: a.categoryId || null }); setEditing(a); }
   function closeModal() { setEditing(null); }
 
@@ -162,6 +162,7 @@ export default function AdminArticlesPage() {
         >
           <Field label="Title" required><Input value={draft.title} onChange={set("title")} /></Field>
           <Field label="Excerpt"><Textarea value={draft.excerpt} onChange={set("excerpt")} rows={2} /></Field>
+          <Field label="Full Content"><Textarea value={draft.content || ""} onChange={set("content")} rows={6} /></Field>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Category">
               <Select

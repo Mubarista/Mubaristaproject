@@ -38,7 +38,8 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const snakeCaseBody = keysToSnakeCase(body);
+    const { id, ...createData } = body;
+    const snakeCaseBody = keysToSnakeCase(createData);
     
     // Handle category_id - if categoryId is provided, use it; otherwise try to find category by name
     if ('categoryId' in snakeCaseBody && snakeCaseBody.categoryId) {

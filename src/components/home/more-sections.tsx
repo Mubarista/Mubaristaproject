@@ -201,14 +201,18 @@ export function ArticlesSection() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {articles.map((article, i) => (
-              <motion.article
+              <Link
                 key={article.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="group glass-card rounded-2xl overflow-hidden"
+                href={`/articles/${article.id}`}
+                className="block"
               >
+                <motion.article
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="group glass-card rounded-2xl overflow-hidden cursor-pointer h-full"
+                >
                 <div className="relative h-48 overflow-hidden">
                   {article.coverImage ? (
                     <Image
@@ -238,6 +242,7 @@ export function ArticlesSection() {
                   </div>
                 </div>
               </motion.article>
+              </Link>
             ))}
           </div>
         )}
