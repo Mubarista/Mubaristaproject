@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Play, Trophy, Users, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ interface HeroContent {
   title: string;
   subtitle: string;
   badge: string;
+  badges?: string[];
   ctaPrimary: string;
   ctaSecondary: string;
   createdAt: string;
@@ -77,6 +78,22 @@ export function HeroSection() {
   // Check if there are active/live competitions
   const hasLiveCompetitions = (platformStats?.liveCompetitions ?? 0) > 0;
 
+  const hints = heroContent?.badges?.length
+    ? heroContent.badges
+    : heroContent?.badge
+      ? [heroContent.badge]
+      : [];
+
+  const [hintIndex, setHintIndex] = useState(0);
+
+  useEffect(() => {
+    if (hints.length <= 1) return;
+    const interval = setInterval(() => {
+      setHintIndex((prev) => (prev + 1) % hints.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [hints.length]);
+
   if (loading) {
     return (
       <section className="relative min-h-screen flex items-center overflow-hidden">
@@ -120,10 +137,21 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            {hasLiveCompetitions && heroContent?.badge && (
+            {hints.length > 0 && (
               <span className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 text-sm mb-6 text-white">
                 <span className="h-2 w-2 rounded-full bg-green animate-pulse" />
-                {heroContent.badge}
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={hints[hintIndex]}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.4 }}
+                    className="inline-block"
+                  >
+                    {hints[hintIndex]}
+                  </motion.span>
+                </AnimatePresence>
               </span>
             )}
 

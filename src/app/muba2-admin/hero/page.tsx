@@ -15,6 +15,7 @@ interface HeroContent {
   title: string;
   subtitle: string;
   badge: string;
+  badges?: string[];
   ctaPrimary: string;
   ctaSecondary: string;
 }
@@ -59,7 +60,7 @@ function getCroppedCanvas(image: HTMLImageElement, crop: PixelCrop): CanvasRende
 }
 
 export default function AdminHeroPage() {
-  const [hero, setHero] = useState<HeroContent>({ title: "", subtitle: "", badge: "", ctaPrimary: "", ctaSecondary: "" });
+  const [hero, setHero] = useState<HeroContent>({ title: "", subtitle: "", badge: "", badges: [], ctaPrimary: "", ctaSecondary: "" });
   const [stats, setStats] = useState<PlatformStats>({ liveCompetitions: 0, totalParticipants: 0, countriesJoined: 0, totalWinners: 0 });
   const [bg, setBg] = useState<HeroBackground>({ type: "image", imageUrl: "", videoUrl: "" });
   const [loading, setLoading] = useState(true);
@@ -573,8 +574,19 @@ export default function AdminHeroPage() {
           <Card className="mb-6">
             <CardTitle className="mb-4">Hero Section</CardTitle>
             <div className="space-y-4">
-              <Field label="Live Badge Text">
-                <Input value={hero.badge} onChange={(e) => setHero({ ...hero, badge: e.target.value })} />
+              <Field label="Status Hints (one per line)">
+                <Textarea
+                  value={(hero.badges || [hero.badge]).filter(Boolean).join("\n")}
+                  onChange={(e) => {
+                    const lines = e.target.value
+                      .split("\n")
+                      .map((l) => l.trim())
+                      .filter((l) => l.length > 0);
+                    setHero({ ...hero, badges: lines, badge: lines[0] || "" });
+                  }}
+                  rows={3}
+                  placeholder="Welcome to Mubarista Hub&#10;Live competition happening&#10;Registration in progress"
+                />
               </Field>
               <Field label="Headline">
                 <Textarea value={hero.title} onChange={(e) => setHero({ ...hero, title: e.target.value })} rows={2} />
