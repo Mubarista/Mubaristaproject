@@ -110,8 +110,14 @@ export default function ArticleDetailPage() {
           )}
         </div>
 
+        {article.excerpt && (
+          <p className="text-lg md:text-xl text-foreground/70 leading-relaxed mb-8">
+            {article.excerpt}
+          </p>
+        )}
+
         <div className="prose prose-invert max-w-none whitespace-pre-wrap text-foreground/90 leading-relaxed">
-          {article.content || article.excerpt || "No content available."}
+          {article.content || "No content available."}
         </div>
       </div>
     </div>
