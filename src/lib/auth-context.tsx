@@ -94,33 +94,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    let mounted = true;
-
-    async function init() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user && mounted) {
-        const profile = await ensureUserProfile(session.user);
-        setUser(mapSupabaseUser(session.user, profile));
-      }
-      if (mounted) setIsLoading(false);
-    }
-
-    init();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session?.user) {
+        if (session.user.app_metadata?.provider === "google") {
+          const email = session.user.email;
+          await supabase.auth.signOut();
+          if (email) {
+            await supabase.auth.signInWithOtp({ email });
+            router.push(`/verify-otp?email=${encodeURIComponent(email)}`);
+          }
+          setIsLoading(false);
+          return;
+        }
         const profile = await ensureUserProfile(session.user);
         setUser(mapSupabaseUser(session.user, profile));
       } else {
         setUser(null);
       }
+      setIsLoading(false);
     });
 
     return () => {
-      mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [router]);
 
   const login = useCallback(async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
