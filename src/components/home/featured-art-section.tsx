@@ -178,15 +178,17 @@ export function FeaturedArtSection() {
             <LoadingDots />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div
+            className="overflow-x-auto flex gap-6 pb-4 -mx-4 px-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
             {latteArt.filter((art) => art.image && art.image.trim() !== "").map((art, i) => (
               <motion.div
                 key={art.id}
                 initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="group relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer"
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: Math.min(i * 0.1, 0.8) }}
+                className="group relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer shrink-0 w-[85%] sm:w-[45%] lg:w-[23%] snap-start"
                 onClick={() => setSelectedArtId(art.id)}
               >
                 <Image
