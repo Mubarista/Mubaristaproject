@@ -34,7 +34,7 @@ export default function AdminLatteArtPage() {
     }
   }
 
-  function openAdd() { const d = { ...blank, id: String(Date.now()) }; setDraft(d); setEditing(d); }
+  function openAdd() { const d = { ...blank, id: "new" }; setDraft(d); setEditing(d); }
   function openEdit(a: any) { setDraft({ ...a }); setEditing(a); }
   function closeModal() { setEditing(null); }
 
