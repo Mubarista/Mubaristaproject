@@ -34,7 +34,9 @@ function mapSupabaseUser(authUser: any, profile?: any): User {
     phone: profile?.phone || authUser.user_metadata?.phone || "",
     country: profile?.country || authUser.user_metadata?.country || "",
     avatar: profile?.avatar || authUser.user_metadata?.avatar || "",
-    emailVerified: authUser.email_confirmed_at ? true : false,
+    // Use the database email_verified column as source of truth, not Supabase's email_confirmed_at
+    // (which is auto-set when enable_confirmations=false)
+    emailVerified: profile?.email_verified ?? false,
     createdAt: authUser.created_at || new Date().toISOString(),
     updatedAt: profile?.updated_at || new Date().toISOString(),
   };
@@ -65,6 +67,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const country = authUser.user_metadata?.country || "";
     const email = authUser.email || "";
 
+    // For OAuth providers (Google, Apple, etc.), the email is already verified by the provider.
+    // For email/password signups, email_verified must be false until the user completes OTP.
+    const isOAuthUser = !!(authUser.app_metadata?.provider && authUser.app_metadata.provider !== "email");
+    const emailVerified = isOAuthUser ? true : false;
+
     const profileData = {
       id: authUser.id,
       email,
@@ -73,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       country,
       role: "user",
       is_premium: false,
-      email_verified: authUser.email_confirmed_at ? true : false,
+      email_verified: emailVerified,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -132,13 +139,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw error;
     }
     if (data.user) {
-      if (!data.user.email_confirmed_at) {
-        await supabase.auth.signOut();
-        await supabase.auth.signInWithOtp({ email });
-        throw new Error("OTP_SENT");
-      }
-      const profile = await ensureUserProfile(data.user);
-      setUser(mapSupabaseUser(data.user, profile));
+      // Email/password logins always require OTP verification.
+      // Sign out the password session and send a one-time code to the email.
+      await supabase.auth.signOut();
+      await supabase.auth.signInWithOtp({ email });
+      throw new Error("OTP_SENT");
     }
   }, []);
 
@@ -200,6 +205,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ? await supabase.auth.verifyOtp({ phone: identifier, token: code, type: "sms" })
       : await supabase.auth.verifyOtp({ email: identifier, token: code, type: "email" });
     if (!result.error && result.data?.user) {
+      // OTP verified successfully — mark the user's email as verified in the database
+      await supabase
+        .from("users")
+        .update({ email_verified: true, updated_at: new Date().toISOString() })
+        .eq("id", result.data.user.id);
+
       const profile = await ensureUserProfile(result.data.user);
       setUser(mapSupabaseUser(result.data.user, profile));
     }
