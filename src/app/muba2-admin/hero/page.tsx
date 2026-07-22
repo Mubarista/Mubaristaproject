@@ -576,12 +576,11 @@ export default function AdminHeroPage() {
             <div className="space-y-4">
               <Field label="Status Hints (one per line)">
                 <Textarea
-                  value={(hero.badges || [hero.badge]).filter(Boolean).join("\n")}
+                  value={hero.badges?.join("\n") ?? hero.badge}
                   onChange={(e) => {
                     const lines = e.target.value
                       .split("\n")
-                      .map((l) => l.trim())
-                      .filter((l) => l.length > 0);
+                      .filter((l) => l.trim() !== "");
                     setHero({ ...hero, badges: lines, badge: lines[0] || "" });
                   }}
                   rows={3}
