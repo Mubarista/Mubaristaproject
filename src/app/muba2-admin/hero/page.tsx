@@ -151,6 +151,9 @@ export default function AdminHeroPage() {
     try {
       const cleanHeroContent = { ...hero };
       delete cleanHeroContent.id;
+      if (cleanHeroContent.badges) {
+        cleanHeroContent.badges = cleanHeroContent.badges.filter((l) => l.trim() !== "");
+      }
       const cleanHeroBackground = { ...bg };
       delete cleanHeroBackground.id;
       const cleanPlatformStats = { ...stats };
@@ -578,10 +581,8 @@ export default function AdminHeroPage() {
                 <Textarea
                   value={hero.badges?.join("\n") ?? hero.badge}
                   onChange={(e) => {
-                    const lines = e.target.value
-                      .split("\n")
-                      .filter((l) => l.trim() !== "");
-                    setHero({ ...hero, badges: lines, badge: lines[0] || "" });
+                    const lines = e.target.value.split("\n");
+                    setHero({ ...hero, badges: lines, badge: lines.find((l) => l.trim() !== "") || "" });
                   }}
                   rows={3}
                   placeholder="Welcome to Mubarista Hub&#10;Live competition happening&#10;Registration in progress"

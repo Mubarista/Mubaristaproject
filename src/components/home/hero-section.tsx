@@ -78,11 +78,8 @@ export function HeroSection() {
   // Check if there are active/live competitions
   const hasLiveCompetitions = (platformStats?.liveCompetitions ?? 0) > 0;
 
-  const hints = heroContent?.badges?.length
-    ? heroContent.badges
-    : heroContent?.badge
-      ? [heroContent.badge]
-      : [];
+  const hints = (heroContent?.badges || [heroContent?.badge].filter(Boolean))
+    .filter((h): h is string => typeof h === "string" && h.trim() !== "");
 
   const [hintIndex, setHintIndex] = useState(0);
 
