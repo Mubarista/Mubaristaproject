@@ -47,37 +47,37 @@ import { useAdminAuth } from "@/lib/admin-auth-context";
 import { useTheme, ThemeProvider } from "@/lib/theme-context";
 
 const sections = [
-  { label: "Overview", href: "/muba2-admin", icon: LayoutDashboard },
-  { label: "Hero & Stats", href: "/muba2-admin/hero", icon: Home },
-  { label: "How It Works", href: "/muba2-admin/how-it-works", icon: ListOrdered },
-  { label: "Competitions", href: "/muba2-admin/competitions", icon: Trophy },
-  { label: "Applicants", href: "/muba2-admin/applications", icon: UserCheck },
-  { label: "Winners", href: "/muba2-admin/winners", icon: Medal },
-  { label: "Latte Art", href: "/muba2-admin/latte-art", icon: Image },
-  { label: "Testimonials", href: "/muba2-admin/testimonials", icon: Star },
-  { label: "Sponsors", href: "/muba2-admin/sponsors", icon: Building2 },
-  { label: "Coffee Facts", href: "/muba2-admin/coffee-facts", icon: Coffee },
-  { label: "Tips & Skills", href: "/muba2-admin/tips", icon: Lightbulb },
-  { label: "Articles", href: "/muba2-admin/articles", icon: FileText },
-  { label: "FAQs", href: "/muba2-admin/faqs", icon: HelpCircle },
-  { label: "Learn Categories", href: "/muba2-admin/learn", icon: BookOpen },
-  { label: "Categories", href: "/muba2-admin/categories", icon: Tags },
-  { label: "Books", href: "/muba2-admin/books", icon: BookOpen },
-  { label: "Tools", href: "/muba2-admin/tools", icon: Wrench },
-  { label: "Jobs", href: "/muba2-admin/jobs", icon: Briefcase },
-  { label: "Schools", href: "/muba2-admin/schools", icon: GraduationCap },
-  { label: "Coffee Timeline", href: "/muba2-admin/timeline", icon: Clock },
-  { label: "Legends", href: "/muba2-admin/legends", icon: UserCheck },
-  { label: "About", href: "/muba2-admin/about", icon: FileText },
-  { label: "Contact", href: "/muba2-admin/contact", icon: Building2 },
-  { label: "Message Center", href: "/muba2-admin/messages", icon: HelpCircle },
-  { label: "Countries", href: "/muba2-admin/countries", icon: Globe },
-  { label: "Payments", href: "/muba2-admin/payments", icon: DollarSign },
-  { label: "Subscription Plans", href: "/muba2-admin/subscription-plans", icon: Crown },
-  { label: "Judges",   href: "/muba2-admin/judges",   icon: Scale },
-  { label: "Team", href: "/muba2-admin/team", icon: Users },
-  { label: "Reviews", href: "/muba2-admin/reviews", icon: FileText },
-  { label: "Settings", href: "/muba2-admin/settings", icon: Settings },
+  { label: "Overview", href: "/muba2-admin", icon: LayoutDashboard, module: "dashboard" },
+  { label: "Hero & Stats", href: "/muba2-admin/hero", icon: Home, module: "hero" },
+  { label: "How It Works", href: "/muba2-admin/how-it-works", icon: ListOrdered, module: "how_it_works" },
+  { label: "Competitions", href: "/muba2-admin/competitions", icon: Trophy, module: "competitions" },
+  { label: "Applicants", href: "/muba2-admin/applications", icon: UserCheck, module: "applications" },
+  { label: "Winners", href: "/muba2-admin/winners", icon: Medal, module: "winners" },
+  { label: "Latte Art", href: "/muba2-admin/latte-art", icon: Image, module: "latte_art" },
+  { label: "Testimonials", href: "/muba2-admin/testimonials", icon: Star, module: "testimonials" },
+  { label: "Sponsors", href: "/muba2-admin/sponsors", icon: Building2, module: "sponsors" },
+  { label: "Coffee Facts", href: "/muba2-admin/coffee-facts", icon: Coffee, module: "coffee_facts" },
+  { label: "Tips & Skills", href: "/muba2-admin/tips", icon: Lightbulb, module: "tips" },
+  { label: "Articles", href: "/muba2-admin/articles", icon: FileText, module: "articles" },
+  { label: "FAQs", href: "/muba2-admin/faqs", icon: HelpCircle, module: "faq" },
+  { label: "Learn Categories", href: "/muba2-admin/learn", icon: BookOpen, module: "learning" },
+  { label: "Categories", href: "/muba2-admin/categories", icon: Tags, module: "categories" },
+  { label: "Books", href: "/muba2-admin/books", icon: BookOpen, module: "books" },
+  { label: "Tools", href: "/muba2-admin/tools", icon: Wrench, module: "tools" },
+  { label: "Jobs", href: "/muba2-admin/jobs", icon: Briefcase, module: "jobs" },
+  { label: "Schools", href: "/muba2-admin/schools", icon: GraduationCap, module: "schools" },
+  { label: "Coffee Timeline", href: "/muba2-admin/timeline", icon: Clock, module: "timeline" },
+  { label: "Legends", href: "/muba2-admin/legends", icon: UserCheck, module: "legends" },
+  { label: "About", href: "/muba2-admin/about", icon: FileText, module: "about" },
+  { label: "Contact", href: "/muba2-admin/contact", icon: Building2, module: "contact" },
+  { label: "Message Center", href: "/muba2-admin/messages", icon: HelpCircle, module: "messages" },
+  { label: "Countries", href: "/muba2-admin/countries", icon: Globe, module: "categories" },
+  { label: "Payments", href: "/muba2-admin/payments", icon: DollarSign, module: "payments" },
+  { label: "Subscription Plans", href: "/muba2-admin/subscription-plans", icon: Crown, module: "settings" },
+  { label: "Judges",   href: "/muba2-admin/judges",   icon: Scale, module: "judges" },
+  { label: "Team", href: "/muba2-admin/team", icon: Users, module: "team" },
+  { label: "Reviews", href: "/muba2-admin/reviews", icon: FileText, module: "learning" },
+  { label: "Settings", href: "/muba2-admin/settings", icon: Settings, module: "settings" },
 ];
 
 function AdminLoginScreen() {
@@ -250,7 +250,10 @@ function ExpiredAccountScreen({ onLogout }: { onLogout: () => void | Promise<voi
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { isAdminAuthed, isLoading, isExpired, isSuper, adminLogout, userId } = useAdminAuth();
+  const { isAdminAuthed, isLoading, isExpired, isSuper, adminLogout, userId, permissions } = useAdminAuth();
+  const visibleSections = isSuper
+    ? sections
+    : sections.filter((s) => permissions.some((p) => p.module === s.module && p.canRead));
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [settings, setSettings] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
@@ -551,7 +554,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="flex-1 px-2 py-3 space-y-0.5">
-          {sections.map((s) => {
+          {visibleSections.map((s) => {
             const active = s.href === "/muba2-admin" ? pathname === s.href : pathname.startsWith(s.href);
             const isApplicants = s.href === "/muba2-admin/applications";
             const isMessages = s.href === "/muba2-admin/messages";

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Search, Plus, Trash2, GripVertical } from "lucide-react";
+import { supabaseAdminAuth } from "@/lib/supabase";
 import { AdminTable } from "@/components/admin/admin-table";
 import { AdminModal, Field, Input, Textarea, Select, ImageUpload, VideoUpload } from "@/components/admin/admin-modal";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
@@ -197,15 +198,24 @@ export default function AdminLearnPage() {
   function closeContentModal() { setEditingContent(null); }
   function delContent(c: LearningContent) { setDeletingContent(c); }
 
+  async function adminToken() {
+    const { data } = await supabaseAdminAuth.auth.getSession();
+    return data.session?.access_token || "";
+  }
+
   async function saveContent() {
     setSaving(true);
     try {
       const method = editingContent!.id === "new" ? "POST" : "PUT";
       const body = editingContent!.id === "new" ? contentDraft : { ...contentDraft, id: editingContent!.id };
-      
+      const token = await adminToken();
+
       const res = await fetch("/api/learning-content", {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
         body: JSON.stringify(body),
       });
 
@@ -226,8 +236,10 @@ export default function AdminLearnPage() {
   async function confirmDeleteContent() {
     if (deletingContent) {
       try {
+        const token = await adminToken();
         const res = await fetch(`/api/learning-content?id=${deletingContent.id}`, {
           method: "DELETE",
+          headers: { Authorization: token ? `Bearer ${token}` : "" },
         });
         if (res.ok) {
           await fetchData();

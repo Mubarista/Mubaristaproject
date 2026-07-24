@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase, keysToSnakeCase } from "@/lib/supabase-utils";
+import { getAdminFromRequest, hasPermission, unauthorized, forbidden } from "@/lib/admin-api";
 
 export async function GET(request: Request) {
   try {
@@ -18,6 +19,10 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const admin = await getAdminFromRequest(request);
+  if (!admin) return unauthorized();
+  if (!admin.isSuper && !hasPermission(admin, "learning", "create")) return forbidden();
+
   try {
     const body = await request.json();
     const payload = keysToSnakeCase(body);
@@ -56,8 +61,27 @@ export async function POST(request: Request) {
     delete payload.updated_at;
     delete payload.category;
 
+    const isSuper = admin.isSuper;
+    payload.status = isSuper ? "live" : "pending";
+    payload.active = isSuper ? true : false;
+    payload.submitted_by = isSuper ? null : admin.userId;
+    payload.reviewed_by = isSuper ? admin.userId : null;
+    payload.review_notes = null;
+
     const { data, error } = await supabaseAdmin.from("learning_content").insert({ ...payload, created_at: new Date().toISOString() }).select().single();
     if (error) throw error;
+
+    if (!isSuper) {
+      await supabaseAdmin.from("content_reviews").insert({
+        content_type: "learning_content",
+        content_id: data.id,
+        submitted_by: admin.userId,
+        status: "pending",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+    }
+
     return NextResponse.json(mapKeysToCamelCase(data));
   } catch (error: any) {
     console.error("Error creating learning content:", error);
@@ -66,6 +90,10 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const admin = await getAdminFromRequest(request);
+  if (!admin) return unauthorized();
+  if (!admin.isSuper && !hasPermission(admin, "learning", "update")) return forbidden();
+
   try {
     const body = await request.json();
     const { id, ...updateData } = body;
@@ -77,8 +105,36 @@ export async function PUT(request: Request) {
     delete payload.updated_at;
     delete payload.category;
 
+    const isSuper = admin.isSuper;
+    const requestedStatus = payload.status;
+
+    if (!isSuper) {
+      // Sub-admins always re-submit for review when editing
+      payload.status = "pending";
+      payload.active = false;
+      payload.submitted_by = admin.userId;
+      payload.reviewed_by = null;
+      payload.review_notes = null;
+    } else if (requestedStatus === "live") {
+      // Super admin publishing
+      payload.active = true;
+      payload.reviewed_by = admin.userId;
+    }
+
     const { data, error } = await supabaseAdmin.from("learning_content").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", id).select().single();
     if (error) throw error;
+
+    if (!isSuper) {
+      await supabaseAdmin.from("content_reviews").insert({
+        content_type: "learning_content",
+        content_id: id,
+        submitted_by: admin.userId,
+        status: "pending",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+    }
+
     return NextResponse.json(mapKeysToCamelCase(data));
   } catch (error: any) {
     console.error("Error updating learning content:", error);
@@ -87,6 +143,10 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const admin = await getAdminFromRequest(request);
+  if (!admin) return unauthorized();
+  if (!admin.isSuper && !hasPermission(admin, "learning", "delete")) return forbidden();
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
