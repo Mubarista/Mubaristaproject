@@ -17,6 +17,7 @@ interface AdminLoginResult {
   success: boolean;
   error?: string;
   permissions?: Permission[];
+  allowedModules?: string[];
   isSuper?: boolean;
 }
 
@@ -27,6 +28,7 @@ interface AdminAuthContextType {
   isSuper: boolean;
   userId: string | null;
   permissions: Permission[];
+  allowedModules: string[];
   adminLogin: (email: string, password: string) => Promise<AdminLoginResult>;
   adminLogout: () => Promise<void>;
 }
@@ -39,6 +41,7 @@ async function fetchAdminSession(): Promise<{
   isSuper: boolean;
   userId: string | null;
   permissions: Permission[];
+  allowedModules: string[];
 } | null> {
   const { data, error } = await supabaseAdminAuth.auth.getSession();
   if (error || !data.session) return null;
@@ -54,6 +57,7 @@ async function fetchAdminSession(): Promise<{
     isSuper: admin.isSuper || false,
     userId: admin.userId || null,
     permissions: admin.permissions || [],
+    allowedModules: admin.allowedModules || [],
   };
 }
 
@@ -64,6 +68,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const [isSuper, setIsSuper] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [permissions, setPermissions] = useState<Permission[]>([]);
+  const [allowedModules, setAllowedModules] = useState<string[]>([]);
 
   const clearAuth = useCallback(() => {
     setIsAdminAuthed(false);
@@ -71,14 +76,16 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     setIsSuper(false);
     setUserId(null);
     setPermissions([]);
+    setAllowedModules([]);
   }, []);
 
-  const setAuth = useCallback((session: { isExpired: boolean; isSuper: boolean; userId: string | null; permissions: Permission[] }) => {
+  const setAuth = useCallback((session: { isExpired: boolean; isSuper: boolean; userId: string | null; permissions: Permission[]; allowedModules?: string[] }) => {
     setIsAdminAuthed(true);
     setIsExpired(session.isExpired);
     setIsSuper(session.isSuper);
     setUserId(session.userId);
     setPermissions(session.permissions);
+    setAllowedModules(session.allowedModules || []);
   }, []);
 
   useEffect(() => {
@@ -159,8 +166,9 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
         isSuper: admin.isSuper || false,
         userId: admin.userId || null,
         permissions: admin.permissions || [],
+        allowedModules: admin.allowedModules || [],
       });
-      return { success: true, permissions: admin.permissions || [], isSuper: admin.isSuper || false };
+      return { success: true, permissions: admin.permissions || [], allowedModules: admin.allowedModules || [], isSuper: admin.isSuper || false };
     } catch (error) {
       console.error('Admin login error:', error);
       return { success: false, error: "An unexpected error occurred." };
@@ -173,7 +181,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   }, [clearAuth]);
 
   return (
-    <AdminAuthContext.Provider value={{ isAdminAuthed, isLoading, isExpired, isSuper, userId, permissions, adminLogin, adminLogout }}>
+    <AdminAuthContext.Provider value={{ isAdminAuthed, isLoading, isExpired, isSuper, userId, permissions, allowedModules, adminLogin, adminLogout }}>
       {children}
     </AdminAuthContext.Provider>
   );

@@ -7,6 +7,7 @@ export interface AdminSession {
   email?: string;
   isSuper: boolean;
   isExpired: boolean;
+  allowedModules?: string[];
   team?: {
     id: string;
     email: string;
@@ -17,6 +18,7 @@ export interface AdminSession {
     createdBy?: string;
     createdAt?: string;
     updatedAt?: string;
+    allowedModules?: string[];
   };
   permissions?: {
     id: string;
@@ -53,13 +55,17 @@ export async function getAdminFromRequest(request: Request): Promise<AdminSessio
       .from("permissions")
       .select("*")
       .eq("role_id", tm.role_id);
+    const allowedModules: string[] = Array.isArray(tm.allowed_modules)
+      ? tm.allowed_modules
+      : [];
 
     return {
       userId,
       email,
       isSuper: tm.role_id === "super_admin",
       isExpired: !tm.is_active || isExpired,
-      team: mapKeysToCamelCase(tm),
+      allowedModules,
+      team: mapKeysToCamelCase({ ...tm, allowed_modules: allowedModules }),
       permissions: perms ? perms.map(mapKeysToCamelCase) : [],
     };
   }
@@ -90,7 +96,11 @@ export function hasPermission(
     | "canRead"
     | "canUpdate"
     | "canDelete";
-  return admin.permissions?.some((p) => p.module === module && p[key]) ?? false;
+  const roleHas = admin.permissions?.some((p) => p.module === module && p[key]) ?? false;
+  if (roleHas) return true;
+  // Content creators can be granted extra modules; they never get delete through allowedModules
+  if (action !== "delete" && admin.allowedModules?.includes(module)) return true;
+  return false;
 }
 
 export function unauthorized() {

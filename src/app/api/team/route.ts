@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { email, password, name, roleId, expiresAt } = body;
+    const { email, password, name, roleId, expiresAt, allowedModules } = body;
 
     if (!email || !password || !roleId || !expiresAt) {
       return NextResponse.json(
@@ -104,6 +104,7 @@ export async function POST(request: Request) {
         role_id: roleId,
         is_active: true,
         status: 'active',
+        allowed_modules: allowedModules || [],
         expires_at: new Date(expiresAt).toISOString(),
         invite_token: token,
         invite_url: inviteUrl,
@@ -134,7 +135,7 @@ export async function PUT(request: Request) {
 
   try {
     const body = await request.json();
-    const { id, name, roleId, expiresAt, status } = body;
+    const { id, name, roleId, expiresAt, status, allowedModules } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Missing team member ID" }, { status: 400 });
@@ -148,6 +149,7 @@ export async function PUT(request: Request) {
       update.status = status;
       update.is_active = status === "active";
     }
+    if (allowedModules !== undefined) update.allowed_modules = allowedModules;
 
     const { data, error } = await supabaseAdmin
       .from("team_members")

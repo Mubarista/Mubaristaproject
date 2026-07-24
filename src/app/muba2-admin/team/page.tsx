@@ -16,6 +16,28 @@ interface Role {
   permissions?: any[];
 }
 
+const contentModules = [
+  { module: "hero", label: "Hero & Stats" },
+  { module: "how_it_works", label: "How It Works" },
+  { module: "coffee_facts", label: "Coffee Facts" },
+  { module: "tips", label: "Tips & Skills" },
+  { module: "articles", label: "Articles" },
+  { module: "faqs", label: "FAQs" },
+  { module: "learning", label: "Learn Center" },
+  { module: "latte_art", label: "Latte Art" },
+  { module: "testimonials", label: "Testimonials" },
+  { module: "sponsors", label: "Sponsors" },
+  { module: "timeline", label: "Coffee Timeline" },
+  { module: "legends", label: "Legends" },
+  { module: "about", label: "About" },
+  { module: "contact", label: "Contact" },
+  { module: "messages", label: "Message Center" },
+  { module: "books", label: "Books" },
+  { module: "tools", label: "Tools" },
+  { module: "jobs", label: "Jobs" },
+  { module: "schools", label: "Schools" },
+];
+
 interface TeamMember {
   id: string;
   email: string;
@@ -23,6 +45,7 @@ interface TeamMember {
   roleId: string;
   isActive: boolean;
   status?: string;
+  allowedModules?: string[];
   expiresAt: string;
   createdAt: string;
   roles?: Role;
@@ -46,6 +69,7 @@ export default function TeamPage() {
     roleId: "",
     expiresAt: "",
     status: "active",
+    allowedModules: [] as string[],
   });
 
   useEffect(() => {
@@ -86,7 +110,7 @@ export default function TeamPage() {
 
   function openAdd() {
     setEditing(null);
-    setDraft({ email: "", password: "", name: "", roleId: roles[0]?.id || "", expiresAt: "", status: "active" });
+    setDraft({ email: "", password: "", name: "", roleId: roles[0]?.id || "", expiresAt: "", status: "active", allowedModules: [] });
     setShowModal(true);
   }
 
@@ -99,6 +123,7 @@ export default function TeamPage() {
       roleId: member.roleId,
       expiresAt: member.expiresAt ? new Date(member.expiresAt).toISOString().slice(0, 10) : "",
       status: member.status || (member.isActive ? "active" : "inactive"),
+      allowedModules: member.allowedModules || [],
     });
     setShowModal(true);
   }
@@ -117,6 +142,7 @@ export default function TeamPage() {
             name: draft.name,
             roleId: draft.roleId,
             expiresAt: new Date(draft.expiresAt).toISOString(),
+            allowedModules: draft.allowedModules,
           };
       const res = await fetch(url, {
         method,
@@ -316,6 +342,28 @@ export default function TeamPage() {
                   { value: "banned", label: "Banned" },
                 ]}
               />
+            </Field>
+          )}
+          {draft.roleId === "content_creator" && (
+            <Field label="Allowed Sections">
+              <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto p-3 rounded-xl bg-muted-bg border border-white/10">
+                {contentModules.map((m) => (
+                  <label key={m.module} className="flex items-center gap-2 text-sm text-muted cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={draft.allowedModules.includes(m.module)}
+                      onChange={(e) => {
+                        const set = new Set(draft.allowedModules);
+                        if (e.target.checked) set.add(m.module);
+                        else set.delete(m.module);
+                        setDraft({ ...draft, allowedModules: Array.from(set) });
+                      }}
+                      className="h-4 w-4 rounded border-white/10 bg-background text-blue focus:ring-blue"
+                    />
+                    {m.label}
+                  </label>
+                ))}
+              </div>
             </Field>
           )}
         </AdminModal>

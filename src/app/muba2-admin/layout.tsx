@@ -118,7 +118,11 @@ function AdminLoginScreen() {
       if (!result.success) {
         setError(result.error || "Invalid email or password.");
       } else if (!result.isSuper) {
-        const permitted = sections.find((s) => result.permissions?.some((p) => p.module === s.module && p.canRead));
+        const permitted = sections.find(
+          (s) =>
+            result.permissions?.some((p) => p.module === s.module && p.canRead) ||
+            result.allowedModules?.includes(s.module)
+        );
         if (permitted && permitted.href !== "/muba2-admin") {
           router.push(permitted.href);
         }
@@ -258,10 +262,12 @@ function ExpiredAccountScreen({ onLogout }: { onLogout: () => void | Promise<voi
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { isAdminAuthed, isLoading, isExpired, isSuper, adminLogout, userId, permissions } = useAdminAuth();
+  const { isAdminAuthed, isLoading, isExpired, isSuper, adminLogout, userId, permissions, allowedModules } = useAdminAuth();
   const visibleSections = isSuper
     ? sections
-    : sections.filter((s) => permissions.some((p) => p.module === s.module && p.canRead));
+    : sections.filter((s) =>
+        permissions.some((p) => p.module === s.module && p.canRead) || allowedModules.includes(s.module)
+      );
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [settings, setSettings] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
