@@ -14,7 +14,7 @@ export default function DashboardPage() {
     if (!user) {
       router.push("/login");
     } else if (user.role === "admin") {
-      router.push("/muba2-admin");
+      router.push("/mbhubteam");
     } else {
       router.push("/dashboard/user");
     }

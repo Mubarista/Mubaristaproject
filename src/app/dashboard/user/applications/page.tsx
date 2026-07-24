@@ -111,7 +111,7 @@ export default function UserApplicationsPage() {
   }
 
   if (user.role === "admin") {
-    router.push("/muba2-admin");
+    router.push("/mbhubteam");
     return null;
   }
 

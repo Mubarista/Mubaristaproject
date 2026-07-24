@@ -72,7 +72,7 @@ export async function POST(request: Request) {
       const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
         type: "recovery",
         email,
-        options: { redirectTo: `${origin}/muba2-admin` },
+        options: { redirectTo: `${origin}/mbhubteam` },
       });
       if (linkError) throw linkError;
       inviteUrl = linkData?.properties?.action_link || null;

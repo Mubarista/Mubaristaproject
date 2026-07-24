@@ -47,37 +47,37 @@ import { useAdminAuth } from "@/lib/admin-auth-context";
 import { useTheme, ThemeProvider } from "@/lib/theme-context";
 
 const sections = [
-  { label: "Overview", href: "/muba2-admin", icon: LayoutDashboard, module: "dashboard" },
-  { label: "Hero & Stats", href: "/muba2-admin/hero", icon: Home, module: "hero" },
-  { label: "How It Works", href: "/muba2-admin/how-it-works", icon: ListOrdered, module: "how_it_works" },
-  { label: "Competitions", href: "/muba2-admin/competitions", icon: Trophy, module: "competitions" },
-  { label: "Applicants", href: "/muba2-admin/applications", icon: UserCheck, module: "applications" },
-  { label: "Winners", href: "/muba2-admin/winners", icon: Medal, module: "winners" },
-  { label: "Latte Art", href: "/muba2-admin/latte-art", icon: Image, module: "latte_art" },
-  { label: "Testimonials", href: "/muba2-admin/testimonials", icon: Star, module: "testimonials" },
-  { label: "Sponsors", href: "/muba2-admin/sponsors", icon: Building2, module: "sponsors" },
-  { label: "Coffee Facts", href: "/muba2-admin/coffee-facts", icon: Coffee, module: "coffee_facts" },
-  { label: "Tips & Skills", href: "/muba2-admin/tips", icon: Lightbulb, module: "tips" },
-  { label: "Articles", href: "/muba2-admin/articles", icon: FileText, module: "articles" },
-  { label: "FAQs", href: "/muba2-admin/faqs", icon: HelpCircle, module: "faq" },
-  { label: "Learn Categories", href: "/muba2-admin/learn", icon: BookOpen, module: "learning" },
-  { label: "Categories", href: "/muba2-admin/categories", icon: Tags, module: "categories" },
-  { label: "Books", href: "/muba2-admin/books", icon: BookOpen, module: "books" },
-  { label: "Tools", href: "/muba2-admin/tools", icon: Wrench, module: "tools" },
-  { label: "Jobs", href: "/muba2-admin/jobs", icon: Briefcase, module: "jobs" },
-  { label: "Schools", href: "/muba2-admin/schools", icon: GraduationCap, module: "schools" },
-  { label: "Coffee Timeline", href: "/muba2-admin/timeline", icon: Clock, module: "timeline" },
-  { label: "Legends", href: "/muba2-admin/legends", icon: UserCheck, module: "legends" },
-  { label: "About", href: "/muba2-admin/about", icon: FileText, module: "about" },
-  { label: "Contact", href: "/muba2-admin/contact", icon: Building2, module: "contact" },
-  { label: "Message Center", href: "/muba2-admin/messages", icon: HelpCircle, module: "messages" },
-  { label: "Countries", href: "/muba2-admin/countries", icon: Globe, module: "categories" },
-  { label: "Payments", href: "/muba2-admin/payments", icon: DollarSign, module: "payments" },
-  { label: "Subscription Plans", href: "/muba2-admin/subscription-plans", icon: Crown, module: "settings" },
-  { label: "Judges",   href: "/muba2-admin/judges",   icon: Scale, module: "judges" },
-  { label: "Team", href: "/muba2-admin/team", icon: Users, module: "team" },
-  { label: "Reviews", href: "/muba2-admin/reviews", icon: FileText, module: "learning" },
-  { label: "Settings", href: "/muba2-admin/settings", icon: Settings, module: "settings" },
+  { label: "Overview", href: "/mbhubteam", icon: LayoutDashboard, module: "dashboard" },
+  { label: "Hero & Stats", href: "/mbhubteam/hero", icon: Home, module: "hero" },
+  { label: "How It Works", href: "/mbhubteam/how-it-works", icon: ListOrdered, module: "how_it_works" },
+  { label: "Competitions", href: "/mbhubteam/competitions", icon: Trophy, module: "competitions" },
+  { label: "Applicants", href: "/mbhubteam/applications", icon: UserCheck, module: "applications" },
+  { label: "Winners", href: "/mbhubteam/winners", icon: Medal, module: "winners" },
+  { label: "Latte Art", href: "/mbhubteam/latte-art", icon: Image, module: "latte_art" },
+  { label: "Testimonials", href: "/mbhubteam/testimonials", icon: Star, module: "testimonials" },
+  { label: "Sponsors", href: "/mbhubteam/sponsors", icon: Building2, module: "sponsors" },
+  { label: "Coffee Facts", href: "/mbhubteam/coffee-facts", icon: Coffee, module: "coffee_facts" },
+  { label: "Tips & Skills", href: "/mbhubteam/tips", icon: Lightbulb, module: "tips" },
+  { label: "Articles", href: "/mbhubteam/articles", icon: FileText, module: "articles" },
+  { label: "FAQs", href: "/mbhubteam/faqs", icon: HelpCircle, module: "faq" },
+  { label: "Learn Categories", href: "/mbhubteam/learn", icon: BookOpen, module: "learning" },
+  { label: "Categories", href: "/mbhubteam/categories", icon: Tags, module: "categories" },
+  { label: "Books", href: "/mbhubteam/books", icon: BookOpen, module: "books" },
+  { label: "Tools", href: "/mbhubteam/tools", icon: Wrench, module: "tools" },
+  { label: "Jobs", href: "/mbhubteam/jobs", icon: Briefcase, module: "jobs" },
+  { label: "Schools", href: "/mbhubteam/schools", icon: GraduationCap, module: "schools" },
+  { label: "Coffee Timeline", href: "/mbhubteam/timeline", icon: Clock, module: "timeline" },
+  { label: "Legends", href: "/mbhubteam/legends", icon: UserCheck, module: "legends" },
+  { label: "About", href: "/mbhubteam/about", icon: FileText, module: "about" },
+  { label: "Contact", href: "/mbhubteam/contact", icon: Building2, module: "contact" },
+  { label: "Message Center", href: "/mbhubteam/messages", icon: HelpCircle, module: "messages" },
+  { label: "Countries", href: "/mbhubteam/countries", icon: Globe, module: "categories" },
+  { label: "Payments", href: "/mbhubteam/payments", icon: DollarSign, module: "payments" },
+  { label: "Subscription Plans", href: "/mbhubteam/subscription-plans", icon: Crown, module: "settings" },
+  { label: "Judges",   href: "/mbhubteam/judges",   icon: Scale, module: "judges" },
+  { label: "Team", href: "/mbhubteam/team", icon: Users, module: "team" },
+  { label: "Reviews", href: "/mbhubteam/reviews", icon: FileText, module: "learning" },
+  { label: "Settings", href: "/mbhubteam/settings", icon: Settings, module: "settings" },
 ];
 
 function AdminLoginScreen() {
@@ -123,7 +123,7 @@ function AdminLoginScreen() {
             result.permissions?.some((p) => p.module === s.module && p.canRead) ||
             result.allowedModules?.includes(s.module)
         );
-        if (permitted && permitted.href !== "/muba2-admin") {
+        if (permitted && permitted.href !== "/mbhubteam") {
           router.push(permitted.href);
         }
       }
@@ -445,7 +445,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           const tools = await toolsRes.json();
           tools.forEach((t: any) => {
             if (t.name.toLowerCase().includes(q) || t.brand.toLowerCase().includes(q) || t.category.toLowerCase().includes(q)) {
-              results.push({ type: "Tool", name: t.name, subtitle: t.brand, href: `/muba2-admin/tools`, icon: Wrench });
+              results.push({ type: "Tool", name: t.name, subtitle: t.brand, href: `/mbhubteam/tools`, icon: Wrench });
             }
           });
         }
@@ -458,7 +458,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           const books = await booksRes.json();
           books.forEach((b: any) => {
             if (b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q) || b.category.toLowerCase().includes(q)) {
-              results.push({ type: "Book", name: b.title, subtitle: b.author, href: `/muba2-admin/books`, icon: BookOpen });
+              results.push({ type: "Book", name: b.title, subtitle: b.author, href: `/mbhubteam/books`, icon: BookOpen });
             }
           });
         }
@@ -471,7 +471,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           const articles = await articlesRes.json();
           articles.forEach((a: any) => {
             if (a.title.toLowerCase().includes(q) || a.author.toLowerCase().includes(q) || a.category.toLowerCase().includes(q)) {
-              results.push({ type: "Article", name: a.title, subtitle: a.author, href: `/muba2-admin/articles`, icon: FileText });
+              results.push({ type: "Article", name: a.title, subtitle: a.author, href: `/mbhubteam/articles`, icon: FileText });
             }
           });
         }
@@ -484,7 +484,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           const legends = await legendsRes.json();
           legends.forEach((l: any) => {
             if (l.name.toLowerCase().includes(q) || l.country.toLowerCase().includes(q)) {
-              results.push({ type: "Legend", name: l.name, subtitle: l.country, href: `/muba2-admin/legends`, icon: UserCheck });
+              results.push({ type: "Legend", name: l.name, subtitle: l.country, href: `/mbhubteam/legends`, icon: UserCheck });
             }
           });
         }
@@ -497,7 +497,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           const winners = await winnersRes.json();
           winners.forEach((w: any) => {
             if (w.name.toLowerCase().includes(q) || w.competition.toLowerCase().includes(q)) {
-              results.push({ type: "Winner", name: w.name, subtitle: w.competition, href: `/muba2-admin/winners`, icon: Medal });
+              results.push({ type: "Winner", name: w.name, subtitle: w.competition, href: `/mbhubteam/winners`, icon: Medal });
             }
           });
         }
@@ -569,9 +569,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
         <nav className="flex-1 px-2 py-3 space-y-0.5">
           {visibleSections.map((s) => {
-            const active = s.href === "/muba2-admin" ? pathname === s.href : pathname.startsWith(s.href);
-            const isApplicants = s.href === "/muba2-admin/applications";
-            const isMessages = s.href === "/muba2-admin/messages";
+            const active = s.href === "/mbhubteam" ? pathname === s.href : pathname.startsWith(s.href);
+            const isApplicants = s.href === "/mbhubteam/applications";
+            const isMessages = s.href === "/mbhubteam/messages";
             return (
               <Link
                 key={s.href}

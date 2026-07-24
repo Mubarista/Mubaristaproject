@@ -112,7 +112,7 @@ export default function AddressesPage() {
   }
 
   if (user.role === "admin") {
-    router.push("/muba2-admin");
+    router.push("/mbhubteam");
     return null;
   }
 

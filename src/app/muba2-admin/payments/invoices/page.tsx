@@ -167,7 +167,7 @@ export default function InvoicesPage() {
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/muba2-admin/payments" className="p-2 rounded-xl hover:bg-white/5 transition-colors">
+        <Link href="/mbhubteam/payments" className="p-2 rounded-xl hover:bg-white/5 transition-colors">
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <div>

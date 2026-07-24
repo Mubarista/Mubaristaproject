@@ -216,7 +216,7 @@ export default function UserDashboard() {
 
   // Redirect admin users to admin panel
   if (user.role === "admin") {
-    router.push("/muba2-admin");
+    router.push("/mbhubteam");
     return null;
   }
 

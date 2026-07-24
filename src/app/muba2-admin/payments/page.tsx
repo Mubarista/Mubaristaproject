@@ -229,11 +229,11 @@ export default function AdminPaymentsPage() {
       {/* Quick navigation */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         {[
-          { href: "/muba2-admin/payments/transactions", icon: CreditCard, label: "All Transactions", desc: `${payments.length} total`, color: "text-blue bg-blue/10" },
-          { href: "/muba2-admin/payments/invoices", icon: Receipt, label: "Invoices", desc: `${invoices.length} invoices`, color: "text-green bg-green/10" },
-          { href: "/muba2-admin/payments/statements", icon: FileText, label: "Statements", desc: `${statements.length} months`, color: "text-yellow bg-yellow/10" },
-          { href: "/muba2-admin/payments/analytics", icon: BarChart3, label: "Analytics", desc: "Methods & trends", color: "text-purple bg-purple/10" },
-          { href: "/muba2-admin/payments/settings", icon: Settings, label: "Payment Method", desc: "Configure payment methods", color: "text-muted bg-muted-bg" },
+          { href: "/mbhubteam/payments/transactions", icon: CreditCard, label: "All Transactions", desc: `${payments.length} total`, color: "text-blue bg-blue/10" },
+          { href: "/mbhubteam/payments/invoices", icon: Receipt, label: "Invoices", desc: `${invoices.length} invoices`, color: "text-green bg-green/10" },
+          { href: "/mbhubteam/payments/statements", icon: FileText, label: "Statements", desc: `${statements.length} months`, color: "text-yellow bg-yellow/10" },
+          { href: "/mbhubteam/payments/analytics", icon: BarChart3, label: "Analytics", desc: "Methods & trends", color: "text-purple bg-purple/10" },
+          { href: "/mbhubteam/payments/settings", icon: Settings, label: "Payment Method", desc: "Configure payment methods", color: "text-muted bg-muted-bg" },
         ].map(nav => (
           <Link key={nav.href} href={nav.href} className="glass-card rounded-2xl p-5 flex items-center gap-4 hover:bg-white/5 transition-colors group">
             <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${nav.color}`}>
@@ -256,7 +256,7 @@ export default function AdminPaymentsPage() {
             <Button variant="ghost" size="sm" onClick={() => setShowClearDialog(true)} className="text-red hover:text-red hover:bg-red/10 h-8 px-2">
               <Trash2 className="h-3.5 w-3.5 mr-1" /> Clear all
             </Button>
-            <Link href="/muba2-admin/payments/transactions" className="text-xs text-blue hover:underline flex items-center gap-1">
+            <Link href="/mbhubteam/payments/transactions" className="text-xs text-blue hover:underline flex items-center gap-1">
               View all <ArrowRight className="h-3 w-3" />
             </Link>
           </div>

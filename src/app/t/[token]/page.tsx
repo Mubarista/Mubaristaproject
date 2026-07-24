@@ -25,5 +25,5 @@ export default async function TeamInvitePage({ params }: Props) {
     );
   }
 
-  return <AutoRedirect url={data.invite_url} fallback="/muba2-admin" />;
+  return <AutoRedirect url={data.invite_url} fallback="/mbhubteam" />;
 }
