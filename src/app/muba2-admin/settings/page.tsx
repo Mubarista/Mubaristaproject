@@ -763,11 +763,12 @@ export default function AdminSettingsPage() {
           onClose={() => setEditingLogo(false)}
           onSave={saveLogo}
         >
-          <Field label="Logo Image">
+          <Field label="Logo Image (PNG with transparent background)">
             <ImageUpload
               value={logoDraft}
               onChange={setLogoDraft}
               aspectRatio="square"
+              pngOnly
             />
           </Field>
         </AdminModal>

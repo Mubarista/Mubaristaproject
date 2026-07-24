@@ -313,9 +313,10 @@ interface ImageUploadProps {
   label?: string;
   aspectRatio?: "square" | "banner" | "portrait" | "story";
   allowCrop?: boolean;
+  pngOnly?: boolean;
 }
 
-export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "banner", allowCrop = false }: ImageUploadProps) {
+export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "banner", allowCrop = false, pngOnly = false }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const cropImageRef = useRef<HTMLImageElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -362,6 +363,12 @@ export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "b
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (pngOnly && file.type !== "image/png") {
+      alert("Only PNG images are allowed for the logo. Please upload a PNG file with a transparent background.");
+      e.target.value = "";
+      return;
+    }
+
     if (allowCrop) {
       // Show crop modal before uploading
       const reader = new FileReader();
@@ -390,11 +397,18 @@ export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "b
       canvas.height = height;
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Failed to create canvas context");
+      if (!pngOnly) {
+        // For non-PNG, fill white background to avoid black when converting to JPEG
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, width, height);
+      }
       ctx.drawImage(image, 0, 0, width, height);
 
-      const blob = await downscaleCanvasToBlob(canvas);
+      const blob = await downscaleCanvasToBlob(canvas, pngOnly);
       if (!blob) throw new Error("Failed to process image");
-      const resized = new File([blob], file.name, { type: "image/jpeg" });
+      const outType = pngOnly ? "image/png" : "image/jpeg";
+      const outName = pngOnly ? (file.name.endsWith(".png") ? file.name : `${file.name}.png`) : file.name;
+      const resized = new File([blob], outName, { type: outType });
 
       const formData = new FormData();
       formData.append("file", resized);
@@ -466,7 +480,7 @@ export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "b
     return canvas;
   }
 
-  function downscaleCanvasToBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
+  function downscaleCanvasToBlob(canvas: HTMLCanvasElement, preservePng = false): Promise<Blob | null> {
     const MAX_WIDTH = 1920;
     const MAX_HEIGHT = 1080;
     let width = canvas.width;
@@ -481,6 +495,9 @@ export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "b
     resized.height = height;
     const ctx = resized.getContext("2d");
     if (ctx) ctx.drawImage(canvas, 0, 0, width, height);
+    if (preservePng) {
+      return new Promise((resolve) => resized.toBlob(resolve, "image/png"));
+    }
     return new Promise((resolve) => resized.toBlob(resolve, "image/jpeg", 0.8));
   }
 
@@ -512,9 +529,11 @@ export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "b
     }
     setUploading(true);
     try {
-      const blob = await downscaleCanvasToBlob(cropped);
+      const blob = await downscaleCanvasToBlob(cropped, pngOnly);
       if (!blob) throw new Error("Failed to process image");
-      const file = new File([blob], "cropped.jpg", { type: "image/jpeg" });
+      const outType = pngOnly ? "image/png" : "image/jpeg";
+      const outName = pngOnly ? "cropped.png" : "cropped.jpg";
+      const file = new File([blob], outName, { type: outType });
       const formData = new FormData();
       formData.append("file", file);
       formData.append("type", "photo");
@@ -588,7 +607,7 @@ export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "b
             <>
               <ImageIcon className="h-8 w-8 text-muted" />
               <p className="text-xs text-muted">Click to upload image</p>
-              <p className="text-xs text-muted/60">PNG, JPG, WEBP</p>
+              <p className="text-xs text-muted/60">{pngOnly ? "PNG only (transparent background)" : "PNG, JPG, WEBP"}</p>
             </>
           )}
         </div>
@@ -608,7 +627,7 @@ export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "b
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept={pngOnly ? "image/png" : "image/*"}
           className="hidden"
           onChange={handleFile}
           disabled={uploading}
