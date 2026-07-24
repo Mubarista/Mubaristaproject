@@ -8,6 +8,23 @@ function generateShortToken(): string {
   return randomBytes(4).toString("hex");
 }
 
+async function generateInviteData(email: string, origin: string): Promise<{ token: string; inviteUrl: string | null }> {
+  const token = generateShortToken();
+  let inviteUrl: string | null = null;
+  try {
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: "recovery",
+      email,
+      options: { redirectTo: `${origin}/mbhubteam` },
+    });
+    if (linkError) throw linkError;
+    inviteUrl = linkData?.properties?.action_link || null;
+  } catch (err: any) {
+    console.error("Invite link generation failed:", err?.message || err);
+  }
+  return { token, inviteUrl };
+}
+
 export async function GET(request: Request) {
   const admin = await getAdminFromRequest(request);
   if (!admin) return unauthorized();
@@ -64,21 +81,7 @@ export async function POST(request: Request) {
 
     const userId = authData.user.id;
     const origin = request.headers.get("origin") || `http://${request.headers.get("host")}`;
-    const token = generateShortToken();
-
-    // Generate a password reset link for first login
-    let inviteUrl: string | null = null;
-    try {
-      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-        type: "recovery",
-        email,
-        options: { redirectTo: `${origin}/mbhubteam` },
-      });
-      if (linkError) throw linkError;
-      inviteUrl = linkData?.properties?.action_link || null;
-    } catch (err: any) {
-      console.error("Invite link generation failed:", err?.message || err);
-    }
+    const { token, inviteUrl } = await generateInviteData(email, origin);
 
     // Ensure public users profile exists
     await supabaseAdmin
@@ -135,7 +138,7 @@ export async function PUT(request: Request) {
 
   try {
     const body = await request.json();
-    const { id, name, roleId, expiresAt, status, allowedModules } = body;
+    const { id, name, roleId, expiresAt, status, allowedModules, regenerateInvite } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Missing team member ID" }, { status: 400 });
@@ -150,6 +153,24 @@ export async function PUT(request: Request) {
       update.is_active = status === "active";
     }
     if (allowedModules !== undefined) update.allowed_modules = allowedModules;
+
+    let shortLink: string | undefined;
+    if (regenerateInvite) {
+      const { data: current } = await supabaseAdmin
+        .from("team_members")
+        .select("email")
+        .eq("id", id)
+        .single();
+      if (!current?.email) {
+        return NextResponse.json({ error: "Team member email not found" }, { status: 404 });
+      }
+      const origin = request.headers.get("origin") || `http://${request.headers.get("host")}`;
+      const { token, inviteUrl } = await generateInviteData(current.email, origin);
+      update.invite_token = token;
+      update.invite_url = inviteUrl;
+      update.invite_expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      shortLink = `${origin}/t/${token}`;
+    }
 
     const { data, error } = await supabaseAdmin
       .from("team_members")
@@ -167,7 +188,7 @@ export async function PUT(request: Request) {
       await supabaseAdmin.from("users").update({ name }).eq("id", id);
     }
 
-    return NextResponse.json(mapKeysToCamelCase(data));
+    return NextResponse.json({ ...mapKeysToCamelCase(data), shortLink });
   } catch (error: any) {
     return NextResponse.json({ error: error?.message || "Failed to update team member" }, { status: 500 });
   }

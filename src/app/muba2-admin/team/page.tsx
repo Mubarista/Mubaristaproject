@@ -188,6 +188,33 @@ export default function TeamPage() {
     }
   }
 
+  async function regenerateInvite(member: TeamMember) {
+    setSaving(true);
+    const token = await getToken();
+    try {
+      const res = await fetch("/api/team", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ id: member.id, regenerateInvite: true }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCreatedInvite({ shortLink: data.shortLink, email: member.email, name: member.name });
+        await loadData();
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to regenerate invite");
+      }
+    } catch (error) {
+      console.error("Regenerate invite error:", error);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (!isSuper) {
     return (
       <div className="pt-24 pb-16 px-4">
@@ -212,7 +239,7 @@ export default function TeamPage() {
 
         {createdInvite && (
           <Card className="p-6 mb-6 border-l-4 border-l-blue">
-            <h2 className="text-lg font-semibold mb-1">Team member created</h2>
+            <h2 className="text-lg font-semibold mb-1">Access link ready</h2>
             <p className="text-muted text-sm mb-3">
               Send this short link to {createdInvite.name || createdInvite.email}. It expires in 24 hours.
             </p>
@@ -260,6 +287,7 @@ export default function TeamPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right space-x-2">
+                      <Button variant="secondary" className="h-8 text-xs" onClick={() => regenerateInvite(m)}>Invite</Button>
                       <Button variant="secondary" className="h-8 text-xs" onClick={() => openEdit(m)}>Edit</Button>
                       <Button variant="secondary" className="h-8 text-xs" onClick={() => setShowDelete(m)}>Delete</Button>
                     </td>
