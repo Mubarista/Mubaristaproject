@@ -203,8 +203,9 @@ export default function LearnContentPage({ params }: Props) {
             <ImageCarousel
               images={imageItems}
               alt={content.title}
-              className="max-w-2xl mx-auto"
-              aspectRatio="4/3"
+              className="max-w-md mx-auto"
+              aspectRatio="1/1"
+              objectFit="cover"
             />
           );
         }

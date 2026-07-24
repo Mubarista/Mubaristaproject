@@ -14,9 +14,10 @@ interface ImageCarouselProps {
   alt: string;
   aspectRatio?: string;
   className?: string;
+  objectFit?: "contain" | "cover";
 }
 
-export function ImageCarousel({ images, alt, aspectRatio = "3/4", className = "" }: ImageCarouselProps) {
+export function ImageCarousel({ images, alt, aspectRatio = "3/4", className = "", objectFit = "contain" }: ImageCarouselProps) {
   const [index, setIndex] = useState(0);
   const [imageAspects, setImageAspects] = useState<Record<number, string>>({});
   const touchStartX = useRef<number | null>(null);
@@ -74,9 +75,10 @@ export function ImageCarousel({ images, alt, aspectRatio = "3/4", className = ""
               alt={`${alt} ${i + 1}`}
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
-              className="object-contain"
+              className={objectFit === "cover" ? "object-cover" : "object-contain"}
               loading="eager"
               onLoadingComplete={(img) => {
+                if (objectFit !== "contain") return;
                 const ratio = img.naturalWidth / img.naturalHeight;
                 const minRatio = 3 / 4;
                 const maxRatio = 4 / 3;

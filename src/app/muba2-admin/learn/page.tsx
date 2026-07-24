@@ -433,7 +433,8 @@ export default function AdminLearnPage() {
                   <ImageUpload
                     value={img.url}
                     onChange={(url) => updateImageSlot(index, "url", url)}
-                    aspectRatio="banner"
+                    aspectRatio="square"
+                    allowCrop={true}
                     label={`Image ${index + 1}`}
                   />
                   <Field label="Caption">
