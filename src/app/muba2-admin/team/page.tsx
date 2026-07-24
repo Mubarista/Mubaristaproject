@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { supabaseAdminAuth } from "@/lib/supabase";
 import { useAdminAuth } from "@/lib/admin-auth-context";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ export default function TeamPage() {
   const [editing, setEditing] = useState<TeamMember | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showDelete, setShowDelete] = useState<TeamMember | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [draft, setDraft] = useState({
     email: "",
     password: "",
@@ -68,6 +70,16 @@ export default function TeamPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function generatePassword() {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+    let pw = "";
+    for (let i = 0; i < 12; i++) {
+      pw += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setDraft((d) => ({ ...d, password: pw }));
+    setShowPassword(true);
   }
 
   function openAdd() {
@@ -218,7 +230,31 @@ export default function TeamPage() {
           {!editing && (
             <>
               <Field label="Email" required><Input type="email" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} /></Field>
-              <Field label="Initial Password" required><Input type="password" value={draft.password} onChange={(e) => setDraft({ ...draft, password: e.target.value })} /></Field>
+              <Field label="Initial Password" required>
+                <div className="relative flex items-center">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    value={draft.password}
+                    onChange={(e) => setDraft({ ...draft, password: e.target.value })}
+                    className="pr-24"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-12 p-1.5 text-muted hover:text-foreground transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={generatePassword}
+                    className="absolute right-2 px-2 py-1 text-xs font-medium rounded-md bg-blue/10 text-blue hover:bg-blue/20 transition-colors"
+                  >
+                    Generate
+                  </button>
+                </div>
+              </Field>
             </>
           )}
           <Field label="Role" required>
