@@ -33,6 +33,7 @@ interface LearningContent {
   contentType: string;
   mediaUrl: string | null;
   textContent: string | null;
+  images: { url: string; caption?: string }[] | null;
   isPremium: boolean;
   order: number;
   active: boolean;
@@ -191,20 +192,35 @@ export default function LearnContentPage({ params }: Props) {
           </div>
         );
 
-      case "image":
-        return content.mediaUrl ? (
-          <div className="rounded-xl overflow-hidden">
-            <img
-              src={content.mediaUrl}
-              alt={content.title}
-              className="w-full h-auto"
-            />
-          </div>
-        ) : (
+      case "image": {
+        const imageItems = content.images?.filter((img) => img.url) || [];
+        if (imageItems.length === 0 && content.mediaUrl) {
+          imageItems.push({ url: content.mediaUrl });
+        }
+        if (imageItems.length > 0) {
+          return (
+            <div className="space-y-6">
+              {imageItems.map((img, idx) => (
+                <div key={idx} className="rounded-xl overflow-hidden border border-white/10 bg-muted-bg">
+                  <img
+                    src={img.url}
+                    alt={img.caption || content.title}
+                    className="w-full h-auto"
+                  />
+                  {img.caption && (
+                    <p className="px-4 py-3 text-sm text-muted border-t border-white/10">{img.caption}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          );
+        }
+        return (
           <div className="aspect-video bg-muted-bg rounded-xl flex items-center justify-center">
-            <p className="text-muted">No image URL provided</p>
+            <p className="text-muted">No images provided</p>
           </div>
         );
+      }
 
       case "text":
         return (

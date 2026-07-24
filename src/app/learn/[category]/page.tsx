@@ -33,6 +33,7 @@ interface LearningContent {
   contentType: string;
   mediaUrl: string | null;
   textContent: string | null;
+  images: { url: string; caption?: string }[] | null;
   isPremium: boolean;
   order: number;
   active: boolean;
