@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
   let query = supabaseAdmin
     .from("team_members")
-    .select("*, roles(*), permissions:permissions(*)")
+    .select("*, roles(*)")
     .order("created_at", { ascending: false });
 
   if (!includeInactive) {

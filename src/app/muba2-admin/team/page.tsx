@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, RefreshCw } from "lucide-react";
 import { supabaseAdminAuth } from "@/lib/supabase";
 import { useAdminAuth } from "@/lib/admin-auth-context";
 import { Button } from "@/components/ui/button";
@@ -249,9 +249,11 @@ export default function TeamPage() {
                   <button
                     type="button"
                     onClick={generatePassword}
-                    className="absolute right-2 px-2 py-1 text-xs font-medium rounded-md bg-blue/10 text-blue hover:bg-blue/20 transition-colors"
+                    className="absolute right-2 p-1.5 rounded-md bg-blue/10 text-blue hover:bg-blue/20 transition-colors"
+                    aria-label="Generate password"
+                    title="Generate password"
                   >
-                    Generate
+                    <RefreshCw className="h-4 w-4" />
                   </button>
                 </div>
               </Field>
