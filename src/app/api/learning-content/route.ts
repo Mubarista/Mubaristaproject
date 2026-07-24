@@ -35,8 +35,19 @@ export async function POST(request: Request) {
     if (payload.content_type === "video" && (!payload.media_url || payload.media_url === "")) {
       return NextResponse.json({ error: "Video content requires a media URL" }, { status: 400 });
     }
-    if (payload.content_type === "image" && (!payload.media_url || payload.media_url === "")) {
-      return NextResponse.json({ error: "Image content requires a media URL" }, { status: 400 });
+    // For image content type, validate that at least one image with URL exists
+    if (payload.content_type === "image") {
+      const images = payload.images;
+      if (!Array.isArray(images) || images.length === 0) {
+        return NextResponse.json({ error: "Image content requires at least one image" }, { status: 400 });
+      }
+      const validImages = images.filter((img: { url?: string }) => img.url && img.url !== "");
+      if (validImages.length === 0) {
+        return NextResponse.json({ error: "Image content requires at least one image with a URL" }, { status: 400 });
+      }
+      if (images.length > 10) {
+        return NextResponse.json({ error: "Maximum 10 images allowed" }, { status: 400 });
+      }
     }
 
     // Remove any client-only fields

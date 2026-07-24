@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search } from "lucide-react";
+import { Search, Plus, Trash2, GripVertical } from "lucide-react";
 import { AdminTable } from "@/components/admin/admin-table";
 import { AdminModal, Field, Input, Textarea, Select, ImageUpload, VideoUpload } from "@/components/admin/admin-modal";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
@@ -21,6 +21,11 @@ interface LearnCategory {
   updatedAt: string;
 }
 
+interface ImageWithCaption {
+  url: string;
+  caption: string;
+}
+
 interface LearningContent {
   id: string;
   categoryId: string;
@@ -29,6 +34,7 @@ interface LearningContent {
   contentType: string;
   mediaUrl: string | null;
   textContent: string | null;
+  images: ImageWithCaption[];
   isPremium: boolean;
   order: number;
   active: boolean;
@@ -46,10 +52,13 @@ const blankContent: Omit<LearningContent, 'id' | 'createdAt' | 'updatedAt' | 'ca
   contentType: "text",
   mediaUrl: null,
   textContent: null,
+  images: [],
   isPremium: false,
   order: 0,
   active: true,
 };
+
+const MAX_IMAGES = 10;
 
 export default function AdminLearnPage() {
   const [activeTab, setActiveTab] = useState("categories");
@@ -158,11 +167,31 @@ export default function AdminLearnPage() {
       contentType: c.contentType, 
       mediaUrl: c.mediaUrl, 
       textContent: c.textContent, 
+      images: c.images || [],
       isPremium: c.isPremium, 
       order: c.order, 
       active: c.active 
     }); 
     setEditingContent(c); 
+  }
+
+  function addImageSlot() {
+    if (contentDraft.images.length >= MAX_IMAGES) return;
+    setContentDraft(d => ({ ...d, images: [...d.images, { url: "", caption: "" }] }));
+  }
+
+  function updateImageSlot(index: number, field: "url" | "caption", value: string) {
+    setContentDraft(d => ({
+      ...d,
+      images: d.images.map((img, i) => i === index ? { ...img, [field]: value } : img),
+    }));
+  }
+
+  function removeImageSlot(index: number) {
+    setContentDraft(d => ({
+      ...d,
+      images: d.images.filter((_, i) => i !== index),
+    }));
   }
   
   function closeContentModal() { setEditingContent(null); }
@@ -365,13 +394,58 @@ export default function AdminLearnPage() {
             </Field>
           )}
           {contentDraft.contentType === "image" && (
-            <Field label="Image URL">
-              <ImageUpload
-                value={contentDraft.mediaUrl || ""}
-                onChange={(url) => setContentDraft(d => ({ ...d, mediaUrl: url }))}
-                aspectRatio="banner"
-              />
-            </Field>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm text-muted">
+                  Images ({contentDraft.images.length}/{MAX_IMAGES})
+                </label>
+                <button
+                  type="button"
+                  onClick={addImageSlot}
+                  disabled={contentDraft.images.length >= MAX_IMAGES}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue/10 text-blue text-xs font-medium hover:bg-blue/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Image
+                </button>
+              </div>
+              {contentDraft.images.length === 0 && (
+                <div className="text-center py-6 rounded-xl border-2 border-dashed border-white/15 bg-muted-bg">
+                  <p className="text-sm text-muted">No images added yet</p>
+                  <p className="text-xs text-muted/60 mt-1">Click "Add Image" to upload up to {MAX_IMAGES} images with captions</p>
+                </div>
+              )}
+              {contentDraft.images.map((img, index) => (
+                <div key={index} className="p-4 rounded-xl border border-white/10 bg-muted-bg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-muted flex items-center gap-1.5">
+                      <GripVertical className="h-3.5 w-3.5" />
+                      Image {index + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeImageSlot(index)}
+                      className="p-1.5 rounded-lg hover:bg-red/20 text-red transition-colors"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <ImageUpload
+                    value={img.url}
+                    onChange={(url) => updateImageSlot(index, "url", url)}
+                    aspectRatio="banner"
+                    label={`Image ${index + 1}`}
+                  />
+                  <Field label="Caption">
+                    <Input
+                      value={img.caption}
+                      onChange={(e) => updateImageSlot(index, "caption", e.target.value)}
+                      placeholder={`Caption for image ${index + 1}`}
+                    />
+                  </Field>
+                </div>
+              ))}
+            </div>
           )}
           {contentDraft.contentType === "text" && (
             <Field label="Text Content">
