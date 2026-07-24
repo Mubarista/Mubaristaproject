@@ -82,6 +82,7 @@ const sections = [
 
 function AdminLoginScreen() {
   const { adminLogin } = useAdminAuth();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -114,7 +115,14 @@ function AdminLoginScreen() {
     setLoading(true);
     try {
       const result = await adminLogin(email, password);
-      if (!result.success) setError(result.error || "Invalid email or password.");
+      if (!result.success) {
+        setError(result.error || "Invalid email or password.");
+      } else if (!result.isSuper) {
+        const permitted = sections.find((s) => result.permissions?.some((p) => p.module === s.module && p.canRead));
+        if (permitted && permitted.href !== "/muba2-admin") {
+          router.push(permitted.href);
+        }
+      }
     } catch {
       setError("Login failed. Please try again.");
     } finally {

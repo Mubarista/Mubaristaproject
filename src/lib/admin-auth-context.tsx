@@ -13,6 +13,13 @@ interface Permission {
   canDelete: boolean;
 }
 
+interface AdminLoginResult {
+  success: boolean;
+  error?: string;
+  permissions?: Permission[];
+  isSuper?: boolean;
+}
+
 interface AdminAuthContextType {
   isAdminAuthed: boolean;
   isLoading: boolean;
@@ -20,7 +27,7 @@ interface AdminAuthContextType {
   isSuper: boolean;
   userId: string | null;
   permissions: Permission[];
-  adminLogin: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  adminLogin: (email: string, password: string) => Promise<AdminLoginResult>;
   adminLogout: () => Promise<void>;
 }
 
@@ -153,7 +160,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
         userId: admin.userId || null,
         permissions: admin.permissions || [],
       });
-      return { success: true };
+      return { success: true, permissions: admin.permissions || [], isSuper: admin.isSuper || false };
     } catch (error) {
       console.error('Admin login error:', error);
       return { success: false, error: "An unexpected error occurred." };
