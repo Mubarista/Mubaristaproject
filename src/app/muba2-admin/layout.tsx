@@ -511,6 +511,19 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     }
   }
 
+  useEffect(() => {
+    if (!isLoading && isAdminAuthed && dataReady && pathname === "/mbhubteam" && !isSuper) {
+      const hasDashboard =
+        permissions.some((p) => p.module === "dashboard" && p.canRead) || allowedModules.includes("dashboard");
+      if (!hasDashboard) {
+        const first = visibleSections[0];
+        if (first && first.href !== pathname) {
+          router.replace(first.href);
+        }
+      }
+    }
+  }, [isLoading, isAdminAuthed, dataReady, pathname, isSuper, permissions, allowedModules, visibleSections, router]);
+
   if (isLoading || (isAdminAuthed && !dataReady)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -521,6 +534,33 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
   if (isExpired) return <ExpiredAccountScreen onLogout={adminLogout} />;
   if (!isAdminAuthed) return <AdminLoginScreen />;
+
+  const currentSection = sections.find(
+    (s) => s.href === pathname || (s.href !== "/mbhubteam" && pathname.startsWith(s.href + "/"))
+  );
+  const currentModule = currentSection?.module;
+  const canAccess =
+    isSuper ||
+    !currentModule ||
+    permissions.some((p) => p.module === currentModule && p.canRead) ||
+    allowedModules.includes(currentModule);
+
+  if (!canAccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 bg-background">
+        <div className="glass-card rounded-2xl p-8 text-center max-w-md">
+          <h1 className="text-xl font-semibold mb-2">Access Denied</h1>
+          <p className="text-muted text-sm mb-4">You do not have permission to view this section.</p>
+          <button
+            onClick={() => router.push(visibleSections[0]?.href || "/mbhubteam")}
+            className="px-4 py-2 rounded-xl bg-blue text-white text-sm font-medium hover:bg-blue-dark transition-colors"
+          >
+            Go to your dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen">

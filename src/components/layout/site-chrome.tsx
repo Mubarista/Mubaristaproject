@@ -6,8 +6,8 @@ import { Footer } from "@/components/layout/footer";
 
 export function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAdmin = pathname.startsWith("/mbhubteam");
-  const isJudge = pathname.startsWith("/judge");
+  const isAdmin = pathname?.startsWith("/mbhubteam") || pathname?.startsWith("/muba2-admin");
+  const isJudge = pathname?.startsWith("/judge");
   const showSiteChrome = !isAdmin && !isJudge;
 
   return (
