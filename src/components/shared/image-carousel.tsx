@@ -78,11 +78,14 @@ export function ImageCarousel({ images, alt, aspectRatio = "3/4", className = ""
               loading="eager"
               onLoadingComplete={(img) => {
                 const ratio = img.naturalWidth / img.naturalHeight;
-                const minRatio = 9 / 16;
-                setImageAspects((aspects) => ({
-                  ...aspects,
-                  [i]: ratio < minRatio ? "9/16" : `${img.naturalWidth}/${img.naturalHeight}`,
-                }));
+                const minRatio = 3 / 4;
+                const maxRatio = 4 / 3;
+                if (ratio >= minRatio && ratio <= maxRatio) {
+                  setImageAspects((aspects) => ({
+                    ...aspects,
+                    [i]: `${img.naturalWidth}/${img.naturalHeight}`,
+                  }));
+                }
               }}
             />
           </div>

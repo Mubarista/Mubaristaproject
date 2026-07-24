@@ -204,7 +204,7 @@ export default function LearnContentPage({ params }: Props) {
               images={imageItems}
               alt={content.title}
               className="max-w-2xl mx-auto"
-              aspectRatio="16/9"
+              aspectRatio="4/3"
             />
           );
         }
