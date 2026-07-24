@@ -231,9 +231,9 @@ function ExpiredAccountScreen({ onLogout }: { onLogout: () => void | Promise<voi
               <RefreshCw className="h-6 w-6" />
             </div>
           </div>
-          <h2 className="text-xl font-semibold mb-2">Account Access Expired</h2>
+          <h2 className="text-xl font-semibold mb-2">Account Access Restricted</h2>
           <p className="text-muted text-sm mb-6">
-            Your team account has expired. A renewal request has been sent to the Super Admin.
+            Your team account is expired, suspended, or banned. Contact the Super Admin for access renewal.
           </p>
           <button
             onClick={onLogout}

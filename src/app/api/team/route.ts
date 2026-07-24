@@ -82,6 +82,7 @@ export async function POST(request: Request) {
         name: name || email.split("@")[0],
         role_id: roleId,
         is_active: true,
+        status: 'active',
         expires_at: new Date(expiresAt).toISOString(),
         created_by: admin.userId,
         created_at: new Date().toISOString(),
@@ -106,7 +107,7 @@ export async function PUT(request: Request) {
 
   try {
     const body = await request.json();
-    const { id, name, roleId, expiresAt, isActive } = body;
+    const { id, name, roleId, expiresAt, status } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Missing team member ID" }, { status: 400 });
@@ -116,7 +117,10 @@ export async function PUT(request: Request) {
     if (name !== undefined) update.name = name;
     if (roleId !== undefined) update.role_id = roleId;
     if (expiresAt !== undefined) update.expires_at = new Date(expiresAt).toISOString();
-    if (isActive !== undefined) update.is_active = isActive;
+    if (status !== undefined) {
+      update.status = status;
+      update.is_active = status === "active";
+    }
 
     const { data, error } = await supabaseAdmin
       .from("team_members")

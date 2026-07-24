@@ -22,6 +22,7 @@ interface TeamMember {
   name?: string;
   roleId: string;
   isActive: boolean;
+  status?: string;
   expiresAt: string;
   createdAt: string;
   roles?: Role;
@@ -43,7 +44,7 @@ export default function TeamPage() {
     name: "",
     roleId: "",
     expiresAt: "",
-    isActive: true,
+    status: "active",
   });
 
   useEffect(() => {
@@ -84,7 +85,7 @@ export default function TeamPage() {
 
   function openAdd() {
     setEditing(null);
-    setDraft({ email: "", password: "", name: "", roleId: roles[0]?.id || "", expiresAt: "", isActive: true });
+    setDraft({ email: "", password: "", name: "", roleId: roles[0]?.id || "", expiresAt: "", status: "active" });
     setShowModal(true);
   }
 
@@ -96,7 +97,7 @@ export default function TeamPage() {
       name: member.name || "",
       roleId: member.roleId,
       expiresAt: member.expiresAt ? new Date(member.expiresAt).toISOString().slice(0, 10) : "",
-      isActive: member.isActive,
+      status: member.status || (member.isActive ? "active" : "inactive"),
     });
     setShowModal(true);
   }
@@ -201,8 +202,12 @@ export default function TeamPage() {
                     <td className="px-4 py-3">{m.roles?.name || m.roleId}</td>
                     <td className="px-4 py-3">{new Date(m.expiresAt).toLocaleDateString()}</td>
                     <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-1 rounded-full ${m.isActive ? "bg-green/10 text-green" : "bg-red/10 text-red"}`}>
-                        {m.isActive ? "Active" : "Inactive"}
+                      <span className={`text-xs px-2 py-1 rounded-full capitalize ${
+                        m.status === "active" ? "bg-green/10 text-green" :
+                        m.status === "suspended" ? "bg-yellow/10 text-yellow" :
+                        m.status === "banned" ? "bg-red/10 text-red" : "bg-muted/10 text-muted"
+                      }`}>
+                        {m.status || (m.isActive ? "Active" : "Inactive")}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right space-x-2">
@@ -226,7 +231,14 @@ export default function TeamPage() {
           onClose={() => setShowModal(false)}
           onSave={save}
         >
-          <Field label="Name"><Input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} /></Field>
+          <Field label="Name"><Input value={draft.name} onChange={(e) => {
+            const name = e.target.value;
+            const email =
+              !editing && (draft.email === "" || draft.email.endsWith("@mubarista.com"))
+                ? `${name.toLowerCase().replace(/\s+/g, ".").replace(/[^a-z0-9.]/g, "")}@mubarista.com`
+                : draft.email;
+            setDraft({ ...draft, name, email });
+          }} /></Field>
           {!editing && (
             <>
               <Field label="Email" required><Input type="email" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} /></Field>
@@ -270,15 +282,18 @@ export default function TeamPage() {
             <Input type="date" value={draft.expiresAt} onChange={(e) => setDraft({ ...draft, expiresAt: e.target.value })} />
           </Field>
           {editing && (
-            <div className="flex items-center gap-2 mt-4">
-              <input
-                type="checkbox"
-                id="isActive"
-                checked={draft.isActive}
-                onChange={(e) => setDraft({ ...draft, isActive: e.target.checked })}
+            <Field label="Account Status">
+              <Select
+                value={draft.status}
+                onChange={(e) => setDraft({ ...draft, status: e.target.value })}
+                options={[
+                  { value: "active", label: "Active" },
+                  { value: "inactive", label: "Inactive" },
+                  { value: "suspended", label: "Suspended" },
+                  { value: "banned", label: "Banned" },
+                ]}
               />
-              <label htmlFor="isActive" className="text-sm text-muted">Account active</label>
-            </div>
+            </Field>
           )}
         </AdminModal>
       )}
