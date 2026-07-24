@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, LogIn } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
+import { OtpDialog } from "@/components/auth/otp-dialog";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -14,6 +15,8 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [logoLoading, setLogoLoading] = useState(true);
+  const [showOtp, setShowOtp] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const { login, loginWithGoogle, isLoading } = useAuth();
   const router = useRouter();
 
@@ -30,26 +33,33 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSubmitting(true);
     try {
       await login(email, password);
       router.push("/dashboard");
-    } catch (err: any) {
-      if (err.message === "OTP_SENT") {
-        router.push(`/verify-otp?email=${encodeURIComponent(email)}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Login failed. Please try again.";
+      if (message === "OTP_SENT") {
+        // Show OTP dialog instead of redirecting
+        setShowOtp(true);
+        setSubmitting(false);
         return;
       }
-      setError(err.message || "Login failed. Please try again.");
+      setError(message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleGoogleLogin = async () => {
     try {
       await loginWithGoogle();
-      // loginWithGoogle redirects to Google OAuth; the redirectTo URL handles the return
-    } catch (err: any) {
-      setError(err.message || "Google login failed. Please try again.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Google login failed. Please try again.");
     }
   };
+
+  const isBusy = submitting || isLoading;
 
   return (
     <div className="pt-24 pb-16 min-h-screen flex items-center justify-center px-4">
@@ -59,6 +69,7 @@ export default function LoginPage() {
             {logoLoading ? (
               <div className="h-7 w-7 rounded-full border-2 border-muted border-t-transparent animate-spin" />
             ) : logoUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
               <img src={logoUrl} alt="MUBARISTA" className="h-full w-full object-contain" />
             ) : null}
           </div>
@@ -77,8 +88,9 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="w-full rounded-xl bg-muted-bg border border-white/10 pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue"
-placeholder="iraguha.mugisha@example.rw"
+                disabled={isBusy}
+                className="w-full rounded-xl bg-muted-bg border border-white/10 pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue disabled:opacity-50 transition-opacity"
+                placeholder="iraguha.mugisha@example.rw"
               />
             </div>
           </div>
@@ -92,7 +104,8 @@ placeholder="iraguha.mugisha@example.rw"
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="current-password"
-                className="w-full rounded-xl bg-muted-bg border border-white/10 pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue"
+                disabled={isBusy}
+                className="w-full rounded-xl bg-muted-bg border border-white/10 pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue disabled:opacity-50 transition-opacity"
                 placeholder="••••••••"
               />
             </div>
@@ -103,10 +116,25 @@ placeholder="iraguha.mugisha@example.rw"
             </Link>
           </div>
           {error && (
-            <p className="text-sm text-red-500">{error}</p>
+            <p className="text-sm text-red-500 animate-otp-error">{error}</p>
           )}
-          <Button variant="primary" type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Signing in..." : "Sign In"}
+          <Button
+            variant="primary"
+            type="submit"
+            className="w-full h-12 text-base font-semibold relative overflow-hidden group"
+            disabled={isBusy}
+          >
+            {isBusy ? (
+              <span className="flex items-center justify-center gap-2.5">
+                <span className="h-5 w-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                Signing you in…
+              </span>
+            ) : (
+              <span className="flex items-center justify-center gap-2">
+                <LogIn className="h-4.5 w-4.5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                Sign In
+              </span>
+            )}
           </Button>
         </form>
 
@@ -123,7 +151,7 @@ placeholder="iraguha.mugisha@example.rw"
           variant="secondary"
           className="w-full"
           onClick={handleGoogleLogin}
-          disabled={isLoading}
+          disabled={isBusy}
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
@@ -135,12 +163,20 @@ placeholder="iraguha.mugisha@example.rw"
         </Button>
 
         <p className="text-center text-sm text-muted mt-6">
-          Don&apos;t have an account?{" "}
+          Don't have an account?{" "}
           <Link href="/register" className="text-blue hover:underline font-medium">
             Register
           </Link>
         </p>
       </Card>
+
+      {/* OTP Verification Dialog */}
+      <OtpDialog
+        email={email}
+        open={showOtp}
+        onClose={() => setShowOtp(false)}
+        onSuccess={() => router.push("/dashboard")}
+      />
     </div>
   );
 }
