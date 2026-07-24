@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
+import { randomBytes } from "crypto";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getAdminFromRequest, hasPermission, unauthorized, forbidden } from "@/lib/admin-api";
 import { mapKeysToCamelCase, keysToSnakeCase } from "@/lib/supabase-utils";
+
+function generateShortToken(): string {
+  return randomBytes(4).toString("hex");
+}
 
 export async function GET(request: Request) {
   const admin = await getAdminFromRequest(request);
@@ -58,6 +63,22 @@ export async function POST(request: Request) {
     }
 
     const userId = authData.user.id;
+    const origin = request.headers.get("origin") || `http://${request.headers.get("host")}`;
+    const token = generateShortToken();
+
+    // Generate a password reset link for first login
+    let inviteUrl: string | null = null;
+    try {
+      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+        type: "recovery",
+        email,
+        options: { redirectTo: `${origin}/muba2-admin` },
+      });
+      if (linkError) throw linkError;
+      inviteUrl = linkData?.properties?.action_link || null;
+    } catch (err: any) {
+      console.error("Invite link generation failed:", err?.message || err);
+    }
 
     // Ensure public users profile exists
     await supabaseAdmin
@@ -84,6 +105,9 @@ export async function POST(request: Request) {
         is_active: true,
         status: 'active',
         expires_at: new Date(expiresAt).toISOString(),
+        invite_token: token,
+        invite_url: inviteUrl,
+        invite_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         created_by: admin.userId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -95,7 +119,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: teamError.message }, { status: 500 });
     }
 
-    return NextResponse.json(mapKeysToCamelCase(teamData));
+    return NextResponse.json({
+      ...mapKeysToCamelCase(teamData),
+      shortLink: `${origin}/t/${token}`,
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error?.message || "Failed to create team member" }, { status: 500 });
   }

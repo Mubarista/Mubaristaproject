@@ -38,6 +38,7 @@ export default function TeamPage() {
   const [showModal, setShowModal] = useState(false);
   const [showDelete, setShowDelete] = useState<TeamMember | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [createdInvite, setCreatedInvite] = useState<{ shortLink: string; email: string; name?: string } | null>(null);
   const [draft, setDraft] = useState({
     email: "",
     password: "",
@@ -124,6 +125,10 @@ export default function TeamPage() {
       });
       if (res.ok) {
         setShowModal(false);
+        const data = await res.json();
+        if (!editing) {
+          setCreatedInvite({ shortLink: data.shortLink, email: data.email, name: data.name });
+        }
         await loadData();
       } else {
         const err = await res.json();
@@ -178,6 +183,24 @@ export default function TeamPage() {
           </div>
           <Button onClick={openAdd} variant="primary">Add Team Member</Button>
         </div>
+
+        {createdInvite && (
+          <Card className="p-6 mb-6 border-l-4 border-l-blue">
+            <h2 className="text-lg font-semibold mb-1">Team member created</h2>
+            <p className="text-muted text-sm mb-3">
+              Send this short link to {createdInvite.name || createdInvite.email}. It expires in 24 hours.
+            </p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 bg-muted-bg rounded-xl px-4 py-2.5 text-sm break-all">{createdInvite.shortLink}</code>
+              <Button
+                variant="secondary"
+                onClick={() => { navigator.clipboard.writeText(createdInvite.shortLink); alert("Link copied!"); }}
+              >
+                Copy
+              </Button>
+            </div>
+          </Card>
+        )}
 
         {loading ? (
           <div className="py-12 text-center"><LoadingDots /></div>
