@@ -31,6 +31,8 @@ import {
   LogOut,
   Eye,
   EyeOff,
+  Users,
+  RefreshCw,
   Settings,
   Tags,
   Search,
@@ -73,6 +75,8 @@ const sections = [
   { label: "Payments", href: "/muba2-admin/payments", icon: DollarSign },
   { label: "Subscription Plans", href: "/muba2-admin/subscription-plans", icon: Crown },
   { label: "Judges",   href: "/muba2-admin/judges",   icon: Scale },
+  { label: "Team", href: "/muba2-admin/team", icon: Users },
+  { label: "Reviews", href: "/muba2-admin/reviews", icon: FileText },
   { label: "Settings", href: "/muba2-admin/settings", icon: Settings },
 ];
 
@@ -217,10 +221,36 @@ function AdminLoginScreen() {
   );
 }
 
+function ExpiredAccountScreen({ onLogout }: { onLogout: () => void | Promise<void> }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4 bg-background">
+      <div className="relative w-full max-w-md">
+        <div className="glass-card rounded-2xl p-8 text-center">
+          <div className="flex justify-center mb-4">
+            <div className="h-12 w-12 rounded-full bg-yellow/10 flex items-center justify-center text-yellow">
+              <RefreshCw className="h-6 w-6" />
+            </div>
+          </div>
+          <h2 className="text-xl font-semibold mb-2">Account Access Expired</h2>
+          <p className="text-muted text-sm mb-6">
+            Your team account has expired. A renewal request has been sent to the Super Admin.
+          </p>
+          <button
+            onClick={onLogout}
+            className="w-full py-3 rounded-xl bg-blue text-white font-semibold text-sm hover:bg-blue-dark transition-colors"
+          >
+            Request Renewal & Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { isAdminAuthed, isLoading, adminLogout, userId } = useAdminAuth();
+  const { isAdminAuthed, isLoading, isExpired, isSuper, adminLogout, userId } = useAdminAuth();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [settings, setSettings] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
@@ -472,6 +502,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     );
   }
 
+  if (isExpired) return <ExpiredAccountScreen onLogout={adminLogout} />;
   if (!isAdminAuthed) return <AdminLoginScreen />;
 
   return (
