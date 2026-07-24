@@ -96,9 +96,9 @@ export function Navbar() {
     >
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-1.5 group">
+          <Link href="/" className="flex items-center gap-1.5 group cursor-pointer" title="Go to Home">
             {siteLogo ? (
-              <img src={siteLogo} alt="MUBARISTA" className="h-14 w-auto bg-transparent transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-2" />
+              <img src={siteLogo} alt="MUBARISTA" className="h-14 w-auto bg-transparent transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-2 cursor-pointer" />
             ) : null}
             <span className="text-xl font-bold tracking-tight leading-none animate-gradient-text">
               MUBARISTA
