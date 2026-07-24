@@ -27,6 +27,8 @@ interface AdminAuthContextType {
   isExpired: boolean;
   isSuper: boolean;
   userId: string | null;
+  adminName: string | null;
+  roleName: string | null;
   permissions: Permission[];
   allowedModules: string[];
   adminLogin: (email: string, password: string) => Promise<AdminLoginResult>;
@@ -40,6 +42,8 @@ async function fetchAdminSession(): Promise<{
   isExpired: boolean;
   isSuper: boolean;
   userId: string | null;
+  adminName: string | null;
+  roleName: string | null;
   permissions: Permission[];
   allowedModules: string[];
 } | null> {
@@ -56,6 +60,8 @@ async function fetchAdminSession(): Promise<{
     isExpired: admin.isExpired || false,
     isSuper: admin.isSuper || false,
     userId: admin.userId || null,
+    adminName: admin.name || null,
+    roleName: admin.roleName || null,
     permissions: admin.permissions || [],
     allowedModules: admin.allowedModules || [],
   };
@@ -67,6 +73,8 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const [isExpired, setIsExpired] = useState(false);
   const [isSuper, setIsSuper] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [adminName, setAdminName] = useState<string | null>(null);
+  const [roleName, setRoleName] = useState<string | null>(null);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [allowedModules, setAllowedModules] = useState<string[]>([]);
 
@@ -75,15 +83,19 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     setIsExpired(false);
     setIsSuper(false);
     setUserId(null);
+    setAdminName(null);
+    setRoleName(null);
     setPermissions([]);
     setAllowedModules([]);
   }, []);
 
-  const setAuth = useCallback((session: { isExpired: boolean; isSuper: boolean; userId: string | null; permissions: Permission[]; allowedModules?: string[] }) => {
+  const setAuth = useCallback((session: { isExpired: boolean; isSuper: boolean; userId: string | null; adminName?: string | null; roleName?: string | null; permissions: Permission[]; allowedModules?: string[] }) => {
     setIsAdminAuthed(true);
     setIsExpired(session.isExpired);
     setIsSuper(session.isSuper);
     setUserId(session.userId);
+    setAdminName(session.adminName || null);
+    setRoleName(session.roleName || null);
     setPermissions(session.permissions);
     setAllowedModules(session.allowedModules || []);
   }, []);
@@ -165,6 +177,8 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
         isExpired: admin.isExpired || false,
         isSuper: admin.isSuper || false,
         userId: admin.userId || null,
+        adminName: admin.name || null,
+        roleName: admin.roleName || null,
         permissions: admin.permissions || [],
         allowedModules: admin.allowedModules || [],
       });
@@ -181,7 +195,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   }, [clearAuth]);
 
   return (
-    <AdminAuthContext.Provider value={{ isAdminAuthed, isLoading, isExpired, isSuper, userId, permissions, allowedModules, adminLogin, adminLogout }}>
+    <AdminAuthContext.Provider value={{ isAdminAuthed, isLoading, isExpired, isSuper, userId, adminName, roleName, permissions, allowedModules, adminLogin, adminLogout }}>
       {children}
     </AdminAuthContext.Provider>
   );

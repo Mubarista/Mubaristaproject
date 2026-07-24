@@ -262,7 +262,7 @@ function ExpiredAccountScreen({ onLogout }: { onLogout: () => void | Promise<voi
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { isAdminAuthed, isLoading, isExpired, isSuper, adminLogout, userId, permissions, allowedModules } = useAdminAuth();
+  const { isAdminAuthed, isLoading, isExpired, isSuper, adminLogout, userId, adminName, roleName, permissions, allowedModules } = useAdminAuth();
   const visibleSections = isSuper
     ? sections
     : sections.filter((s) =>
@@ -571,16 +571,16 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden bg-muted-bg">
                 {user?.avatar ? (
-                  <img src={user.avatar} alt={user?.name || "Admin"} className="h-full w-full object-cover" />
+                  <img src={user.avatar} alt={adminName || "Admin"} className="h-full w-full object-cover" />
                 ) : (
                   <div className="h-full w-full flex items-center justify-center text-muted text-sm font-medium">
-                    {user?.name?.charAt(0) || "A"}
+                    {adminName?.charAt(0).toUpperCase() || "A"}
                   </div>
                 )}
               </div>
               <div>
-                <p className="text-sm font-bold">{settings?.adminPortalTitle || "MubaristaHub Overview"}</p>
-                <p className="text-xs text-muted">{settings?.adminPortalSubtitle || "Full CMS Control"}</p>
+                <p className="text-sm font-bold">{adminName || "MubaristaHub Team"}</p>
+                <p className="text-xs text-muted">{roleName || settings?.adminPortalSubtitle || "Full CMS Control"}</p>
               </div>
             </div>
             <div className="flex items-center gap-1">

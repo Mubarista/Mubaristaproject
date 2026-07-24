@@ -5,6 +5,8 @@ import { mapKeysToCamelCase } from "./supabase-utils";
 export interface AdminSession {
   userId: string;
   email?: string;
+  name?: string;
+  roleName?: string;
   isSuper: boolean;
   isExpired: boolean;
   allowedModules?: string[];
@@ -62,6 +64,8 @@ export async function getAdminFromRequest(request: Request): Promise<AdminSessio
     return {
       userId,
       email,
+      name: tm.name || email?.split("@")[0] || "",
+      roleName: tm.roles?.name || "Team Member",
       isSuper: tm.role_id === "super_admin",
       isExpired: !tm.is_active || isExpired,
       allowedModules,
@@ -78,7 +82,7 @@ export async function getAdminFromRequest(request: Request): Promise<AdminSessio
     .single();
 
   if (profile?.role === "admin") {
-    return { userId, email, isSuper: true, isExpired: false };
+    return { userId, email, name: email?.split("@")[0] || "Admin", roleName: "Super Admin", isSuper: true, isExpired: false };
   }
 
   return null;
