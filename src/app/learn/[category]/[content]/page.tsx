@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { PremiumGate } from "@/components/shared/premium-gate";
+import { ImageCarousel } from "@/components/shared/image-carousel";
 import { LoadingDots } from "@/components/ui/loading-dots";
 
 interface Props {
@@ -199,20 +200,12 @@ export default function LearnContentPage({ params }: Props) {
         }
         if (imageItems.length > 0) {
           return (
-            <div className="space-y-6">
-              {imageItems.map((img, idx) => (
-                <div key={idx} className="rounded-xl overflow-hidden border border-white/10 bg-muted-bg">
-                  <img
-                    src={img.url}
-                    alt={img.caption || content.title}
-                    className="w-full h-auto"
-                  />
-                  {img.caption && (
-                    <p className="px-4 py-3 text-sm text-muted border-t border-white/10">{img.caption}</p>
-                  )}
-                </div>
-              ))}
-            </div>
+            <ImageCarousel
+              images={imageItems}
+              alt={content.title}
+              className="max-w-2xl mx-auto"
+              aspectRatio="16/9"
+            />
           );
         }
         return (
