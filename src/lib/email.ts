@@ -143,6 +143,61 @@ async function sendWithResend(input: SendEmailInput): Promise<SendEmailResult> {
   }
 }
 
+export async function getSiteLogo(): Promise<string | null> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("site_settings")
+      .select("logo")
+      .limit(1)
+      .maybeSingle();
+    const configured = !error && data?.logo ? (data.logo as string) : null;
+    if (configured) return configured;
+
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    return siteUrl ? `${siteUrl}/logo-bimi.svg` : null;
+  } catch (err) {
+    console.error("Error loading site logo:", err);
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    return siteUrl ? `${siteUrl}/logo-bimi.svg` : null;
+  }
+}
+
+export interface BuildEmailHtmlInput {
+  title?: string;
+  body: string;
+  logoUrl?: string | null;
+}
+
+export async function buildEmailHtml(input: BuildEmailHtmlInput): Promise<string> {
+  const logoUrl = input.logoUrl ?? (await getSiteLogo());
+  const logoHtml = logoUrl
+    ? `<img src="${logoUrl}" alt="MUBARISTA" style="max-height:48px;max-width:180px;" />`
+    : `<h1 style="margin:0;font-size:24px;">MUBARISTA</h1>`;
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <title>${input.title ?? "MUBARISTA"}</title>
+      </head>
+      <body style="margin:0;padding:0;background:#f3f4f6;font-family:system-ui,-apple-system,sans-serif">
+        <div style="max-width:640px;margin:24px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1)">
+          <div style="background:#111827;color:#ffffff;padding:24px 32px;text-align:center;">
+            ${logoHtml}
+          </div>
+          <div style="padding:32px;">
+            ${input.body}
+          </div>
+          <div style="padding:24px 32px;border-top:1px solid #e5e7eb;text-align:center;color:#6b7280;font-size:14px">
+            <p style="margin:0;">MUBARISTA</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
 export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
   const settings = await getSmtpSettings();
   if (settings) {

@@ -771,6 +771,13 @@ export default function AdminSettingsPage() {
               pngOnly
             />
           </Field>
+          <Field label="Or paste a logo URL (SVG or PNG)">
+            <Input
+              value={logoDraft}
+              onChange={(e) => setLogoDraft(e.target.value)}
+              placeholder="https://mubarista.com/logo-bimi.svg"
+            />
+          </Field>
         </AdminModal>
       )}
 

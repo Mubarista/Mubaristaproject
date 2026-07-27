@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, buildEmailHtml } from "@/lib/email";
 
 export async function POST(request: Request) {
   try {
@@ -30,26 +30,29 @@ export async function POST(request: Request) {
       ? `<ul>${socials.map((s) => `<li>${s.platform || ""}: ${s.url || ""}</li>`).join("")}</ul>`
       : "<p>No social media links provided.</p>";
 
-    const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #000;">
-        <h2 style="color: #1a1a1a;">${job.title}</h2>
-        <p><strong>Company:</strong> ${job.company}</p>
-        <p><strong>Location:</strong> ${job.country}</p>
-        <p><strong>Salary:</strong> ${job.salary}</p>
-        <p><strong>Experience:</strong> ${job.experience}</p>
-        <p><strong>Type:</strong> ${job.type}</p>
-        <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;" />
-        <h3 style="color: #1a1a1a;">Job Description</h3>
-        <p>${job.description}</p>
-        <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;" />
-        <h3 style="color: #1a1a1a;">Company Contact Details</h3>
-        <p><strong>Email:</strong> ${job.company_email || "N/A"}</p>
-        <p><strong>Phone:</strong> ${job.company_phone || "N/A"}</p>
-        <p><strong>Website:</strong> ${job.company_website ? `<a href="${job.company_website}">${job.company_website}</a>` : "N/A"}</p>
-        <h4>Social Media</h4>
-        ${socialsHtml}
-      </div>
+    const body = `
+      <h2 style="color: #1a1a1a;">${job.title}</h2>
+      <p><strong>Company:</strong> ${job.company}</p>
+      <p><strong>Location:</strong> ${job.country}</p>
+      <p><strong>Salary:</strong> ${job.salary}</p>
+      <p><strong>Experience:</strong> ${job.experience}</p>
+      <p><strong>Type:</strong> ${job.type}</p>
+      <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;" />
+      <h3 style="color: #1a1a1a;">Job Description</h3>
+      <p>${job.description}</p>
+      <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;" />
+      <h3 style="color: #1a1a1a;">Company Contact Details</h3>
+      <p><strong>Email:</strong> ${job.company_email || "N/A"}</p>
+      <p><strong>Phone:</strong> ${job.company_phone || "N/A"}</p>
+      <p><strong>Website:</strong> ${job.company_website ? `<a href="${job.company_website}">${job.company_website}</a>` : "N/A"}</p>
+      <h4>Social Media</h4>
+      ${socialsHtml}
     `;
+
+    const html = await buildEmailHtml({
+      title: `Job Details: ${job.title}`,
+      body,
+    });
 
     const result = await sendEmail({
       to: userEmail,
