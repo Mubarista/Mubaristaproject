@@ -144,17 +144,18 @@ function AdminLoginScreen() {
 
       <div className="relative w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl overflow-hidden bg-muted-bg mb-4">
+        <div className="flex flex-col items-center text-center mb-8">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl overflow-hidden bg-muted-bg mb-4">
             {logoLoading ? (
-              <div className="h-8 w-8 rounded-full border-2 border-muted border-t-transparent animate-spin" />
+              <div className="h-6 w-6 rounded-full border-2 border-muted border-t-transparent animate-spin" />
             ) : logoUrl ? (
               <img src={logoUrl} alt="MUBARISTA" className="h-full w-full object-contain" />
             ) : null}
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            MUBA<span className="text-blue">RISTA</span>
-          </h1>
+          <span className="text-xl font-bold tracking-tight leading-none animate-gradient-text">
+            MUBARISTA
+            <span className="text-[0.45em] tracking-widest uppercase align-top ml-0.5">HUB</span>
+          </span>
           <p className="text-muted text-sm mt-1">MubaristaHub Overview</p>
         </div>
 
