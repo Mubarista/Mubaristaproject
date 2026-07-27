@@ -39,6 +39,11 @@ export const metadata: Metadata = {
     "barista training",
     "coffee jobs",
   ],
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
   openGraph: {
     title: "MUBARISTA — Global Barista Platform",
     description: "Compete with the world's best baristas.",
