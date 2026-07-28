@@ -13,6 +13,7 @@ export default function AdminSiteSettingsPage() {
     footerDescription: "", 
     privacyContent: "",
     termsContent: "",
+    refundContent: "",
     instagram: "", 
     facebook: "", 
     youtube: "", 
@@ -42,6 +43,7 @@ export default function AdminSiteSettingsPage() {
         footerDescription: data?.footerDescription || "",
         privacyContent: data?.privacyContent || "",
         termsContent: data?.termsContent || "",
+        refundContent: data?.refundContent || "",
         instagram: data?.instagram || "",
         facebook: data?.facebook || "",
         youtube: data?.youtube || "",
@@ -123,6 +125,11 @@ export default function AdminSiteSettingsPage() {
         <div className="border-t border-white/10 pt-6">
           <h3 className="font-semibold mb-4">Terms of Service Content</h3>
           <p className="text-sm text-muted line-clamp-4">{settings.termsContent || "Not set"}</p>
+        </div>
+
+        <div className="border-t border-white/10 pt-6">
+          <h3 className="font-semibold mb-4">Refund Policy Content</h3>
+          <p className="text-sm text-muted line-clamp-4">{settings.refundContent || "Not set"}</p>
         </div>
 
         <div className="border-t border-white/10 pt-6">
@@ -220,6 +227,14 @@ export default function AdminSiteSettingsPage() {
             <Textarea
               value={draft.termsContent}
               onChange={(e) => setDraft({ ...draft, termsContent: e.target.value })}
+              rows={10}
+            />
+          </Field>
+
+          <Field label="Refund Policy Content">
+            <Textarea
+              value={draft.refundContent}
+              onChange={(e) => setDraft({ ...draft, refundContent: e.target.value })}
               rows={10}
             />
           </Field>
