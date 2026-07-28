@@ -41,10 +41,13 @@ import {
   ListOrdered,
   Sun,
   Moon,
+  Pin,
+  PinOff,
 } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
 import { useAdminAuth } from "@/lib/admin-auth-context";
 import { useTheme, ThemeProvider } from "@/lib/theme-context";
+import { safeLocalStorage } from "@/lib/safe-storage";
 
 const sections = [
   { label: "Overview", href: "/mbhubteam", icon: LayoutDashboard, module: "dashboard" },
@@ -279,7 +282,21 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
+  const [pinned, setPinned] = useState<string[]>([]);
   const { theme, setTheme } = useTheme();
+
+  useEffect(() => {
+    try {
+      const stored = safeLocalStorage.getItem("mubarista-admin-pinned-nav");
+      if (stored) setPinned(JSON.parse(stored));
+    } catch {
+      setPinned([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    safeLocalStorage.setItem("mubarista-admin-pinned-nav", JSON.stringify(pinned));
+  }, [pinned]);
 
   useEffect(() => {
     // Wait for auth state to settle and avoid fetching while the dev server may still be starting
@@ -525,6 +542,25 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     }
   }, [isLoading, isAdminAuthed, dataReady, pathname, isSuper, permissions, allowedModules, visibleSections, router]);
 
+  const displaySections = [...visibleSections].sort((a, b) => {
+    const aIndex = pinned.indexOf(a.label);
+    const bIndex = pinned.indexOf(b.label);
+    const aPinned = aIndex !== -1;
+    const bPinned = bIndex !== -1;
+    if (aPinned && bPinned) return aIndex - bIndex;
+    if (aPinned) return -1;
+    if (bPinned) return 1;
+    return a.label.localeCompare(b.label);
+  });
+
+  const togglePin = (label: string) => {
+    setPinned((prev) => {
+      if (prev.includes(label)) return prev.filter((l) => l !== label);
+      if (prev.length >= 3) return prev;
+      return [label, ...prev];
+    });
+  };
+
   if (isLoading || (isAdminAuthed && !dataReady)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -609,34 +645,50 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="flex-1 px-2 py-3 space-y-0.5">
-          {visibleSections.map((s) => {
+          {displaySections.map((s) => {
             const active = s.href === "/mbhubteam" ? pathname === s.href : pathname.startsWith(s.href);
             const isApplicants = s.href === "/mbhubteam/applications";
             const isMessages = s.href === "/mbhubteam/messages";
+            const isPinned = pinned.includes(s.label);
+            const canPin = isPinned || pinned.length < 3;
             return (
-              <Link
-                key={s.href}
-                href={s.href}
-                className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
-                  active
-                    ? "bg-blue text-white"
-                    : "text-muted hover:bg-white/5 hover:text-foreground"
-                }`}
-              >
-                <s.icon className="h-4 w-4 shrink-0" />
-                <span className="flex-1">{s.label}</span>
-                {isApplicants && pendingApplicantsCount > 0 && (
-                  <span className="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red px-1.5 text-[10px] font-bold text-white">
-                    {pendingApplicantsCount > 99 ? "99+" : pendingApplicantsCount}
-                  </span>
-                )}
-                {isMessages && unreadMessagesCount > 0 && (
-                  <span className="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red px-1.5 text-[10px] font-bold text-white">
-                    {unreadMessagesCount > 99 ? "99+" : unreadMessagesCount}
-                  </span>
-                )}
-                {active && <ChevronRight className="h-3 w-3 ml-auto" />}
-              </Link>
+              <div key={s.href} className="relative group">
+                <Link
+                  href={s.href}
+                  className={`flex items-center gap-3 px-3 py-2 pr-10 rounded-xl text-sm font-medium transition-all ${
+                    active
+                      ? "bg-blue text-white"
+                      : "text-muted hover:bg-white/5 hover:text-foreground"
+                  }`}
+                >
+                  <s.icon className="h-4 w-4 shrink-0" />
+                  <span className="flex-1">{s.label}</span>
+                  {isApplicants && pendingApplicantsCount > 0 && (
+                    <span className="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red px-1.5 text-[10px] font-bold text-white">
+                      {pendingApplicantsCount > 99 ? "99+" : pendingApplicantsCount}
+                    </span>
+                  )}
+                  {isMessages && unreadMessagesCount > 0 && (
+                    <span className="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red px-1.5 text-[10px] font-bold text-white">
+                      {unreadMessagesCount > 99 ? "99+" : unreadMessagesCount}
+                    </span>
+                  )}
+                  {active && <ChevronRight className="h-3 w-3 ml-auto" />}
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => togglePin(s.label)}
+                  disabled={!canPin}
+                  title={isPinned ? "Unpin" : canPin ? "Pin to top" : "Maximum 3 pins"}
+                  className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md transition-all ${
+                    isPinned
+                      ? "text-blue opacity-100"
+                      : "text-muted opacity-0 group-hover:opacity-100 hover:text-foreground"
+                  } ${!canPin ? "opacity-30 cursor-not-allowed" : ""}`}
+                >
+                  {isPinned ? <Pin className="h-3.5 w-3.5" /> : <PinOff className="h-3.5 w-3.5" />}
+                </button>
+              </div>
             );
           })}
         </nav>
