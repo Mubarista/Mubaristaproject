@@ -74,6 +74,7 @@ const sections = [
   { label: "Message Center", href: "/mbhubteam/messages", icon: HelpCircle, module: "messages" },
   { label: "Countries", href: "/mbhubteam/countries", icon: Globe, module: "categories" },
   { label: "Payments", href: "/mbhubteam/payments", icon: DollarSign, module: "payments" },
+  { label: "Site Settings", href: "/mbhubteam/site-settings", icon: Settings, module: "site_settings" },
   { label: "Subscription Plans", href: "/mbhubteam/subscription-plans", icon: Crown, module: "settings" },
   { label: "Judges",   href: "/mbhubteam/judges",   icon: Scale, module: "judges" },
   { label: "Team", href: "/mbhubteam/team", icon: Users, module: "team" },
@@ -265,11 +266,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { isAdminAuthed, isLoading, isExpired, isSuper, adminLogout, userId, adminName, roleName, permissions, allowedModules } = useAdminAuth();
-  const visibleSections = isSuper
-    ? sections
-    : sections.filter((s) =>
-        permissions.some((p) => p.module === s.module && p.canRead) || allowedModules.includes(s.module)
-      );
+  const visibleSections = (isSuper ? [...sections] : sections.filter((s) =>
+    permissions.some((p) => p.module === s.module && p.canRead) || allowedModules.includes(s.module)
+  )).sort((a, b) => a.label.localeCompare(b.label));
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [settings, setSettings] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
