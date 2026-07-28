@@ -69,6 +69,7 @@ const sections = [
   { label: "Coffee Timeline", href: "/mbhubteam/timeline", icon: Clock, module: "timeline" },
   { label: "Legends", href: "/mbhubteam/legends", icon: UserCheck, module: "legends" },
   { label: "About", href: "/mbhubteam/about", icon: FileText, module: "about" },
+  { label: "Refund Policy", href: "/mbhubteam/refund-policy", icon: FileText, module: "site_settings" },
   { label: "Contact", href: "/mbhubteam/contact", icon: Building2, module: "contact" },
   { label: "Message Center", href: "/mbhubteam/messages", icon: HelpCircle, module: "messages" },
   { label: "Countries", href: "/mbhubteam/countries", icon: Globe, module: "categories" },
