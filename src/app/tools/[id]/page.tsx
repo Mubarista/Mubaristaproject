@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -49,6 +49,17 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
   const [reviewComment, setReviewComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const resumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const pauseAutoSlide = useCallback(() => {
+    setIsPaused(true);
+    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
+    resumeTimeoutRef.current = setTimeout(() => {
+      setIsPaused(false);
+      resumeTimeoutRef.current = null;
+    }, 8000);
+  }, []);
 
   const allImages = useMemo(() => {
     if (!tool) return [];
@@ -63,12 +74,32 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
   }, [toolId]);
 
   useEffect(() => {
-    if (allImages.length <= 1) return;
+    return () => {
+      if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (allImages.length <= 1 || isPaused) return;
     const interval = setInterval(() => {
       setSelectedIndex((prev) => (prev + 1) % allImages.length);
-    }, 4000);
+    }, 6000);
     return () => clearInterval(interval);
-  }, [allImages.length]);
+  }, [allImages.length, isPaused]);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "ArrowLeft") {
+        setSelectedIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1));
+        pauseAutoSlide();
+      } else if (e.key === "ArrowRight") {
+        setSelectedIndex((prev) => (prev + 1) % allImages.length);
+        pauseAutoSlide();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [allImages.length, pauseAutoSlide]);
 
   async function fetchReviews() {
     try {
@@ -198,7 +229,12 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Product Images */}
           <div className="space-y-4">
-            <div className="relative h-96 bg-muted-bg rounded-2xl overflow-hidden">
+            <div
+              className="relative h-96 bg-muted-bg rounded-2xl overflow-hidden"
+              onClick={pauseAutoSlide}
+              role="button"
+              aria-label="Pause slideshow"
+            >
               <Image src={getImageUrl(mainImage)} alt={tool.name} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
             </div>
             <div className="grid grid-cols-4 gap-4">
@@ -210,7 +246,7 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
                 return (
                   <div
                     key={i}
-                    onClick={() => setSelectedIndex(thumbIndex)}
+                    onClick={() => { setSelectedIndex(thumbIndex); pauseAutoSlide(); }}
                     className={`relative h-24 bg-muted-bg rounded-xl overflow-hidden cursor-pointer transition-colors border-2 ${isActive ? "border-blue" : "border-transparent hover:border-blue/50"}`}
                   >
                     <Image src={getImageUrl(img)} alt={`${tool.name} view ${i + 1}`} fill sizes="100px" className="object-cover" />
