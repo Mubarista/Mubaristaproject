@@ -50,9 +50,13 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "MUBARISTA — THE BARISTA HUB™",
+    title: "MUBARISTA - THE BARISTA HUB™",
     description: "Compete with the world's best baristas.",
     type: "website",
+  },
+  twitter: {
+    title: "MUBARISTA - THE BARISTA HUB™",
+    description: "Compete with the world's best baristas.",
   },
 };
 
