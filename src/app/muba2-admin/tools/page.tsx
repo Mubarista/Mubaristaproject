@@ -191,13 +191,14 @@ export default function AdminToolsPage() {
   async function save() {
     setSaving(true);
     try {
-      const features = draft.featuresText
-        .split("\n")
-        .map(f => f.trim())
-        .filter(Boolean);
+      const { featuresText, ...draftPayload } = draft;
       const body = {
-        ...draft,
-        features,
+        ...draftPayload,
+        features: featuresText
+          .split("\n")
+          .map(f => f.trim())
+          .filter(Boolean),
+        gallery: draftPayload.gallery.filter(Boolean),
       };
       const method = editing!.id === "new" ? "POST" : "PUT";
       const payload = editing!.id === "new" ? body : { ...body, id: editing!.id };
