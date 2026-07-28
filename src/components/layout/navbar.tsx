@@ -21,7 +21,7 @@ import { navLinks } from "@/data/mock-data";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { useCart } from "@/lib/cart-context";
-import { cn, DEFAULT_IMAGE } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -29,8 +29,8 @@ export function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [siteLogo, setSiteLogo] = useState(() => {
-    if (typeof window === "undefined") return DEFAULT_IMAGE;
-    return localStorage.getItem("mubarista-site-logo") || DEFAULT_IMAGE;
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem("mubarista-site-logo") || "";
   });
   const [unreadCount, setUnreadCount] = useState(0);
   const { theme, setTheme } = useTheme();
@@ -57,9 +57,13 @@ export function Navbar() {
       const res = await fetch("/api/site-settings");
       if (res.ok) {
         const data = await res.json();
-        const logo = data.logo || DEFAULT_IMAGE;
+        const logo = data.logo || "";
         setSiteLogo(logo);
-        localStorage.setItem("mubarista-site-logo", logo);
+        if (logo) {
+          localStorage.setItem("mubarista-site-logo", logo);
+        } else {
+          localStorage.removeItem("mubarista-site-logo");
+        }
       }
     } catch (error) {
       console.error("Error fetching site settings:", error);

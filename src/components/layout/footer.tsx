@@ -3,7 +3,6 @@ import { Mail, MapPin, Phone } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { navLinks } from "@/data/mock-data";
-import { DEFAULT_IMAGE } from "@/lib/utils";
 
 // Custom social media icons
 const InstagramIcon = ({ className }: { className?: string }) => (
@@ -52,8 +51,8 @@ export function Footer() {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [footerDescription, setFooterDescription] = useState("");
   const [siteLogo, setSiteLogo] = useState(() => {
-    if (typeof window === "undefined") return DEFAULT_IMAGE;
-    return localStorage.getItem("mubarista-site-logo") || DEFAULT_IMAGE;
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem("mubarista-site-logo") || "";
   });
   const [contactInfo, setContactInfo] = useState<ContactInfo>({
     email: "hello@mubarista.com",
@@ -80,10 +79,14 @@ export function Footer() {
     try {
       const res = await fetch("/api/site-settings");
       const data = await res.json();
-      const logo = data.logo || DEFAULT_IMAGE;
+      const logo = data.logo || "";
       setFooterDescription(data.footerDescription);
       setSiteLogo(logo);
-      localStorage.setItem("mubarista-site-logo", logo);
+      if (logo) {
+        localStorage.setItem("mubarista-site-logo", logo);
+      } else {
+        localStorage.removeItem("mubarista-site-logo");
+      }
       setSocialLinks({
         instagram: data.instagram || "",
         facebook: data.facebook || "",
