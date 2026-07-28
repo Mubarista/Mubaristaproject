@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { AuthProvider } from "@/lib/auth-context";
@@ -68,28 +69,26 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth" className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} h-full`}>
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                var noopStorage = {
-                  length: 0,
-                  key: function() { return null; },
-                  getItem: function() { return null; },
-                  setItem: function() {},
-                  removeItem: function() {},
-                  clear: function() {}
-                };
-                try { window.localStorage; } catch (e) {
-                  try { Object.defineProperty(window, 'localStorage', { value: noopStorage, writable: true, configurable: true }); } catch (e2) {}
-                }
-                try { window.sessionStorage; } catch (e) {
-                  try { Object.defineProperty(window, 'sessionStorage', { value: noopStorage, writable: true, configurable: true }); } catch (e2) {}
-                }
-              })();
-            `,
-          }}
-        />
+        <Script id="storage-polyfill" strategy="beforeInteractive">
+          {`
+            (function() {
+              var noopStorage = {
+                length: 0,
+                key: function() { return null; },
+                getItem: function() { return null; },
+                setItem: function() {},
+                removeItem: function() {},
+                clear: function() {}
+              };
+              try { window.localStorage; } catch (e) {
+                try { Object.defineProperty(window, 'localStorage', { value: noopStorage, writable: true, configurable: true }); } catch (e2) {}
+              }
+              try { window.sessionStorage; } catch (e) {
+                try { Object.defineProperty(window, 'sessionStorage', { value: noopStorage, writable: true, configurable: true }); } catch (e2) {}
+              }
+            })();
+          `}
+        </Script>
       </head>
       <body className="min-h-full flex flex-col antialiased" suppressHydrationWarning>
         <ThemeProvider>
