@@ -51,7 +51,7 @@ interface ContactInfo {
 export function Footer() {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [footerDescription, setFooterDescription] = useState("");
-  const [siteLogo, setSiteLogo] = useState(() => safeLocalStorage.getItem("mubarista-site-logo") || "");
+  const [siteLogo, setSiteLogo] = useState("");
   const [contactInfo, setContactInfo] = useState<ContactInfo>({
     email: "hello@mubarista.com",
     phone: "+250 788 000 000",
@@ -69,6 +69,8 @@ export function Footer() {
   useEffect(() => {
     setCurrentYear(new Date().getFullYear());
 
+    const stored = safeLocalStorage.getItem("mubarista-site-logo") || "";
+    setSiteLogo(stored);
     fetchSiteSettings();
     fetchContactInfo();
   }, []);

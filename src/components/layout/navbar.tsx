@@ -29,7 +29,7 @@ export function Navbar() {
   const [scrollY, setScrollY] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [siteLogo, setSiteLogo] = useState(() => safeLocalStorage.getItem("mubarista-site-logo") || "");
+  const [siteLogo, setSiteLogo] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
   const { theme, setTheme } = useTheme();
   const { user, logout } = useAuth();
@@ -44,6 +44,8 @@ export function Navbar() {
   }, []);
 
   useEffect(() => {
+    const stored = safeLocalStorage.getItem("mubarista-site-logo") || "";
+    setSiteLogo(stored);
     fetchSiteSettings();
     if (user) {
       fetchUnreadCount();
