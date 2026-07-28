@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Shield, Lock, FileText, Server, Eye, Trash2 } from "lucide-react";
+import { Shield, Lock, FileText, Server, Eye, Trash2, Loader2 } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/card";
 
 export default function PrivacyPage() {
@@ -92,7 +92,9 @@ If you have any questions about this Privacy Policy or how your data is handled,
             <CardTitle className="text-xl">Privacy Policy Details</CardTitle>
           </div>
           {loading ? (
-            <div className="py-8 text-center text-muted">Loading privacy policy...</div>
+            <div className="py-8 flex items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin text-blue" />
+            </div>
           ) : (
             <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap text-sm text-muted leading-relaxed">
               {content || defaultContent}
