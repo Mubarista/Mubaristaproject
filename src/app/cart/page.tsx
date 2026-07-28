@@ -57,8 +57,10 @@ export default function CartPage() {
                 >
                   <Card className="p-4">
                     <div className="flex gap-4">
-                      <div className="h-24 w-24 rounded-lg bg-muted-bg flex items-center justify-center shrink-0">
-                        {item.type === "book" ? (
+                      <div className="h-24 w-24 rounded-lg bg-muted-bg flex items-center justify-center shrink-0 overflow-hidden">
+                        {item.image ? (
+                          <img src={item.image} alt={item.title} className="h-full w-full object-cover" />
+                        ) : item.type === "book" ? (
                           <BookOpen className="h-8 w-8 text-muted" />
                         ) : (
                           <Wrench className="h-8 w-8 text-muted" />
