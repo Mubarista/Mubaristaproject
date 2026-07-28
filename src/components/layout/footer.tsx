@@ -3,6 +3,7 @@ import { Mail, MapPin, Phone } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { navLinks } from "@/data/mock-data";
+import { safeLocalStorage } from "@/lib/safe-storage";
 
 // Custom social media icons
 const InstagramIcon = ({ className }: { className?: string }) => (
@@ -50,10 +51,7 @@ interface ContactInfo {
 export function Footer() {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [footerDescription, setFooterDescription] = useState("");
-  const [siteLogo, setSiteLogo] = useState(() => {
-    if (typeof window === "undefined") return "";
-    return localStorage.getItem("mubarista-site-logo") || "";
-  });
+  const [siteLogo, setSiteLogo] = useState(() => safeLocalStorage.getItem("mubarista-site-logo") || "");
   const [contactInfo, setContactInfo] = useState<ContactInfo>({
     email: "hello@mubarista.com",
     phone: "+250 788 000 000",
@@ -83,9 +81,9 @@ export function Footer() {
       setFooterDescription(data.footerDescription);
       setSiteLogo(logo);
       if (logo) {
-        localStorage.setItem("mubarista-site-logo", logo);
+        safeLocalStorage.setItem("mubarista-site-logo", logo);
       } else {
-        localStorage.removeItem("mubarista-site-logo");
+        safeLocalStorage.removeItem("mubarista-site-logo");
       }
       setSocialLinks({
         instagram: data.instagram || "",

@@ -21,6 +21,7 @@ import { navLinks } from "@/data/mock-data";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { useCart } from "@/lib/cart-context";
+import { safeLocalStorage } from "@/lib/safe-storage";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
@@ -28,10 +29,7 @@ export function Navbar() {
   const [scrollY, setScrollY] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [siteLogo, setSiteLogo] = useState(() => {
-    if (typeof window === "undefined") return "";
-    return localStorage.getItem("mubarista-site-logo") || "";
-  });
+  const [siteLogo, setSiteLogo] = useState(() => safeLocalStorage.getItem("mubarista-site-logo") || "");
   const [unreadCount, setUnreadCount] = useState(0);
   const { theme, setTheme } = useTheme();
   const { user, logout } = useAuth();
@@ -60,9 +58,9 @@ export function Navbar() {
         const logo = data.logo || "";
         setSiteLogo(logo);
         if (logo) {
-          localStorage.setItem("mubarista-site-logo", logo);
+          safeLocalStorage.setItem("mubarista-site-logo", logo);
         } else {
-          localStorage.removeItem("mubarista-site-logo");
+          safeLocalStorage.removeItem("mubarista-site-logo");
         }
       }
     } catch (error) {
