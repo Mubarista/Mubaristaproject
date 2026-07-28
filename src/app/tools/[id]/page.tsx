@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Star, Heart, ShoppingBag, Check, Truck, Shield, RotateCcw } from "lucide-react";
+import { ArrowLeft, Star, Heart, ShoppingBag, Check, Truck, Shield, RotateCcw, Send } from "lucide-react";
 import { useAdminData } from "@/lib/admin-data-context";
 import { useAuth } from "@/lib/auth-context";
 import { useCart } from "@/lib/cart-context";
@@ -15,30 +15,57 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 
+interface Review {
+  id: string;
+  toolId: string;
+  userId: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
+const defaultFeatures = [
+  "Precision calibration",
+  "Durable stainless steel construction",
+  "Ergonomic design",
+  "Easy to clean",
+  "Professional grade",
+];
+
 export default function ToolDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { tools } = useAdminData();
   const routeParams = useParams();
   const toolId = typeof routeParams?.id === "string" ? routeParams.id : "";
-  const tool = tools.find((t) => t.id === toolId);
+  const tool = tools.find((t) => t.id === toolId)!;
   const { user } = useAuth();
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
   const [addedToWishlist, setAddedToWishlist] = useState(false);
   const [notification, setNotification] = useState<{ show: boolean; message: string; type: "success" | "error" }>({ show: false, message: "", type: "success" });
-  const [siteSettings, setSiteSettings] = useState<any>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewLoading, setReviewLoading] = useState(true);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
-    fetchSiteSettings();
-  }, []);
+    if (toolId) {
+      fetchReviews();
+    }
+  }, [toolId]);
 
-  async function fetchSiteSettings() {
+  async function fetchReviews() {
     try {
-      const res = await fetch("/api/site-settings");
-      const data = await res.json();
-      setSiteSettings(data);
+      const res = await fetch(`/api/tool-reviews?toolId=${toolId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setReviews(data || []);
+      }
     } catch (error) {
-      console.error("Error fetching site settings:", error);
+      console.error("Error fetching reviews:", error);
+    } finally {
+      setReviewLoading(false);
     }
   }
 
@@ -58,6 +85,10 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
     );
   }
 
+  const gallery = tool.gallery?.filter(Boolean) || [];
+  const features = tool.features?.length ? tool.features : defaultFeatures;
+  const hasDiscount = (tool.discountPrice || 0) > 0 && (tool.discountPrice || 0) < tool.price;
+
   const handleAddToCart = () => {
     if (!user) {
       setNotification({ show: true, message: "Please login to add items to cart", type: "error" });
@@ -68,7 +99,7 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
       id: tool.id,
       type: "tool",
       title: tool.name,
-      price: tool.price,
+      price: hasDiscount ? (tool.discountPrice as number) : tool.price,
       image: tool.image,
     });
     setAddedToCart(true);
@@ -89,6 +120,41 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
     setNotification({ show: true, message: addedToWishlist ? "Removed from wishlist" : "Added to wishlist", type: "success" });
     setTimeout(() => setNotification({ show: false, message: "", type: "success" }), 2000);
   };
+
+  async function handleSubmitReview(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user) {
+      setNotification({ show: true, message: "Please login to leave a review", type: "error" });
+      return;
+    }
+    setSubmittingReview(true);
+    try {
+      const res = await fetch("/api/tool-reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          toolId: tool.id,
+          userId: user.id,
+          rating: reviewRating,
+          comment: reviewComment,
+        }),
+      });
+      if (res.ok) {
+        setReviewComment("");
+        setReviewRating(5);
+        await fetchReviews();
+        setNotification({ show: true, message: "Review submitted!", type: "success" });
+        setTimeout(() => setNotification({ show: false, message: "", type: "success" }), 3000);
+      } else {
+        setNotification({ show: true, message: "Failed to submit review", type: "error" });
+      }
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      setNotification({ show: true, message: "Error submitting review", type: "error" });
+    } finally {
+      setSubmittingReview(false);
+    }
+  }
 
   return (
     <div className="pt-24 pb-16 min-h-screen">
@@ -126,17 +192,20 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
               )}
             </div>
             <div className="grid grid-cols-4 gap-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="relative h-24 bg-muted-bg rounded-xl overflow-hidden cursor-pointer hover:border-blue/50 transition-colors border border-transparent">
-                  {tool.image ? (
-                    <Image src={tool.image} alt={`${tool.name} view ${i}`} fill sizes="100px" className="object-cover" />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-muted text-xs">
-                      View {i}
-                    </div>
-                  )}
-                </div>
-              ))}
+              {[0, 1, 2, 3].map((i) => {
+                const img = gallery[i] || tool.image;
+                return (
+                  <div key={i} className="relative h-24 bg-muted-bg rounded-xl overflow-hidden cursor-pointer hover:border-blue/50 transition-colors border border-transparent">
+                    {img ? (
+                      <Image src={img} alt={`${tool.name} view ${i + 1}`} fill sizes="100px" className="object-cover" />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center text-muted text-xs">
+                        View {i + 1}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -151,24 +220,31 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} className={`h-4 w-4 ${star <= Math.floor(tool.rating) ? "fill-yellow text-yellow" : "text-muted"}`} />
+                  <Star key={star} className={`h-4 w-4 ${star <= Math.round(tool.rating || 0) ? "fill-yellow text-yellow" : "text-muted"}`} />
                 ))}
               </div>
-              <span className="text-sm font-medium">{tool.rating}</span>
-              <span className="text-sm text-muted">({Math.floor(Math.random() * 100) + 10} reviews)</span>
+              <span className="text-sm font-medium">{Number(tool.rating || 0).toFixed(1)}</span>
+              <span className="text-sm text-muted">({tool.reviews || 0} reviews)</span>
             </div>
 
-            <div className="text-3xl font-bold text-green">{formatCurrency(tool.price)}</div>
+            <div className="flex items-baseline gap-3">
+              {hasDiscount ? (
+                <>
+                  <span className="text-3xl font-bold text-green">{formatCurrency(tool.discountPrice as number)}</span>
+                  <span className="text-lg text-muted line-through">{formatCurrency(tool.price)}</span>
+                </>
+              ) : (
+                <span className="text-3xl font-bold text-green">{formatCurrency(tool.price)}</span>
+              )}
+            </div>
 
-            <p className="text-muted">
-              Professional-grade equipment designed for competition-level baristas. Precision engineering meets durability in this essential tool for your coffee preparation workflow.
-            </p>
+            <p className="text-muted">{tool.description}</p>
 
             {/* Features */}
             <div className="space-y-3">
               <h3 className="font-semibold">Key Features</h3>
               <ul className="space-y-2">
-                {["Precision calibration", "Durable stainless steel construction", "Ergonomic design", "Easy to clean", "Professional grade"].map((feature) => (
+                {features.map((feature) => (
                   <li key={feature} className="flex items-center gap-2 text-sm">
                     <Check className="h-4 w-4 text-green" />
                     {feature}
@@ -230,28 +306,84 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
             <div className="grid grid-cols-3 gap-4 pt-6 border-t border-white/10">
               <div className="text-center">
                 <Truck className="h-5 w-5 text-blue mx-auto mb-2" />
-                <p className="text-xs font-medium">{siteSettings?.shippingInfo1Title || "Free Shipping"}</p>
-                <p className="text-xs text-muted">{siteSettings?.shippingInfo1Description || "On orders over RWF 100,000"}</p>
+                <p className="text-xs font-medium">{tool.shippingTitle || "Free Shipping"}</p>
+                <p className="text-xs text-muted">{tool.shippingSubtitle || "On orders over RWF 100,000"}</p>
               </div>
               <div className="text-center">
                 <Shield className="h-5 w-5 text-green mx-auto mb-2" />
-                <p className="text-xs font-medium">{siteSettings?.shippingInfo2Title || "2 Year Warranty"}</p>
-                <p className="text-xs text-muted">{siteSettings?.shippingInfo2Description || "Full coverage"}</p>
+                <p className="text-xs font-medium">{tool.warrantyTitle || "2 Year Warranty"}</p>
+                <p className="text-xs text-muted">{tool.warrantySubtitle || "Full coverage"}</p>
               </div>
               <div className="text-center">
                 <RotateCcw className="h-5 w-5 text-yellow mx-auto mb-2" />
-                <p className="text-xs font-medium">{siteSettings?.shippingInfo3Title || "30 Day Returns"}</p>
-                <p className="text-xs text-muted">{siteSettings?.shippingInfo3Description || "Hassle-free returns"}</p>
+                <p className="text-xs font-medium">{tool.returnsTitle || "30 Day Returns"}</p>
+                <p className="text-xs text-muted">{tool.returnsSubtitle || "Hassle-free returns"}</p>
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold mb-6">Customer Reviews</h2>
+          {user && (
+            <form onSubmit={handleSubmitReview} className="glass-card rounded-2xl p-6 mb-8">
+              <h3 className="font-semibold mb-4">Write a Review</h3>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-sm text-muted">Rating:</span>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setReviewRating(star)}
+                    className="focus:outline-none"
+                  >
+                    <Star className={`h-5 w-5 ${star <= reviewRating ? "fill-yellow text-yellow" : "text-muted"}`} />
+                  </button>
+                ))}
+              </div>
+              <textarea
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                placeholder="Share your thoughts about this product..."
+                className="w-full rounded-xl bg-muted-bg border border-white/10 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue mb-4"
+                rows={3}
+              />
+              <Button variant="primary" type="submit" disabled={submittingReview}>
+                <Send className="h-4 w-4 mr-2" />
+                {submittingReview ? "Submitting..." : "Submit Review"}
+              </Button>
+            </form>
+          )}
+
+          {reviewLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <LoadingDots />
+            </div>
+          ) : reviews.length === 0 ? (
+            <p className="text-muted text-sm">No reviews yet. Be the first to review!</p>
+          ) : (
+            <div className="space-y-4">
+              {reviews.map((review) => (
+                <Card key={review.id} className="p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star key={star} className={`h-4 w-4 ${star <= Math.round(review.rating || 0) ? "fill-yellow text-yellow" : "text-muted"}`} />
+                    ))}
+                    <span className="text-sm text-muted ml-2">{new Date(review.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <p className="text-sm text-muted">{review.comment || "No comment"}</p>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Related Products */}
         <div className="mt-16">
           <h2 className="text-2xl font-bold mb-6">Related Products</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {tools.slice(0, 4).map((relatedTool) => (
+            {tools.filter(t => t.id !== tool.id).slice(0, 4).map((relatedTool) => (
               <Link key={relatedTool.id} href={`/tools/${relatedTool.id}`}>
                 <Card className="overflow-hidden p-0 cursor-pointer hover:border-blue/50 transition-colors">
                   <div className="relative h-40">

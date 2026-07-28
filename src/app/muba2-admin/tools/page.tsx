@@ -14,11 +14,22 @@ interface Tool {
   categoryId: string | null;
   price: number;
   rating: number;
+  reviews: number;
   image: string;
+  gallery: string[];
   description: string;
   brand: string;
+  currency: string;
   active: boolean;
   order: number;
+  discountPrice: number;
+  features: string[];
+  shippingTitle: string;
+  shippingSubtitle: string;
+  warrantyTitle: string;
+  warrantySubtitle: string;
+  returnsTitle: string;
+  returnsSubtitle: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -30,14 +41,88 @@ interface Category {
   orderIndex: number;
 }
 
-const blank: Omit<Tool, 'id' | 'createdAt' | 'updatedAt'> = { name: "", category: "", categoryId: null, price: 0, rating: 4.5, image: "", description: "", brand: "", active: true, order: 0 };
+interface Draft {
+  name: string;
+  category: string;
+  categoryId: string | null;
+  price: number;
+  rating: number;
+  reviews: number;
+  image: string;
+  gallery: string[];
+  description: string;
+  brand: string;
+  currency: string;
+  active: boolean;
+  order: number;
+  discountPrice: number;
+  featuresText: string;
+  shippingTitle: string;
+  shippingSubtitle: string;
+  warrantyTitle: string;
+  warrantySubtitle: string;
+  returnsTitle: string;
+  returnsSubtitle: string;
+}
+
+const defaultFeatures = "Precision calibration\nDurable stainless steel construction\nErgonomic design\nEasy to clean\nProfessional grade";
+
+const blank: Draft = {
+  name: "",
+  category: "",
+  categoryId: null,
+  price: 0,
+  rating: 4.5,
+  reviews: 0,
+  image: "",
+  gallery: ["", "", "", ""],
+  description: "",
+  brand: "",
+  currency: "RWF",
+  active: true,
+  order: 0,
+  discountPrice: 0,
+  featuresText: defaultFeatures,
+  shippingTitle: "Free Shipping",
+  shippingSubtitle: "On orders over RWF 100,000",
+  warrantyTitle: "2 Year Warranty",
+  warrantySubtitle: "Full coverage",
+  returnsTitle: "30 Day Returns",
+  returnsSubtitle: "Hassle-free returns",
+};
+
+function toolToDraft(t: Tool): Draft {
+  return {
+    name: t.name,
+    category: t.category,
+    categoryId: t.categoryId,
+    price: t.price,
+    rating: t.rating,
+    reviews: t.reviews,
+    image: t.image,
+    gallery: t.gallery && t.gallery.length >= 4 ? t.gallery.slice(0, 4) : ["", "", "", ""],
+    description: t.description,
+    brand: t.brand,
+    currency: t.currency || "RWF",
+    active: t.active,
+    order: t.order,
+    discountPrice: t.discountPrice || 0,
+    featuresText: (t.features || []).join("\n"),
+    shippingTitle: t.shippingTitle || "Free Shipping",
+    shippingSubtitle: t.shippingSubtitle || "On orders over RWF 100,000",
+    warrantyTitle: t.warrantyTitle || "2 Year Warranty",
+    warrantySubtitle: t.warrantySubtitle || "Full coverage",
+    returnsTitle: t.returnsTitle || "30 Day Returns",
+    returnsSubtitle: t.returnsSubtitle || "Hassle-free returns",
+  };
+}
 
 export default function AdminToolsPage() {
   const [tools, setTools] = useState<Tool[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Tool | null>(null);
-  const [draft, setDraft] = useState<Omit<Tool, 'id' | 'createdAt' | 'updatedAt'>>(blank);
+  const [draft, setDraft] = useState<Draft>(blank);
   const [deleting, setDeleting] = useState<Tool | null>(null);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
@@ -83,21 +168,44 @@ export default function AdminToolsPage() {
       t.category.toLowerCase().includes(search.toLowerCase())
   );
 
-  function openAdd() { setDraft({ ...blank }); setEditing({ ...blank, id: "new", createdAt: "", updatedAt: "" }); }
-  function openEdit(t: Tool) { setDraft({ name: t.name, category: t.category, categoryId: t.categoryId, price: t.price, rating: t.rating, image: t.image, description: t.description, brand: t.brand, active: t.active, order: t.order }); setEditing(t); }
+  function openAdd() { setDraft({ ...blank }); setEditing({ ...blank, id: "new", createdAt: "", updatedAt: "", features: [] } as Tool); }
+  function openEdit(t: Tool) { setDraft(toolToDraft(t)); setEditing(t); }
   function closeModal() { setEditing(null); }
   function del(t: Tool) { setDeleting(t); }
+
+  function setGallery(index: number, url: string) {
+    setDraft(d => {
+      const g = [...d.gallery];
+      g[index] = url;
+      return { ...d, gallery: g };
+    });
+  }
+
+  function setNumber(k: keyof Draft) {
+    return (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value === "" ? 0 : Number(e.target.value);
+      setDraft(d => ({ ...d, [k]: value } as Draft));
+    };
+  }
 
   async function save() {
     setSaving(true);
     try {
+      const features = draft.featuresText
+        .split("\n")
+        .map(f => f.trim())
+        .filter(Boolean);
+      const body = {
+        ...draft,
+        features,
+      };
       const method = editing!.id === "new" ? "POST" : "PUT";
-      const body = editing!.id === "new" ? draft : { ...draft, id: editing!.id };
+      const payload = editing!.id === "new" ? body : { ...body, id: editing!.id };
 
       const res = await fetch("/api/tools", {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -127,8 +235,8 @@ export default function AdminToolsPage() {
     }
   }
 
-  const set = (k: keyof Omit<Tool, 'id' | 'createdAt' | 'updatedAt'>) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setDraft((d) => ({ ...d, [k]: k === "price" || k === "rating" ? Number(e.target.value) : e.target.value }));
+  const set = (k: keyof Draft) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setDraft((d) => ({ ...d, [k]: e.target.value } as Draft));
 
   if (loading) {
     return (
@@ -196,12 +304,45 @@ export default function AdminToolsPage() {
                 options={categories.map(cat => ({ label: cat.name, value: cat.id }))}
               />
             </Field>
-            <Field label="Price (RWF)"><Input type="number" value={draft.price} onChange={set("price")} /></Field>
-            <Field label="Rating"><Input type="number" step="0.1" min="0" max="5" value={draft.rating} onChange={set("rating")} /></Field>
+            <Field label="Price (RWF)"><Input type="number" value={draft.price} onChange={setNumber("price")} /></Field>
+            <Field label="Discount Price (RWF)"><Input type="number" value={draft.discountPrice} onChange={setNumber("discountPrice")} /></Field>
           </div>
-          <Field label="Image">
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Rating"><Input type="number" step="0.1" min="0" max="5" value={draft.rating} onChange={setNumber("rating")} /></Field>
+            <Field label="Review Count"><Input type="number" value={draft.reviews} onChange={setNumber("reviews")} /></Field>
+            <Field label="Order"><Input type="number" value={draft.order} onChange={setNumber("order")} /></Field>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Active">
+              <Select value={String(draft.active)} onChange={(e) => setDraft(d => ({ ...d, active: e.target.value === "true" }))} options={[{ value: "true", label: "Active" }, { value: "false", label: "Inactive" }]} />
+            </Field>
+            <Field label="Currency"><Input value={draft.currency} onChange={set("currency")} /></Field>
+          </div>
+          <Field label="Main Image">
             <ImageUpload value={draft.image} onChange={(url) => setDraft(d => ({ ...d, image: url }))} aspectRatio="square" />
           </Field>
+          <Field label="Gallery Images (up to 4)">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[0, 1, 2, 3].map((i) => (
+                <ImageUpload key={i} value={draft.gallery[i] || ""} onChange={(url) => setGallery(i, url)} aspectRatio="square" />
+              ))}
+            </div>
+          </Field>
+          <Field label="Key Features (one per line)">
+            <Textarea value={draft.featuresText} onChange={set("featuresText")} rows={5} />
+          </Field>
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Shipping Title"><Input value={draft.shippingTitle} onChange={set("shippingTitle")} /></Field>
+            <Field label="Shipping Subtitle"><Input value={draft.shippingSubtitle} onChange={set("shippingSubtitle")} /></Field>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Warranty Title"><Input value={draft.warrantyTitle} onChange={set("warrantyTitle")} /></Field>
+            <Field label="Warranty Subtitle"><Input value={draft.warrantySubtitle} onChange={set("warrantySubtitle")} /></Field>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Returns Title"><Input value={draft.returnsTitle} onChange={set("returnsTitle")} /></Field>
+            <Field label="Returns Subtitle"><Input value={draft.returnsSubtitle} onChange={set("returnsSubtitle")} /></Field>
+          </div>
         </AdminModal>
       )}
 

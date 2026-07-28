@@ -254,15 +254,25 @@ export interface Tool {
   id: string;
   name: string;
   category: string;
+  categoryId: string | null;
   price: number;
   rating: number;
   reviews: number;
   image: string;
+  gallery: string[];
   description: string;
   brand: string;
   currency: string;
   active: boolean;
   order: number;
+  discountPrice?: number;
+  features?: string[];
+  shippingTitle?: string;
+  shippingSubtitle?: string;
+  warrantyTitle?: string;
+  warrantySubtitle?: string;
+  returnsTitle?: string;
+  returnsSubtitle?: string;
   createdAt: string;
   updatedAt: string;
 }
