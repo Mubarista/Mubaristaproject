@@ -3,6 +3,7 @@ import { Mail, MapPin, Phone } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { navLinks } from "@/data/mock-data";
+import { DEFAULT_IMAGE } from "@/lib/utils";
 
 // Custom social media icons
 const InstagramIcon = ({ className }: { className?: string }) => (
@@ -50,7 +51,10 @@ interface ContactInfo {
 export function Footer() {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [footerDescription, setFooterDescription] = useState("");
-  const [siteLogo, setSiteLogo] = useState("");
+  const [siteLogo, setSiteLogo] = useState(() => {
+    if (typeof window === "undefined") return DEFAULT_IMAGE;
+    return localStorage.getItem("mubarista-site-logo") || DEFAULT_IMAGE;
+  });
   const [contactInfo, setContactInfo] = useState<ContactInfo>({
     email: "hello@mubarista.com",
     phone: "+250 788 000 000",
@@ -70,21 +74,16 @@ export function Footer() {
 
     fetchSiteSettings();
     fetchContactInfo();
-    // Re-fetch every 5 seconds to get latest settings
-    const interval = setInterval(() => {
-      setCurrentYear(new Date().getFullYear());
-      fetchSiteSettings();
-      fetchContactInfo();
-    }, 5000);
-    return () => clearInterval(interval);
   }, []);
 
   async function fetchSiteSettings() {
     try {
       const res = await fetch("/api/site-settings");
       const data = await res.json();
+      const logo = data.logo || DEFAULT_IMAGE;
       setFooterDescription(data.footerDescription);
-      setSiteLogo(data.logo || "");
+      setSiteLogo(logo);
+      localStorage.setItem("mubarista-site-logo", logo);
       setSocialLinks({
         instagram: data.instagram || "",
         facebook: data.facebook || "",

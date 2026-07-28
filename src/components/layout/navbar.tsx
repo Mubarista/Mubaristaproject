@@ -21,14 +21,17 @@ import { navLinks } from "@/data/mock-data";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { useCart } from "@/lib/cart-context";
-import { cn } from "@/lib/utils";
+import { cn, DEFAULT_IMAGE } from "@/lib/utils";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [siteLogo, setSiteLogo] = useState("");
+  const [siteLogo, setSiteLogo] = useState(() => {
+    if (typeof window === "undefined") return DEFAULT_IMAGE;
+    return localStorage.getItem("mubarista-site-logo") || DEFAULT_IMAGE;
+  });
   const [unreadCount, setUnreadCount] = useState(0);
   const { theme, setTheme } = useTheme();
   const { user, logout } = useAuth();
@@ -54,7 +57,9 @@ export function Navbar() {
       const res = await fetch("/api/site-settings");
       if (res.ok) {
         const data = await res.json();
-        setSiteLogo(data.logo || "");
+        const logo = data.logo || DEFAULT_IMAGE;
+        setSiteLogo(logo);
+        localStorage.setItem("mubarista-site-logo", logo);
       }
     } catch (error) {
       console.error("Error fetching site settings:", error);
