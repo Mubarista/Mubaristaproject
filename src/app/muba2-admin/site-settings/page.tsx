@@ -140,11 +140,6 @@ export default function AdminSiteSettingsPage() {
         </div>
 
         <div className="border-t border-white/10 pt-6">
-          <h3 className="font-semibold mb-4">Refund Policy Content</h3>
-          <p className="text-sm text-muted line-clamp-4">{settings.refundContent || "Not set"}</p>
-        </div>
-
-        <div className="border-t border-white/10 pt-6">
           <h3 className="font-semibold mb-4">Social Media Links</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
