@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { ArrowLeft, Star, Heart, ShoppingBag, Check, Truck, Shield, RotateCcw } from "lucide-react";
 import { useAdminData } from "@/lib/admin-data-context";
 import { useAuth } from "@/lib/auth-context";
 import { useCart } from "@/lib/cart-context";
+import { LoadingDots } from "@/components/ui/loading-dots";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +17,9 @@ import { formatCurrency } from "@/lib/utils";
 
 export default function ToolDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { tools } = useAdminData();
+  const routeParams = useParams();
+  const toolId = typeof routeParams?.id === "string" ? routeParams.id : "";
+  const tool = tools.find((t) => t.id === toolId);
   const { user } = useAuth();
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
@@ -37,9 +42,13 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
     }
   }
 
-  // In a real app, you'd fetch the specific tool by ID
-  // For now, we'll use the first tool as a placeholder
-  const tool = tools[0];
+  if (tools.length === 0) {
+    return (
+      <div className="pt-24 pb-16 min-h-screen flex items-center justify-center">
+        <LoadingDots />
+      </div>
+    );
+  }
 
   if (!tool) {
     return (

@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { ArrowLeft, Star, Heart, ShoppingBag, Check, Truck, Shield, RotateCcw, BookOpen } from "lucide-react";
 import { useAdminData } from "@/lib/admin-data-context";
 import { useAuth } from "@/lib/auth-context";
 import { useCart } from "@/lib/cart-context";
+import { LoadingDots } from "@/components/ui/loading-dots";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +17,9 @@ import { formatCurrency } from "@/lib/utils";
 
 export default function BookDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { books } = useAdminData();
+  const routeParams = useParams();
+  const bookId = typeof routeParams?.id === "string" ? routeParams.id : "";
+  const book = books.find((b) => b.id === bookId);
   const { user } = useAuth();
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
@@ -37,9 +42,13 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
     }
   }
 
-  // In a real app, you'd fetch the specific book by ID
-  // For now, we'll use the first book as a placeholder
-  const book = books[0];
+  if (books.length === 0) {
+    return (
+      <div className="pt-24 pb-16 min-h-screen flex items-center justify-center">
+        <LoadingDots />
+      </div>
+    );
+  }
 
   if (!book) {
     return (
