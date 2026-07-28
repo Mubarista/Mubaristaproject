@@ -27,7 +27,7 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: {
-    default: "MUBARISTA — Global Barista Platform",
+    default: "MUBARISTA - THE BARISTA HUB™",
     template: "%s | MUBARISTA",
   },
   description:
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "MUBARISTA — Global Barista Platform",
+    title: "MUBARISTA — THE BARISTA HUB™",
     description: "Compete with the world's best baristas.",
     type: "website",
   },
