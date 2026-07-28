@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Star, Heart, ShoppingBag, Check, Truck, Shield, RotateCcw, Send } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Star, Heart, ShoppingBag, Check, Truck, Shield, RotateCcw, Send } from "lucide-react";
 import { useAdminData } from "@/lib/admin-data-context";
 import { useAuth } from "@/lib/auth-context";
 import { useCart } from "@/lib/cart-context";
@@ -230,12 +230,40 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
           {/* Product Images */}
           <div className="space-y-4">
             <div
-              className="relative h-96 bg-muted-bg rounded-2xl overflow-hidden"
+              className="relative h-96 bg-muted-bg rounded-2xl overflow-hidden group"
               onClick={pauseAutoSlide}
               role="button"
               aria-label="Pause slideshow"
             >
               <Image src={getImageUrl(mainImage)} alt={tool.name} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
+              {allImages.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Previous image"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1));
+                      pauseAutoSlide();
+                    }}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm transition-colors z-10 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Next image"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedIndex((prev) => (prev + 1) % allImages.length);
+                      pauseAutoSlide();
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm transition-colors z-10 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </>
+              )}
             </div>
             <div className="grid grid-cols-4 gap-4">
               {[0, 1, 2, 3].map((i) => {
