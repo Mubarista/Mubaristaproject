@@ -266,6 +266,7 @@ export interface Tool {
   active: boolean;
   order: number;
   discountPrice?: number;
+  stock?: number | null;
   features?: string[];
   shippingTitle?: string;
   shippingSubtitle?: string;

@@ -23,6 +23,7 @@ interface Tool {
   active: boolean;
   order: number;
   discountPrice: number;
+  stock: number | null;
   features: string[];
   shippingTitle: string;
   shippingSubtitle: string;
@@ -56,6 +57,7 @@ interface Draft {
   active: boolean;
   order: number;
   discountPrice: number;
+  stock: number | null;
   featuresText: string;
   shippingTitle: string;
   shippingSubtitle: string;
@@ -82,6 +84,7 @@ const blank: Draft = {
   active: true,
   order: 0,
   discountPrice: 0,
+  stock: null,
   featuresText: defaultFeatures,
   shippingTitle: "Free Shipping",
   shippingSubtitle: "On orders over RWF 100,000",
@@ -107,6 +110,7 @@ function toolToDraft(t: Tool): Draft {
     active: t.active,
     order: t.order,
     discountPrice: t.discountPrice || 0,
+    stock: t.stock ?? null,
     featuresText: (t.features || []).join("\n"),
     shippingTitle: t.shippingTitle || "Free Shipping",
     shippingSubtitle: t.shippingSubtitle || "On orders over RWF 100,000",
@@ -307,6 +311,17 @@ export default function AdminToolsPage() {
             </Field>
             <Field label="Price (RWF)"><Input type="number" value={draft.price} onChange={setNumber("price")} /></Field>
             <Field label="Discount Price (RWF)"><Input type="number" value={draft.discountPrice} onChange={setNumber("discountPrice")} /></Field>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Field label="Stock (Quantity)">
+              <Input
+                type="number"
+                min={0}
+                placeholder="Leave blank for unlimited"
+                value={draft.stock ?? ""}
+                onChange={(e) => setDraft(d => ({ ...d, stock: e.target.value === "" ? null : Number(e.target.value) }))}
+              />
+            </Field>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <Field label="Rating"><Input type="number" step="0.1" min="0" max="5" value={draft.rating} onChange={setNumber("rating")} /></Field>

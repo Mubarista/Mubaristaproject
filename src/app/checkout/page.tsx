@@ -50,13 +50,21 @@ export default function CheckoutPage() {
   });
 
   const [settings, setSettings] = useState<any>({});
+  const [tools, setTools] = useState<any[]>([]);
+  const [stockError, setStockError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/site-settings")
       .then((res) => res.json())
       .then((data) => setSettings(data || {}))
       .catch((error) => console.error("Error fetching site settings:", error));
+    fetch("/api/tools")
+      .then((res) => res.json())
+      .then((data) => setTools(data || []))
+      .catch((error) => console.error("Error fetching tools:", error));
   }, []);
+
+  const stockFor = (id: string) => tools.find((t) => t.id === id)?.stock;
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const freeThreshold = Number(settings.freeShippingThreshold) || 0;
@@ -66,6 +74,18 @@ export default function CheckoutPage() {
   const serviceFee = Number(settings.serviceFee) || 0;
   const vat = subtotal * (vatRate / 100);
   const total = subtotal + shipping + vat + serviceFee;
+
+  const unavailableItems = cartItems
+    .filter((item) => item.type === "tool")
+    .map((item) => {
+      const stock = stockFor(item.id);
+      if (stock === null || stock === undefined) return null;
+      if (stock <= 0) return `${item.title} is out of stock`;
+      if (item.quantity > stock) return `${item.title}: only ${stock} available`;
+      return null;
+    })
+    .filter(Boolean) as string[];
+  const canCheckout = unavailableItems.length === 0;
 
   if (cartCount === 0 && step !== "processing" && step !== "success") {
     return (
@@ -82,6 +102,11 @@ export default function CheckoutPage() {
 
   const handleDetailsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canCheckout) {
+      setStockError(unavailableItems[0] || "Some items are no longer available");
+      return;
+    }
+    setStockError(null);
     setStep("payment-method");
   };
 
@@ -133,6 +158,31 @@ export default function CheckoutPage() {
     }
   }
 
+  async function decrementStock(): Promise<boolean> {
+    const toolItems = cartItems.filter((item) => item.type === "tool");
+    if (toolItems.length === 0) return true;
+    try {
+      const res = await fetch("/api/tools/decrement-stock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: toolItems.map((item) => ({ id: item.id, quantity: item.quantity })),
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({} as any));
+        setStockError(data.error || "Stock could not be reserved");
+        return false;
+      }
+      setStockError(null);
+      return true;
+    } catch (error) {
+      console.error("Error reserving stock:", error);
+      setStockError("Stock could not be reserved");
+      return false;
+    }
+  }
+
   const handleMomoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (momoStep === "phone") {
@@ -147,6 +197,10 @@ export default function CheckoutPage() {
     } else {
       // Verify code and proceed
       setProcessing(true);
+      if (!(await decrementStock())) {
+        setProcessing(false);
+        return;
+      }
       setStep("processing");
       await new Promise(resolve => setTimeout(resolve, 3000));
       const order = addOrder({
@@ -165,6 +219,10 @@ export default function CheckoutPage() {
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setProcessing(true);
+    if (!(await decrementStock())) {
+      setProcessing(false);
+      return;
+    }
     setStep("processing");
 
     // Simulate payment processing
@@ -575,6 +633,16 @@ export default function CheckoutPage() {
                   </div>
                 ))}
               </div>
+              {stockError && (
+                <p className="text-xs text-red mb-3">{stockError}</p>
+              )}
+              {!canCheckout && !stockError && (
+                <div className="text-xs text-red space-y-1 mb-3">
+                  {unavailableItems.map((msg, i) => (
+                    <p key={i}>{msg}</p>
+                  ))}
+                </div>
+              )}
               <div className="border-t border-white/10 pt-3 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted">Subtotal</span>

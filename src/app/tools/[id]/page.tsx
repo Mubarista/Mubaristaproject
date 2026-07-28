@@ -135,10 +135,18 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
   const mainImage = allImages[selectedIndex % allImages.length] || tool.image;
   const features = tool.features?.length ? tool.features : defaultFeatures;
   const hasDiscount = (tool.discountPrice || 0) > 0 && (tool.discountPrice || 0) < tool.price;
+  const stock = tool.stock ?? null;
+  const inStock = stock === null || stock > 0;
+  const stockLabel = stock === null ? "In Stock" : stock > 0 ? `${stock} in stock` : "Out of Stock";
 
   const handleAddToCart = () => {
     if (!user) {
       setNotification({ show: true, message: "Please login to add items to cart", type: "error" });
+      setTimeout(() => setNotification({ show: false, message: "", type: "success" }), 3000);
+      return;
+    }
+    if (!inStock) {
+      setNotification({ show: true, message: "This item is out of stock", type: "error" });
       setTimeout(() => setNotification({ show: false, message: "", type: "success" }), 3000);
       return;
     }
@@ -313,6 +321,8 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
               )}
             </div>
 
+            <Badge variant={inStock ? "green" : "red"} className="w-fit">{stockLabel}</Badge>
+
             <p className="text-muted">{tool.description}</p>
 
             {/* Features */}
@@ -354,9 +364,14 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
                 variant="primary"
                 className="flex-1"
                 onClick={handleAddToCart}
-                disabled={addedToCart}
+                disabled={!inStock || addedToCart}
               >
-                {addedToCart ? (
+                {!inStock ? (
+                  <>
+                    <ShoppingBag className="h-4 w-4 mr-2" />
+                    Out of Stock
+                  </>
+                ) : addedToCart ? (
                   <>
                     <Check className="h-4 w-4 mr-2" />
                     Added to Cart
