@@ -361,7 +361,7 @@ export const learnCategories = [
   },
   {
     id: "premium-books",
-    title: "Premium Barista Books",
+    title: "Premium Barista E-Books",
     description: "Curated professional library",
     icon: "📚",
     free: false,
@@ -724,7 +724,7 @@ export const navLinks = [
   { href: "/competitions", label: "Competitions" },
   { href: "/learn", label: "Learn" },
   { href: "/jobs", label: "Barista Jobs" },
-  { href: "/books", label: "Books" },
+  { href: "/books", label: "E-Books" },
   { href: "/tools", label: "Tools" },
   { href: "/schools", label: "Schools" },
   { href: "/coffee-history", label: "Coffee History" },

@@ -9,7 +9,7 @@ import Link from "next/link";
 const TYPE_LABELS: Record<PaymentType, string> = {
   competition_entry: "Competition Entries",
   premium_subscription: "Premium Subscriptions",
-  book_purchase: "Book Purchases",
+  book_purchase: "E-Book Purchases",
   tool_purchase: "Tool Purchases",
   job_access: "Job Access",
   refund: "Refunds",

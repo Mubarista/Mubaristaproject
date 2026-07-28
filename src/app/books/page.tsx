@@ -85,8 +85,8 @@ export default function BooksPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeading
             eyebrow="Marketplace"
-            title="Barista Books"
-            description="Curated professional library for serious baristas. Browse freely, purchase with account."
+            title="Barista E-Books"
+            description="Curated professional e-book library for serious baristas. Browse freely, purchase with account."
           />
           <div className="flex items-center justify-center py-12">
             <LoadingDots />
@@ -110,8 +110,8 @@ export default function BooksPage() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
           eyebrow="Marketplace"
-          title="Barista Books"
-          description="Curated professional library for serious baristas. Browse freely, purchase with account."
+          title="Barista E-Books"
+          description="Curated professional e-book library for serious baristas. Browse freely, purchase with account."
         />
 
         <div className="mb-8 flex flex-col sm:flex-row gap-4">
@@ -119,7 +119,7 @@ export default function BooksPage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
             <input
               type="text"
-              placeholder="Search books..."
+              placeholder="Search e-books..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-xl bg-muted-bg border border-white/10 pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue"

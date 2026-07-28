@@ -165,7 +165,7 @@ export default function AdminCategoriesPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="tools">Tool Categories</TabsTrigger>
-          <TabsTrigger value="books">Book Categories</TabsTrigger>
+          <TabsTrigger value="books">E-Book Categories</TabsTrigger>
           <TabsTrigger value="articles">Article Categories</TabsTrigger>
         </TabsList>
 
@@ -186,7 +186,7 @@ export default function AdminCategoriesPage() {
 
         <TabsContent value="books">
           <AdminTable
-            title={`Book Categories (${bookCategories.length})`}
+            title={`E-Book Categories (${bookCategories.length})`}
             items={bookCategories}
             onAdd={openAdd}
             onEdit={openEdit}

@@ -103,7 +103,7 @@ export default function WishlistPage() {
             <CardTitle className="mb-2">Your wishlist is empty</CardTitle>
             <p className="text-muted mb-6">Save items you want to buy later</p>
             <Link href="/books">
-              <Button variant="primary">Browse Books</Button>
+              <Button variant="primary">Browse E-Books</Button>
             </Link>
           </Card>
         ) : (

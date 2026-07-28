@@ -19,7 +19,7 @@ const METHOD_META: Record<PaymentMethod, { label: string; icon: React.ReactNode;
 const TYPE_LABELS: Record<string, string> = {
   competition_entry: "Competition Entry",
   premium_subscription: "Premium Sub",
-  book_purchase: "Book",
+  book_purchase: "E-Book",
   tool_purchase: "Tool",
   refund: "Refund",
 };

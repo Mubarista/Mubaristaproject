@@ -62,7 +62,7 @@ const sections = [
   { label: "FAQs", href: "/mbhubteam/faqs", icon: HelpCircle, module: "faq" },
   { label: "Learn Categories", href: "/mbhubteam/learn", icon: BookOpen, module: "learning" },
   { label: "Categories", href: "/mbhubteam/categories", icon: Tags, module: "categories" },
-  { label: "Books", href: "/mbhubteam/books", icon: BookOpen, module: "books" },
+  { label: "E-Books", href: "/mbhubteam/books", icon: BookOpen, module: "books" },
   { label: "Tools", href: "/mbhubteam/tools", icon: Wrench, module: "tools" },
   { label: "Jobs", href: "/mbhubteam/jobs", icon: Briefcase, module: "jobs" },
   { label: "Schools", href: "/mbhubteam/schools", icon: GraduationCap, module: "schools" },
@@ -460,7 +460,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           const books = await booksRes.json();
           books.forEach((b: any) => {
             if (b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q) || b.category.toLowerCase().includes(q)) {
-              results.push({ type: "Book", name: b.title, subtitle: b.author, href: `/mbhubteam/books`, icon: BookOpen });
+              results.push({ type: "E-Book", name: b.title, subtitle: b.author, href: `/mbhubteam/books`, icon: BookOpen });
             }
           });
         }

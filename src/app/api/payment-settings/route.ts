@@ -12,7 +12,7 @@ const ALL_METHODS = [
 const defaultPaymentSettings = [
   { context: "competition_entry", label: "Competition Entry Fees", methods: ALL_METHODS },
   { context: "premium_subscription", label: "Premium Memberships", methods: ALL_METHODS },
-  { context: "book_purchase", label: "Book / eBook Purchases", methods: ALL_METHODS },
+  { context: "book_purchase", label: "E-Book Purchases", methods: ALL_METHODS },
   { context: "tool_purchase", label: "Barista Tools / Products", methods: ALL_METHODS },
   { context: "job_access", label: "Job Access Purchases", methods: ALL_METHODS },
 ];
@@ -20,7 +20,7 @@ const defaultPaymentSettings = [
 const defaultCurrencySettings = [
   { context: "competition_entry", label: "Competition Entry Fees", acceptedCurrencies: ["RWF"] },
   { context: "premium_subscription", label: "Premium Memberships", acceptedCurrencies: ["RWF"] },
-  { context: "book_purchase", label: "Book / eBook Purchases", acceptedCurrencies: ["RWF"] },
+  { context: "book_purchase", label: "E-Book Purchases", acceptedCurrencies: ["RWF"] },
   { context: "tool_purchase", label: "Barista Tools / Products", acceptedCurrencies: ["RWF"] },
   { context: "job_access", label: "Job Access Purchases", acceptedCurrencies: ["RWF"] },
 ];

@@ -175,7 +175,7 @@ export default function UserDashboard() {
     { icon: MapPin, title: "My Addresses", desc: "Manage delivery & pickup", link: "/settings/profile" },
     { icon: User, title: "My Profile", desc: "Update your profile", link: "/settings/profile" },
     { icon: MessageSquare, title: "Messages", desc: "View your messages", link: "/settings/notifications" },
-    { icon: BookOpen, title: "Shop Books", desc: "Browse coffee books", link: "/books" },
+    { icon: BookOpen, title: "Shop E-Books", desc: "Browse coffee e-books", link: "/books" },
     { icon: ShoppingBag, title: "Shop Tools", desc: "Professional equipment", link: "/tools" },
   ];
 
@@ -186,7 +186,7 @@ export default function UserDashboard() {
       case "subscription":
         return { icon: Crown, title: activity.description || "Subscription payment", color: "text-yellow", bg: "bg-yellow/10" };
       case "book":
-        return { icon: BookOpen, title: activity.description || "Book order", color: "text-green", bg: "bg-green/10" };
+        return { icon: BookOpen, title: activity.description || "E-Book order", color: "text-green", bg: "bg-green/10" };
       case "tool":
         return { icon: ShoppingBag, title: activity.description || "Tool order", color: "text-yellow", bg: "bg-yellow/10" };
       default:

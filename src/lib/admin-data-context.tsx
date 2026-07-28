@@ -197,7 +197,7 @@ const DEFAULT_EXCHANGE_RATE = 1370;
 const defaultCurrencySettings: CurrencyContextSettings[] = [
   { context: "competition_entry",    label: "Competition Entry Fees",    acceptedCurrencies: ["RWF"] },
   { context: "premium_subscription", label: "Premium Memberships",       acceptedCurrencies: ["RWF"] },
-  { context: "book_purchase",        label: "Book / eBook Purchases",    acceptedCurrencies: ["RWF"] },
+  { context: "book_purchase",        label: "E-Book Purchases",    acceptedCurrencies: ["RWF"] },
   { context: "tool_purchase",        label: "Barista Tools / Products",  acceptedCurrencies: ["RWF"] },
 ];
 
@@ -211,7 +211,7 @@ const ALL_METHODS: PaymentContextSettings["methods"] = [
 const defaultPaymentSettings: PaymentContextSettings[] = [
   { context: "competition_entry", label: "Competition Entry Fees", methods: ALL_METHODS },
   { context: "premium_subscription", label: "Premium Memberships", methods: ALL_METHODS },
-  { context: "book_purchase", label: "Book / eBook Purchases", methods: ALL_METHODS },
+  { context: "book_purchase", label: "E-Book Purchases", methods: ALL_METHODS },
   { context: "tool_purchase", label: "Barista Tools / Products", methods: ALL_METHODS },
 ];
 

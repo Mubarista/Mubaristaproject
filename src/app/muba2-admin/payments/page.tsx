@@ -13,7 +13,7 @@ import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 const TYPE_LABELS: Record<string, string> = {
   competition_entry: "Competition Entries",
   premium_subscription: "Premium Subscriptions",
-  book_purchase: "Book Purchases",
+  book_purchase: "E-Book Purchases",
   tool_purchase: "Tool Purchases",
   refund: "Refunds",
 };

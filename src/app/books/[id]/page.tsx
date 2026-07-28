@@ -44,7 +44,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
   if (!book) {
     return (
       <div className="pt-24 pb-16 min-h-screen flex items-center justify-center">
-        <p className="text-muted">Book not found</p>
+        <p className="text-muted">E-Book not found</p>
       </div>
     );
   }
@@ -119,7 +119,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Link href="/books" className="inline-flex items-center gap-2 text-muted hover:text-foreground mb-6">
           <ArrowLeft className="h-4 w-4" />
-          Back to Books
+          Back to E-Books
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -173,7 +173,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
 
             {/* Features */}
             <div className="space-y-3">
-              <h3 className="font-semibold">Book Details</h3>
+              <h3 className="font-semibold">E-Book Details</h3>
               <ul className="space-y-2">
                 <li className="flex items-center gap-2 text-sm">
                   <BookOpen className="h-4 w-4 text-blue" />
@@ -274,7 +274,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
 
         {/* Related Products */}
         <div className="mt-16">
-          <h2 className="text-2xl font-bold mb-6">Related Books</h2>
+          <h2 className="text-2xl font-bold mb-6">Related E-Books</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {books.slice(0, 4).map((relatedBook) => (
               <Link key={relatedBook.id} href={`/books/${relatedBook.id}`}>

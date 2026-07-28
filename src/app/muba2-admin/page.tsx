@@ -26,7 +26,7 @@ const sections = [
   { label: "Articles", href: "/mbhubteam/articles", icon: FileText, color: "text-blue", bg: "bg-blue/10", api: "/api/articles" },
   { label: "FAQs", href: "/mbhubteam/faqs", icon: HelpCircle, color: "text-green", bg: "bg-green/10", api: "/api/faqs" },
   { label: "Learn Categories", href: "/mbhubteam/learn", icon: BookOpen, color: "text-blue", bg: "bg-blue/10", api: "/api/learn-categories" },
-  { label: "Books", href: "/mbhubteam/books", icon: BookOpen, color: "text-yellow", bg: "bg-yellow/10", api: "/api/books" },
+  { label: "E-Books", href: "/mbhubteam/books", icon: BookOpen, color: "text-yellow", bg: "bg-yellow/10", api: "/api/books" },
   { label: "Tools", href: "/mbhubteam/tools", icon: Wrench, color: "text-red", bg: "bg-red/10", api: "/api/tools" },
   { label: "Jobs", href: "/mbhubteam/jobs", icon: Briefcase, color: "text-green", bg: "bg-green/10", api: "/api/jobs" },
   { label: "Schools", href: "/mbhubteam/schools", icon: GraduationCap, color: "text-blue", bg: "bg-blue/10", api: "/api/schools" },

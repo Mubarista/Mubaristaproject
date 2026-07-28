@@ -29,7 +29,7 @@ export default function CartPage() {
             <CardTitle className="mb-2">Your cart is empty</CardTitle>
             <p className="text-muted mb-6">Add some items to get started</p>
             <Link href="/books">
-              <Button variant="primary">Browse Books</Button>
+              <Button variant="primary">Browse E-Books</Button>
             </Link>
           </Card>
         ) : (

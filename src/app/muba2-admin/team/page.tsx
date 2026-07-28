@@ -32,7 +32,7 @@ const contentModules = [
   { module: "about", label: "About" },
   { module: "contact", label: "Contact" },
   { module: "messages", label: "Message Center" },
-  { module: "books", label: "Books" },
+  { module: "books", label: "E-Books" },
   { module: "tools", label: "Tools" },
   { module: "jobs", label: "Jobs" },
   { module: "schools", label: "Schools" },

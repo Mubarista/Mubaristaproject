@@ -147,8 +147,8 @@ export default function AdminBooksPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Books</h1>
-        <p className="text-foreground/50 text-sm">Manage the barista books marketplace.</p>
+        <h1 className="text-2xl font-bold">E-Books</h1>
+        <p className="text-foreground/50 text-sm">Manage the barista e-books marketplace.</p>
       </div>
 
       {/* Search Bar */}
@@ -157,7 +157,7 @@ export default function AdminBooksPage() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/50" />
           <input
             type="text"
-            placeholder="Search books by title, author, or category..."
+            placeholder="Search e-books by title, author, or category..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full rounded-xl bg-muted-bg border border-white/10 pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue"
@@ -166,7 +166,7 @@ export default function AdminBooksPage() {
       </div>
 
       <AdminTable
-        title={`Books (${filteredBooks.length})`}
+        title={`E-Books (${filteredBooks.length})`}
         items={filteredBooks}
         onAdd={openAdd}
         onEdit={openEdit}
@@ -181,7 +181,7 @@ export default function AdminBooksPage() {
       />
 
       {editing && (
-        <AdminModal title={editing.id === "new" ? "Add Book" : "Edit Book"} onClose={closeModal} onSave={save}>
+        <AdminModal title={editing.id === "new" ? "Add E-Book" : "Edit E-Book"} onClose={closeModal} onSave={save}>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Title" required><Input value={draft.title} onChange={set("title")} /></Field>
             <Field label="Author"><Input value={draft.author} onChange={set("author")} /></Field>
@@ -215,7 +215,7 @@ export default function AdminBooksPage() {
           <Field label="Cover Image">
             <ImageUpload value={draft.cover} onChange={(url) => setDraft(d => ({ ...d, cover: url }))} aspectRatio="portrait" />
           </Field>
-          <Field label="Book PDF">
+          <Field label="E-Book PDF">
             <FileUpload value={draft.pdfUrl} onChange={(url) => setDraft(d => ({ ...d, pdfUrl: url }))} />
           </Field>
         </AdminModal>
@@ -223,9 +223,9 @@ export default function AdminBooksPage() {
 
       {deleting && (
         <ConfirmDialog
-          title="Delete Book"
+          title="Delete E-Book"
           message={<>Are you sure you want to delete <span className="font-semibold">{deleting.title}</span>?</>}
-          confirmLabel="Delete Book"
+          confirmLabel="Delete E-Book"
           onConfirm={confirmDelete}
           onCancel={() => setDeleting(null)}
         />

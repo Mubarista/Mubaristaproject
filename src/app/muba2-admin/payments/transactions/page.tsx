@@ -11,7 +11,7 @@ import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 const TYPE_LABELS: Record<PaymentType, string> = {
   competition_entry: "Competition Entry",
   premium_subscription: "Premium Sub",
-  book_purchase: "Book",
+  book_purchase: "E-Book",
   tool_purchase: "Tool",
   job_access: "Job Access",
   refund: "Refund",
@@ -156,7 +156,7 @@ export default function TransactionsPage() {
           <option value="all">All Types</option>
           <option value="competition_entry">Competition Entry</option>
           <option value="premium_subscription">Premium Subscription</option>
-          <option value="book_purchase">Book Purchase</option>
+          <option value="book_purchase">E-Book Purchase</option>
           <option value="tool_purchase">Tool Purchase</option>
           <option value="refund">Refund</option>
         </select>
