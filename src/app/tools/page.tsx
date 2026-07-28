@@ -10,7 +10,7 @@ import { SectionHeading } from "@/components/shared/section-heading";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, getImageUrl } from "@/lib/utils";
 
 interface Category {
   id: string;
@@ -196,11 +196,9 @@ export default function ToolsPage() {
           {filtered.map((tool) => (
             <Link key={tool.id} href={`/tools/${tool.id}`}>
               <Card className="overflow-hidden p-0 cursor-pointer hover:border-blue/50 transition-colors">
-                {tool.image ? (
-                  <div className="relative h-40">
-                    <Image src={tool.image} alt={tool.name} fill sizes="(max-width: 640px) 100vw, 25vw" className="object-cover" />
-                  </div>
-                ) : null}
+                <div className="relative h-40">
+                  <Image src={getImageUrl(tool.image)} alt={tool.name} fill sizes="(max-width: 640px) 100vw, 25vw" className="object-cover" />
+                </div>
                 <div className="p-5">
                   <Badge variant="blue" className="mb-2">{tool.category}</Badge>
                   <CardTitle className="text-base mb-1">{tool.name}</CardTitle>

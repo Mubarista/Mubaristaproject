@@ -19,3 +19,9 @@ export function formatCurrency(amount: number, currency = "RWF"): string {
     maximumFractionDigits: 0,
   }).format(amount);
 }
+
+export const DEFAULT_IMAGE = "/logo-bimi.svg";
+
+export function getImageUrl(src?: string | null): string {
+  return src && src.trim() !== "" ? src : DEFAULT_IMAGE;
+}

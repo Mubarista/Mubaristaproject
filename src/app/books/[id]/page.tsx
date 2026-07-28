@@ -13,7 +13,7 @@ import { LoadingDots } from "@/components/ui/loading-dots";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, getImageUrl } from "@/lib/utils";
 
 export default function BookDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { books } = useAdminData();
@@ -135,24 +135,12 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
           {/* Product Images */}
           <div className="space-y-4">
             <div className="relative h-96 bg-muted-bg rounded-2xl overflow-hidden">
-              {book.cover ? (
-                <Image src={book.cover} alt={book.title} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-muted">
-                  No cover available
-                </div>
-              )}
+              <Image src={getImageUrl(book.cover)} alt={book.title} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
             </div>
             <div className="grid grid-cols-4 gap-4">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="relative h-24 bg-muted-bg rounded-xl overflow-hidden cursor-pointer hover:border-blue/50 transition-colors border border-transparent">
-                  {book.cover ? (
-                    <Image src={book.cover} alt={`${book.title} view ${i}`} fill sizes="100px" className="object-cover" />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-muted text-xs">
-                      View {i}
-                    </div>
-                  )}
+                  <Image src={getImageUrl(book.cover)} alt={`${book.title} view ${i}`} fill sizes="100px" className="object-cover" />
                 </div>
               ))}
             </div>
@@ -289,11 +277,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
               <Link key={relatedBook.id} href={`/books/${relatedBook.id}`}>
                 <Card className="overflow-hidden p-0 cursor-pointer hover:border-blue/50 transition-colors">
                   <div className="relative h-56">
-                    {relatedBook.cover ? (
-                      <Image src={relatedBook.cover} alt={relatedBook.title} fill sizes="25vw" className="object-cover" />
-                    ) : (
-                      <div className="h-full w-full bg-muted-bg flex items-center justify-center text-muted text-xs">No image</div>
-                    )}
+                    <Image src={getImageUrl(relatedBook.cover)} alt={relatedBook.title} fill sizes="25vw" className="object-cover" />
                   </div>
                   <div className="p-6">
                     <Badge variant="default" className="mb-2">{relatedBook.category}</Badge>

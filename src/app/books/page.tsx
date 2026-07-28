@@ -11,7 +11,7 @@ import { SectionHeading } from "@/components/shared/section-heading";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, getImageUrl } from "@/lib/utils";
 
 interface Category {
   id: string;
@@ -198,11 +198,9 @@ export default function BooksPage() {
           {filtered.map((book) => (
             <Card key={book.id} className="overflow-hidden p-0">
               <Link href={`/books/${book.id}`}>
-                {book.cover ? (
-                  <div className="relative h-56">
-                    <Image src={book.cover} alt={book.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover" />
-                  </div>
-                ) : null}
+                <div className="relative h-56">
+                  <Image src={getImageUrl(book.cover)} alt={book.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover" />
+                </div>
                 <div className="p-6">
                   <Badge variant="default" className="mb-2">{book.category}</Badge>
                   <CardTitle className="text-lg mb-1">{book.title}</CardTitle>

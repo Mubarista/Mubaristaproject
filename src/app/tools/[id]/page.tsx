@@ -13,7 +13,7 @@ import { LoadingDots } from "@/components/ui/loading-dots";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, getImageUrl } from "@/lib/utils";
 
 interface Review {
   id: string;
@@ -183,26 +183,14 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
           {/* Product Images */}
           <div className="space-y-4">
             <div className="relative h-96 bg-muted-bg rounded-2xl overflow-hidden">
-              {tool.image ? (
-                <Image src={tool.image} alt={tool.name} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-muted">
-                  No image available
-                </div>
-              )}
+              <Image src={getImageUrl(tool.image)} alt={tool.name} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
             </div>
             <div className="grid grid-cols-4 gap-4">
               {[0, 1, 2, 3].map((i) => {
                 const img = gallery[i] || tool.image;
                 return (
                   <div key={i} className="relative h-24 bg-muted-bg rounded-xl overflow-hidden cursor-pointer hover:border-blue/50 transition-colors border border-transparent">
-                    {img ? (
-                      <Image src={img} alt={`${tool.name} view ${i + 1}`} fill sizes="100px" className="object-cover" />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center text-muted text-xs">
-                        View {i + 1}
-                      </div>
-                    )}
+                    <Image src={getImageUrl(img)} alt={`${tool.name} view ${i + 1}`} fill sizes="100px" className="object-cover" />
                   </div>
                 );
               })}
@@ -387,11 +375,7 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
               <Link key={relatedTool.id} href={`/tools/${relatedTool.id}`}>
                 <Card className="overflow-hidden p-0 cursor-pointer hover:border-blue/50 transition-colors">
                   <div className="relative h-40">
-                    {relatedTool.image ? (
-                      <Image src={relatedTool.image} alt={relatedTool.name} fill sizes="25vw" className="object-cover" />
-                    ) : (
-                      <div className="h-full w-full bg-muted-bg flex items-center justify-center text-muted text-xs">No image</div>
-                    )}
+                    <Image src={getImageUrl(relatedTool.image)} alt={relatedTool.name} fill sizes="25vw" className="object-cover" />
                   </div>
                   <div className="p-5">
                     <Badge variant="blue" className="mb-2 text-xs">{relatedTool.category}</Badge>
