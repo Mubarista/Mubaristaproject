@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AdminModal, Field, Textarea } from "@/components/admin/admin-modal";
+import { AdminModal, Field, Input, Textarea } from "@/components/admin/admin-modal";
 import { LoadingDots } from "@/components/ui/loading-dots";
 
 export default function AdminSiteSettingsPage() {
@@ -26,6 +26,10 @@ export default function AdminSiteSettingsPage() {
     shippingInfo2Description: "",
     shippingInfo3Title: "",
     shippingInfo3Description: "",
+    freeShippingThreshold: "0",
+    shippingAmount: "0",
+    vatRate: "0",
+    serviceFee: "0",
     maxApplicationVideoDuration: "300",
     maxApplicationVideoSize: "100",
   });
@@ -56,6 +60,10 @@ export default function AdminSiteSettingsPage() {
         shippingInfo2Description: data?.shippingInfo2Description || "",
         shippingInfo3Title: data?.shippingInfo3Title || "",
         shippingInfo3Description: data?.shippingInfo3Description || "",
+        freeShippingThreshold: String(data?.freeShippingThreshold ?? 0),
+        shippingAmount: String(data?.shippingAmount ?? 0),
+        vatRate: String(data?.vatRate ?? 0),
+        serviceFee: String(data?.serviceFee ?? 0),
         maxApplicationVideoDuration: String(data?.maxApplicationVideoDuration ?? 300),
         maxApplicationVideoSize: String(data?.maxApplicationVideoSize ?? 100),
       });
@@ -71,6 +79,10 @@ export default function AdminSiteSettingsPage() {
     try {
       const body = {
         ...draft,
+        freeShippingThreshold: Number(draft.freeShippingThreshold) || 0,
+        shippingAmount: Number(draft.shippingAmount) || 0,
+        vatRate: Number(draft.vatRate) || 0,
+        serviceFee: Number(draft.serviceFee) || 0,
         maxApplicationVideoDuration: Number(draft.maxApplicationVideoDuration) || 300,
         maxApplicationVideoSize: Number(draft.maxApplicationVideoSize) || 100,
       };
@@ -182,6 +194,28 @@ export default function AdminSiteSettingsPage() {
               <p className="text-sm font-medium">{settings.shippingInfo3Title || "Not set"}</p>
               <label className="text-xs text-muted mb-1 block mt-2">Info 3 Description</label>
               <p className="text-sm">{settings.shippingInfo3Description || "Not set"}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-white/10 pt-6">
+          <h3 className="font-semibold mb-4">Cart & Checkout Pricing</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-muted mb-1 block">Free Shipping Threshold</label>
+              <p className="text-sm font-medium">RWF {settings.freeShippingThreshold ?? 0}</p>
+            </div>
+            <div>
+              <label className="text-xs text-muted mb-1 block">Standard Shipping Amount</label>
+              <p className="text-sm font-medium">RWF {settings.shippingAmount ?? 0}</p>
+            </div>
+            <div>
+              <label className="text-xs text-muted mb-1 block">VAT Rate (%)</label>
+              <p className="text-sm font-medium">{settings.vatRate ?? 0}%</p>
+            </div>
+            <div>
+              <label className="text-xs text-muted mb-1 block">Service Fee</label>
+              <p className="text-sm font-medium">RWF {settings.serviceFee ?? 0}</p>
             </div>
           </div>
         </div>
@@ -373,6 +407,52 @@ export default function AdminSiteSettingsPage() {
                     className="w-full rounded-lg bg-muted-bg border border-white/10 px-3 py-2 text-sm"
                   />
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-white/10 pt-4 mt-4">
+            <h4 className="font-semibold mb-4">Cart & Checkout Pricing</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-muted mb-1 block">Free Shipping Threshold (RWF)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={draft.freeShippingThreshold}
+                  onChange={(e) => setDraft({ ...draft, freeShippingThreshold: e.target.value })}
+                  className="w-full rounded-lg bg-muted-bg border border-white/10 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted mb-1 block">Standard Shipping Amount (RWF)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={draft.shippingAmount}
+                  onChange={(e) => setDraft({ ...draft, shippingAmount: e.target.value })}
+                  className="w-full rounded-lg bg-muted-bg border border-white/10 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted mb-1 block">VAT Rate (%)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={draft.vatRate}
+                  onChange={(e) => setDraft({ ...draft, vatRate: e.target.value })}
+                  className="w-full rounded-lg bg-muted-bg border border-white/10 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted mb-1 block">Service Fee (RWF)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={draft.serviceFee}
+                  onChange={(e) => setDraft({ ...draft, serviceFee: e.target.value })}
+                  className="w-full rounded-lg bg-muted-bg border border-white/10 px-3 py-2 text-sm"
+                />
               </div>
             </div>
           </div>

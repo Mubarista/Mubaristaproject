@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, BookOpen, Wrench } from "lucide-react";
@@ -7,12 +8,23 @@ import { useCart } from "@/lib/cart-context";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/lib/utils";
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart } = useCart();
+  const [settings, setSettings] = useState<any>({});
+
+  useEffect(() => {
+    fetch("/api/site-settings")
+      .then((res) => res.json())
+      .then((data) => setSettings(data || {}))
+      .catch((error) => console.error("Error fetching site settings:", error));
+  }, []);
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = subtotal > 100000 ? 0 : 10000;
+  const freeThreshold = Number(settings.freeShippingThreshold) || 0;
+  const shippingAmount = Number(settings.shippingAmount) || 0;
+  const shipping = freeThreshold > 0 && subtotal >= freeThreshold ? 0 : shippingAmount;
   const total = subtotal + shipping;
 
   return (
@@ -59,7 +71,7 @@ export default function CartPage() {
                             {item.author && <p className="text-sm text-muted">{item.author}</p>}
                             <Badge variant="blue" className="mt-1 text-xs capitalize">{item.type}</Badge>
                           </div>
-                          <p className="font-bold">RWF {item.price}</p>
+                          <p className="font-bold">{formatCurrency(item.price)}</p>
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
@@ -98,18 +110,18 @@ export default function CartPage() {
                 <div className="space-y-3 mb-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted">Subtotal</span>
-                    <span>RWF {subtotal.toFixed(0)}</span>
+                    <span>{formatCurrency(subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted">Shipping</span>
-                    <span>{shipping === 0 ? "Free" : `RWF ${shipping.toFixed(0)}`}</span>
+                    <span>{shipping === 0 ? "Free" : formatCurrency(shipping)}</span>
                   </div>
-                  {shipping > 0 && (
-                    <p className="text-xs text-muted">Free shipping on orders over RWF 100,000</p>
+                  {shipping > 0 && freeThreshold > 0 && (
+                    <p className="text-xs text-muted">Free shipping on orders over {formatCurrency(freeThreshold)}</p>
                   )}
                   <div className="border-t border-white/10 pt-3 flex justify-between font-bold">
                     <span>Total</span>
-                    <span>RWF {total.toFixed(0)}</span>
+                    <span>{formatCurrency(total)}</span>
                   </div>
                 </div>
                 <Link href="/checkout">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowLeft, CreditCard, Lock, Check, Loader2, Smartphone, Phone } from "lucide-react";
@@ -49,9 +49,23 @@ export default function CheckoutPage() {
     cvv: "",
   });
 
+  const [settings, setSettings] = useState<any>({});
+
+  useEffect(() => {
+    fetch("/api/site-settings")
+      .then((res) => res.json())
+      .then((data) => setSettings(data || {}))
+      .catch((error) => console.error("Error fetching site settings:", error));
+  }, []);
+
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = subtotal > 100 ? 0 : 10;
-  const total = subtotal + shipping;
+  const freeThreshold = Number(settings.freeShippingThreshold) || 0;
+  const shippingAmount = Number(settings.shippingAmount) || 0;
+  const shipping = freeThreshold > 0 && subtotal >= freeThreshold ? 0 : shippingAmount;
+  const vatRate = Number(settings.vatRate) || 0;
+  const serviceFee = Number(settings.serviceFee) || 0;
+  const vat = subtotal * (vatRate / 100);
+  const total = subtotal + shipping + vat + serviceFee;
 
   if (cartCount === 0 && step !== "processing" && step !== "success") {
     return (
@@ -570,6 +584,21 @@ export default function CheckoutPage() {
                   <span className="text-muted">Shipping</span>
                   <span>{shipping === 0 ? "Free" : formatCurrency(shipping)}</span>
                 </div>
+                {shipping > 0 && freeThreshold > 0 && (
+                  <p className="text-xs text-muted">Free shipping on orders over {formatCurrency(freeThreshold)}</p>
+                )}
+                {vat > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted">VAT ({vatRate}%)</span>
+                    <span>{formatCurrency(vat)}</span>
+                  </div>
+                )}
+                {serviceFee > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted">Service Fee</span>
+                    <span>{formatCurrency(serviceFee)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between font-bold text-lg pt-2 border-t border-white/10">
                   <span>Total</span>
                   <span>{formatCurrency(total)}</span>
