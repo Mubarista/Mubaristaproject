@@ -1,11 +1,14 @@
 // Utility functions for converting between camelCase and snake_case
 
 export function toSnakeCase(str: string): string {
-  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+  return str
+    .replace(/([a-z])([A-Z0-9])/g, "$1_$2")
+    .replace(/([0-9])([A-Z])/g, "$1_$2")
+    .toLowerCase();
 }
 
 export function toCamelCase(str: string): string {
-  return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+  return str.replace(/_([a-zA-Z0-9])/g, (_, letter) => letter.toUpperCase());
 }
 
 export function keysToSnakeCase(obj: Record<string, any>): Record<string, any> {
