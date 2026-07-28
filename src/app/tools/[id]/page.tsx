@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -48,12 +48,27 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const allImages = useMemo(() => {
+    if (!tool) return [];
+    return [tool.image, ...(tool.gallery?.filter(Boolean) || [])];
+  }, [tool]);
 
   useEffect(() => {
     if (toolId) {
+      setSelectedIndex(0);
       fetchReviews();
     }
   }, [toolId]);
+
+  useEffect(() => {
+    if (allImages.length <= 1) return;
+    const interval = setInterval(() => {
+      setSelectedIndex((prev) => (prev + 1) % allImages.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [allImages.length]);
 
   async function fetchReviews() {
     try {
@@ -86,6 +101,7 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
   }
 
   const gallery = tool.gallery?.filter(Boolean) || [];
+  const mainImage = allImages[selectedIndex % allImages.length] || tool.image;
   const features = tool.features?.length ? tool.features : defaultFeatures;
   const hasDiscount = (tool.discountPrice || 0) > 0 && (tool.discountPrice || 0) < tool.price;
 
@@ -183,13 +199,20 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
           {/* Product Images */}
           <div className="space-y-4">
             <div className="relative h-96 bg-muted-bg rounded-2xl overflow-hidden">
-              <Image src={getImageUrl(tool.image)} alt={tool.name} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
+              <Image src={getImageUrl(mainImage)} alt={tool.name} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
             </div>
             <div className="grid grid-cols-4 gap-4">
               {[0, 1, 2, 3].map((i) => {
-                const img = gallery[i] || tool.image;
+                const galleryUrl = gallery[i];
+                const thumbIndex = galleryUrl ? i + 1 : 0;
+                const img = galleryUrl || tool.image;
+                const isActive = selectedIndex === thumbIndex;
                 return (
-                  <div key={i} className="relative h-24 bg-muted-bg rounded-xl overflow-hidden cursor-pointer hover:border-blue/50 transition-colors border border-transparent">
+                  <div
+                    key={i}
+                    onClick={() => setSelectedIndex(thumbIndex)}
+                    className={`relative h-24 bg-muted-bg rounded-xl overflow-hidden cursor-pointer transition-colors border-2 ${isActive ? "border-blue" : "border-transparent hover:border-blue/50"}`}
+                  >
                     <Image src={getImageUrl(img)} alt={`${tool.name} view ${i + 1}`} fill sizes="100px" className="object-cover" />
                   </div>
                 );
