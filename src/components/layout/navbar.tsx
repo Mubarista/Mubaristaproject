@@ -280,6 +280,17 @@ export function Navbar() {
                           </span>
                         )}
                       </Link>
+                      <Button
+                        variant="ghost"
+                        className="w-full"
+                        onClick={() => {
+                          setIsOpen(false);
+                          setShowLogoutConfirm(true);
+                        }}
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Logout
+                      </Button>
                     </>
                   )}
                 </div>
