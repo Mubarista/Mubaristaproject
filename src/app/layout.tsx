@@ -9,6 +9,7 @@ import { CartProvider } from "@/lib/cart-context";
 import { OrderProvider } from "@/lib/order-context";
 import { SiteChrome } from "@/components/layout/site-chrome";
 import { AppBootLoader } from "@/components/layout/app-boot-loader";
+import { SessionTimeout } from "@/components/session-timeout";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -74,6 +75,7 @@ export default function RootLayout({
           <AdminAuthProvider>
             <AdminDataProvider>
               <AuthProvider>
+                <SessionTimeout />
                 <CartProvider>
                   <OrderProvider>
                     <JudgeAuthProvider>
