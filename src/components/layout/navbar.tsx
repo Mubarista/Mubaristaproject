@@ -154,7 +154,7 @@ export function Navbar() {
                 className="p-2 rounded-xl hover:bg-white/5 transition-colors"
                 aria-label="Toggle theme"
               >
-                <Moon className="h-5 w-5 text-white" />
+                <Moon className={cn("h-5 w-5 transition-colors duration-300", theme === "dark" ? "text-white" : "text-black")} />
               </button>
             )}
 
