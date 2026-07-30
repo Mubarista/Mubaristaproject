@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Mail, MapPin, Phone, Send, Loader2 } from "lucide-react";
-import { LoadingDots } from "@/components/ui/loading-dots";
+import { useState } from "react";
+import { Send, Loader2 } from "lucide-react";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,8 +9,6 @@ import { Button } from "@/components/ui/button";
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [contact, setContact] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -20,24 +17,6 @@ export default function ContactPage() {
     priority: "normal",
     message: ""
   });
-
-  useEffect(() => {
-    fetchContact();
-  }, []);
-
-  async function fetchContact() {
-    try {
-      const res = await fetch("/api/contact");
-      if (res.ok) {
-        const data = await res.json();
-        setContact(data);
-      }
-    } catch (error) {
-      console.error("Error fetching contact info:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -63,23 +42,6 @@ export default function ContactPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="pt-24 pb-16">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6">
-          <SectionHeading
-            eyebrow="Get in Touch"
-            title="Contact Us"
-            description="Have questions about competitions, membership, or partnerships? We'd love to hear from you."
-          />
-          <div className="flex items-center justify-center py-12">
-            <LoadingDots />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="pt-24 pb-16">
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
@@ -89,26 +51,8 @@ export default function ContactPage() {
           description="Have questions about competitions, membership, or partnerships? We'd love to hear from you."
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="space-y-4">
-            {contact ? [
-              { icon: Mail, label: "Email", value: contact.email, color: "text-blue" },
-              { icon: Phone, label: "Phone", value: contact.phone, color: "text-green" },
-              { icon: MapPin, label: "Location", value: contact.location, color: "text-red" },
-            ].map((item) => (
-              <Card key={item.label} className="flex items-center gap-4">
-                <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-muted-bg ${item.color}`}>
-                  <item.icon className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted">{item.label}</p>
-                  <p className="font-medium">{item.value}</p>
-                </div>
-              </Card>
-            )) : null}
-          </div>
-
-          <Card className="lg:col-span-2">
+        <div className="grid grid-cols-1 gap-8">
+          <Card>
             {submitted ? (
               <div className="text-center py-12">
                 <p className="text-2xl font-semibold text-green mb-2">Message Sent!</p>

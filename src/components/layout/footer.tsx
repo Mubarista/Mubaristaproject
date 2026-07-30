@@ -53,9 +53,9 @@ export function Footer() {
   const [footerDescription, setFooterDescription] = useState("");
   const [siteLogo, setSiteLogo] = useState("");
   const [contactInfo, setContactInfo] = useState<ContactInfo>({
-    email: "hello@mubarista.com",
-    phone: "+250 788 000 000",
-    location: "Kigali, Rwanda · Global",
+    email: "",
+    phone: "",
+    location: "",
   });
   const [socialLinks, setSocialLinks] = useState({
     instagram: "",
@@ -195,23 +195,31 @@ export function Footer() {
             </ul>
           </div>
 
-          <div>
-            <h4 className="font-semibold mb-4">Contact</h4>
-            <ul className="space-y-3 text-sm text-muted">
-              <li className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-blue" />
-                {contactInfo.email}
-              </li>
-              <li className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-green" />
-                {contactInfo.phone}
-              </li>
-              <li className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-red" />
-                {contactInfo.location}
-              </li>
-            </ul>
-          </div>
+          {(contactInfo.email || contactInfo.phone || contactInfo.location) && (
+            <div>
+              <h4 className="font-semibold mb-4">Contact</h4>
+              <ul className="space-y-3 text-sm text-muted">
+                {contactInfo.email && (
+                  <li className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-blue" />
+                    {contactInfo.email}
+                  </li>
+                )}
+                {contactInfo.phone && (
+                  <li className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-green" />
+                    {contactInfo.phone}
+                  </li>
+                )}
+                {contactInfo.location && (
+                  <li className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-red" />
+                    {contactInfo.location}
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
         </div>
 
         <div className="mt-12 pt-8 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
