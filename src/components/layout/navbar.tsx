@@ -302,17 +302,6 @@ export function Navbar() {
                           {user.name.split(' ')[0]}
                         </Button>
                       </Link>
-                      <Link href="/cart" onClick={() => setIsOpen(false)} className="relative">
-                        <Button variant="ghost" className="w-full">
-                          <ShoppingBag className="h-4 w-4 mr-2" />
-                          Cart
-                        </Button>
-                        {cartCount > 0 && (
-                          <span className="absolute top-2 right-2 h-5 w-5 bg-red text-white text-xs rounded-full flex items-center justify-center font-medium">
-                            {cartCount > 9 ? '9+' : cartCount}
-                          </span>
-                        )}
-                      </Link>
                       <Button
                         variant="ghost"
                         className="w-full"
