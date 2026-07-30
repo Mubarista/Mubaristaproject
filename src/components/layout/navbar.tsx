@@ -109,7 +109,12 @@ export function Navbar() {
             {siteLogo ? (
               <img src={siteLogo} alt="MUBARISTA" className="h-14 w-auto bg-transparent transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-2 cursor-pointer" />
             ) : null}
-            <span className="text-xl font-bold tracking-tight leading-none animate-gradient-text">
+            <span
+              className={cn(
+                "text-xl font-bold tracking-tight leading-none animate-gradient-text",
+                user && "hidden sm:inline"
+              )}
+            >
               MUBARISTA
               <span className="text-[0.45em] tracking-widest uppercase align-top ml-0.5">HUB</span>
             </span>
@@ -215,6 +220,39 @@ export function Navbar() {
                   <Button variant="primary" size="sm">
                     Register
                   </Button>
+                </Link>
+              </div>
+            )}
+
+            {user && (
+              <div className="flex sm:hidden items-center gap-0.5">
+                <Link href="/dashboard" className="p-2 rounded-xl hover:bg-white/5 transition-colors">
+                  {user.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={user.avatar}
+                      alt={user.name || "Profile"}
+                      className="h-5 w-5 rounded-full object-cover"
+                    />
+                  ) : (
+                    <User className="h-5 w-5" />
+                  )}
+                </Link>
+                <Link href="/settings/notifications" className="relative p-2 rounded-xl hover:bg-white/5 transition-colors">
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-0 right-0 h-4 w-4 bg-red text-white text-[10px] rounded-full flex items-center justify-center font-medium">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </Link>
+                <Link href="/cart" className="relative p-2 rounded-xl hover:bg-white/5 transition-colors">
+                  <ShoppingBag className="h-5 w-5" />
+                  {cartCount > 0 && (
+                    <span className="absolute top-0 right-0 h-4 w-4 bg-red text-white text-[10px] rounded-full flex items-center justify-center font-medium">
+                      {cartCount > 9 ? '9+' : cartCount}
+                    </span>
+                  )}
                 </Link>
               </div>
             )}
