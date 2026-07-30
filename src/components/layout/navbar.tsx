@@ -14,6 +14,7 @@ import {
   ShoppingBag,
   Settings,
   Bell,
+  Heart,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
 import { navLinks } from "@/data/mock-data";
@@ -200,6 +201,11 @@ export function Navbar() {
                     </span>
                   )}
                 </Link>
+                <Link href="/wishlist">
+                  <Button variant="ghost" size="sm">
+                    <Heart className="h-4 w-4" />
+                  </Button>
+                </Link>
                 <Button variant="ghost" size="sm" onClick={() => setShowLogoutConfirm(true)}>
                   <LogOut className="h-4 w-4" />
                 </Button>
@@ -236,6 +242,9 @@ export function Navbar() {
                       {cartCount > 9 ? '9+' : cartCount}
                     </span>
                   )}
+                </Link>
+                <Link href="/wishlist" className="p-2 rounded-xl hover:bg-white/5 transition-colors">
+                  <Heart className="h-5 w-5" />
                 </Link>
                 <Link href="/dashboard" className="p-2 rounded-xl hover:bg-white/5 transition-colors">
                   {user.avatar ? (
