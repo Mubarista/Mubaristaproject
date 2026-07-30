@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 
-const cleanPaths = ["/refund-policy", "/terms", "/privacy"];
+const cleanPaths = ["/refund-policy", "/terms", "/privacy", "/contact"];
 
 export function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
