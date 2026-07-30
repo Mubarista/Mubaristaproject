@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Menu,
   X,
-  Sun,
   Moon,
   ChevronDown,
   User,
@@ -23,68 +22,6 @@ import { useAuth } from "@/lib/auth-context";
 import { useCart } from "@/lib/cart-context";
 import { safeLocalStorage } from "@/lib/safe-storage";
 import { cn } from "@/lib/utils";
-
-function ThemeToggle({
-  theme,
-  onToggle,
-  className,
-}: {
-  theme: string;
-  onToggle: () => void;
-  className?: string;
-}) {
-  const isDark = theme === "dark";
-  return (
-    <button
-      onClick={onToggle}
-      aria-label="Toggle theme"
-      className={cn(
-        "relative h-8 w-[58px] shrink-0 rounded-full border transition-colors duration-500 cursor-pointer",
-        isDark
-          ? "border-white/15 bg-[radial-gradient(circle_at_30%_20%,#1e2a5a_0%,#0b1026_70%)]"
-          : "border-amber-300/50 bg-gradient-to-r from-sky-300 via-sky-200 to-amber-200",
-        className
-      )}
-    >
-      {/* Track icons (visible on the side not covered by the knob) */}
-      <Sun
-        className={cn(
-          "absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 transition-all duration-300",
-          isDark ? "text-amber-300/90 opacity-100" : "opacity-0"
-        )}
-      />
-      <Moon
-        className={cn(
-          "absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 transition-all duration-300",
-          isDark ? "opacity-0" : "text-indigo-500/70 opacity-100"
-        )}
-      />
-      {/* Sliding knob with rotating icon */}
-      <motion.span
-        className={cn(
-          "absolute left-0 top-[3px] flex h-[26px] w-[26px] items-center justify-center rounded-full shadow-md",
-          isDark ? "bg-slate-800 text-amber-200" : "bg-white text-amber-500"
-        )}
-        initial={false}
-        animate={{ x: isDark ? 28 : 3 }}
-        transition={{ type: "spring", stiffness: 500, damping: 32 }}
-      >
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.span
-            key={isDark ? "moon" : "sun"}
-            initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
-            animate={{ rotate: 0, opacity: 1, scale: 1 }}
-            exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
-            transition={{ duration: 0.18 }}
-            className="flex"
-          >
-            {isDark ? <Moon className="h-3.5 w-3.5" /> : <Sun className="h-3.5 w-3.5" />}
-          </motion.span>
-        </AnimatePresence>
-      </motion.span>
-    </button>
-  );
-}
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -212,11 +149,13 @@ export function Navbar() {
 
           <div className="flex items-center gap-1">
             {mounted && (
-              <ThemeToggle
-                theme={theme}
-                onToggle={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="hidden sm:flex"
-              />
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="p-2 rounded-xl hover:bg-white/5 transition-colors"
+                aria-label="Toggle theme"
+              >
+                <Moon className="h-5 w-5 text-white" />
+              </button>
             )}
 
             {user ? (
@@ -311,14 +250,6 @@ export function Navbar() {
                   )}
                 </Link>
               </div>
-            )}
-
-            {mounted && (
-              <ThemeToggle
-                theme={theme}
-                onToggle={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="sm:hidden"
-              />
             )}
 
             <button
