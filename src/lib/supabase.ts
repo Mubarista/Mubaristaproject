@@ -7,29 +7,14 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable');
 }
 
-function getSessionAuthStorage(): Storage {
-  if (typeof window !== "undefined") {
-    return window.sessionStorage;
-  }
-  return {
-    getItem: () => null,
-    setItem: () => {},
-    removeItem: () => {},
-    clear: () => {},
-    key: () => null,
-    length: 0,
-  } as unknown as Storage;
-}
-
 // Client-side Supabase client (uses anon/publishable key)
-// User session is stored in sessionStorage so it does not survive a closed tab/browser.
+// Session persistence is enabled by default with auth.persistSession = true
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
     flowType: 'pkce',
-    storage: getSessionAuthStorage(),
     storageKey: 'sb-mubarista-auth',
   },
 });

@@ -1,47 +1,61 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { safeLocalStorage } from "@/lib/safe-storage";
 
-// 15 minutes of inactivity before auto-logout
-const SESSION_TIMEOUT = 15 * 60 * 1000;
+const LAST_ACTIVITY_KEY = "mubarista_last_activity";
+const REFRESH_AFTER = 5 * 60 * 1000;       // 5 minutes
+const SIGN_OUT_AFTER = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+function getLastActivity(): number {
+  const stored = safeLocalStorage.getItem(LAST_ACTIVITY_KEY);
+  return stored ? Number(stored) : Date.now();
+}
+
+function updateLastActivity() {
+  safeLocalStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
+}
 
 export function SessionTimeout() {
   const { user, logout } = useAuth();
-  const lastActivity = useRef(Date.now());
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!user) return;
 
-    lastActivity.current = Date.now();
-
-    const resetTimer = () => {
-      lastActivity.current = Date.now();
-    };
-
     const events = ["mousedown", "keydown", "touchstart", "scroll", "click", "mousemove"];
+    const resetTimer = () => updateLastActivity();
     events.forEach((e) => window.addEventListener(e, resetTimer, { passive: true }));
 
-    const checkInactivity = () => {
-      if (Date.now() - lastActivity.current > SESSION_TIMEOUT) {
+    const handleVisibility = () => {
+      if (document.visibilityState !== "visible") return;
+      const inactiveFor = Date.now() - getLastActivity();
+
+      if (inactiveFor > SIGN_OUT_AFTER) {
+        logout();
+        return;
+      }
+
+      if (inactiveFor > REFRESH_AFTER) {
+        window.location.reload();
+        return;
+      }
+    };
+
+    const checkTimeout = () => {
+      if (Date.now() - getLastActivity() > SIGN_OUT_AFTER) {
         logout();
       }
     };
 
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        checkInactivity();
-      }
-    };
-
-    timerRef.current = setInterval(checkInactivity, 5000);
+    updateLastActivity();
     document.addEventListener("visibilitychange", handleVisibility);
+    const interval = setInterval(checkTimeout, 60000);
 
     return () => {
       events.forEach((e) => window.removeEventListener(e, resetTimer));
-      if (timerRef.current) clearInterval(timerRef.current);
       document.removeEventListener("visibilitychange", handleVisibility);
+      clearInterval(interval);
     };
   }, [user, logout]);
 
