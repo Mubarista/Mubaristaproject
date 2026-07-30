@@ -8,6 +8,7 @@ import { JudgeAuthProvider } from "@/lib/judge-auth-context";
 import { CartProvider } from "@/lib/cart-context";
 import { OrderProvider } from "@/lib/order-context";
 import { SiteChrome } from "@/components/layout/site-chrome";
+import { AppBootLoader } from "@/components/layout/app-boot-loader";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -68,6 +69,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth" className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} h-full`}>
       <body className="min-h-full flex flex-col antialiased" suppressHydrationWarning>
+        <AppBootLoader />
         <ThemeProvider>
           <AdminAuthProvider>
             <AdminDataProvider>
