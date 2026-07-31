@@ -57,6 +57,17 @@ We may update this Privacy Policy from time to time. Any changes will be posted 
 
 If you have any questions about this Privacy Policy or how your data is handled, please contact our support team.`;
 
+  if (loading) {
+    return (
+      <div className="pt-24 pb-16 min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-blue" />
+          <p className="text-sm text-muted">Loading Privacy Policy…</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="pt-24 pb-16 min-h-screen">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
@@ -91,15 +102,9 @@ If you have any questions about this Privacy Policy or how your data is handled,
             <FileText className="h-5 w-5 text-blue" />
             <CardTitle className="text-xl">Privacy Policy Details</CardTitle>
           </div>
-          {loading ? (
-            <div className="py-8 flex items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-blue" />
-            </div>
-          ) : (
-            <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap text-sm text-muted leading-relaxed">
-              {content || defaultContent}
-            </div>
-          )}
+          <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap text-sm text-muted leading-relaxed">
+            {content || defaultContent}
+          </div>
         </Card>
 
         <div className="mt-12 p-6 rounded-2xl bg-blue/5 border border-blue/10">
