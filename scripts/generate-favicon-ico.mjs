@@ -1,11 +1,11 @@
-// Generates a multi-size public/favicon.ico from the 512x512 logo (public/favicon.png).
+// Generates a multi-size src/app/favicon.ico from the 512x512 logo (public/favicon.png).
 // The ICO container embeds PNG-encoded entries (valid on all modern browsers / Vista+).
 import sharp from "sharp";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const SOURCE = path.resolve("public/favicon.png");
-const OUT = path.resolve("public/favicon.ico");
+const OUT = path.resolve("src/app/favicon.ico");
 const SIZES = [16, 24, 32, 48, 64, 128, 256];
 
 async function main() {
