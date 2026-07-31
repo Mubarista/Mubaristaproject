@@ -21,7 +21,7 @@ interface AuthContextType {
   verifyOTP: (identifier: string, code: string) => Promise<{ success: boolean; message: string }>;
   reloadUser: () => Promise<void>;
   resendVerificationEmail: () => Promise<void>;
-  deleteAccount: () => Promise<void>;
+  deleteAccount: (firstName: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -168,6 +168,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const register = useCallback(async (email: string, password: string, name: string, phone: string, country: string) => {
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: blocked } = await supabase
+      .from("deleted_accounts")
+      .select("deleted_at")
+      .or(`email.eq.${email},phone.eq.${phone}`)
+      .gte("deleted_at", since)
+      .maybeSingle();
+
+    if (blocked) {
+      throw new Error(
+        "This email or phone number was used by a deleted account. Please wait 30 days after deletion to register again."
+      );
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -284,12 +298,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.resend({ type: "signup", email: user.email });
   }, [user]);
 
-  const deleteAccount = useCallback(async () => {
+  const deleteAccount = useCallback(async (firstName: string) => {
     if (!user) return;
-    await supabase.from("users").delete().eq("id", user.id);
-    await supabase.auth.signOut();
-    setUser(null);
-  }, [user]);
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) throw new Error("Session expired. Please log in again.");
+
+    const res = await fetch("/api/delete-account", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ firstName: firstName.trim() }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({ error: "Failed to delete account" }));
+      throw new Error(data.error || "Failed to delete account");
+    }
+
+    await logout();
+  }, [user, logout]);
 
   const value: AuthContextType = {
     user,

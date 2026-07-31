@@ -10,7 +10,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { supabase } from "@/lib/supabase";
 
 export default function AccountSettingsPage() {
-  const { user, deleteAccount, isLoading } = useAuth();
+  const { user, deleteAccount, sendOTP, verifyOTP, isLoading } = useAuth();
   const router = useRouter();
   const [formData, setFormData] = useState({
     currentPassword: "",
@@ -21,7 +21,11 @@ export default function AccountSettingsPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleteFirstName, setDeleteFirstName] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpMessage, setOtpMessage] = useState<string | null>(null);
   const [showFirstConfirm, setShowFirstConfirm] = useState(false);
   const [showSecondConfirm, setShowSecondConfirm] = useState(false);
 
@@ -59,17 +63,48 @@ export default function AccountSettingsPage() {
   };
 
   const handleDeleteAccount = async () => {
-    if (deleteConfirmText !== "DELETE") {
-      alert('Please type "DELETE" to confirm account deletion');
+    if (!deleteFirstName.trim() || !user?.name) return;
+    const expected = user.name.trim().split(/\s+/)[0].toLowerCase();
+    if (deleteFirstName.trim().toLowerCase() !== expected) {
+      setOtpMessage("First name does not match. Please type your first name exactly as it appears on your account.");
       return;
     }
 
+    setOtpLoading(true);
+    setOtpMessage(null);
     try {
-      await deleteAccount();
-      alert("Your account has been successfully deleted.");
-      router.push("/");
+      const result = await sendOTP(user.email, "email");
+      if (result.success) {
+        setOtpSent(true);
+        setOtpMessage("A verification code has been sent to your email.");
+      } else {
+        setOtpMessage(result.message || "Failed to send verification code.");
+      }
     } catch (error: any) {
-      alert(error.message || "Failed to delete account. Please try again.");
+      setOtpMessage(error.message || "Failed to send verification code.");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleOtpSubmit = async () => {
+    if (!otpCode.trim() || !user?.email) return;
+
+    setOtpLoading(true);
+    setOtpMessage(null);
+    try {
+      const result = await verifyOTP(user.email, otpCode.trim());
+      if (result.success) {
+        await deleteAccount(deleteFirstName.trim());
+        setOtpMessage("Your account has been deleted. Redirecting...");
+        router.push("/");
+      } else {
+        setOtpMessage(result.message || "Invalid verification code.");
+      }
+    } catch (error: any) {
+      setOtpMessage(error.message || "Failed to delete account. Please try again.");
+    } finally {
+      setOtpLoading(false);
     }
   };
 
@@ -87,7 +122,10 @@ export default function AccountSettingsPage() {
     setShowDeleteConfirm(false);
     setShowFirstConfirm(false);
     setShowSecondConfirm(false);
-    setDeleteConfirmText("");
+    setDeleteFirstName("");
+    setOtpCode("");
+    setOtpSent(false);
+    setOtpMessage(null);
   };
 
   return (
@@ -165,28 +203,9 @@ export default function AccountSettingsPage() {
                   </Button>
                 </div>
 
-                {showDeleteConfirm && (
-                  <div className="mt-4 space-y-3">
-                    <p className="text-sm text-muted">
-                      Type <span className="font-mono font-bold text-red">DELETE</span> to confirm account deletion:
-                    </p>
-                    <input
-                      type="text"
-                      value={deleteConfirmText}
-                      onChange={(e) => setDeleteConfirmText(e.target.value)}
-                      className="w-full rounded-xl bg-muted-bg border border-red/30 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red"
-                      placeholder="Type DELETE"
-                    />
-                    <Button
-                      variant="primary"
-                      className="w-full bg-red hover:bg-red/90"
-                      onClick={handleDeleteAccount}
-                      disabled={isLoading || deleteConfirmText !== "DELETE"}
-                    >
-                      {isLoading ? "Deleting..." : "Permanently Delete Account"}
-                    </Button>
-                  </div>
-                )}
+                <p className="text-xs text-muted mt-2">
+                  This will open a secure multi-step confirmation and verification flow.
+                </p>
               </div>
             </div>
           </Card>
@@ -262,38 +281,71 @@ export default function AccountSettingsPage() {
         </div>
       )}
 
-      {/* Type DELETE Modal */}
+      {/* First Name + OTP Verification Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-2xl p-6 max-w-md w-full border border-red/30">
             <h3 className="text-xl font-bold mb-4 text-red">Confirm Account Deletion</h3>
-            <p className="text-muted mb-4">
-              Type <span className="font-mono font-bold text-red">DELETE</span> to confirm account deletion:
-            </p>
-            <input
-              type="text"
-              value={deleteConfirmText}
-              onChange={(e) => setDeleteConfirmText(e.target.value)}
-              className="w-full rounded-xl bg-muted-bg border border-red/30 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red mb-4"
-              placeholder="Type DELETE"
-            />
-            <div className="flex gap-3">
-              <Button
-                variant="secondary"
-                className="flex-1"
-                onClick={cancelDelete}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                className="flex-1 bg-red hover:bg-red/90"
-                onClick={handleDeleteAccount}
-                disabled={isLoading || deleteConfirmText !== "DELETE"}
-              >
-                {isLoading ? "Deleting..." : "Permanently Delete"}
-              </Button>
-            </div>
+
+            {!otpSent ? (
+              <>
+                <p className="text-muted mb-4">
+                  Type your first name to confirm account deletion:
+                </p>
+                <input
+                  type="text"
+                  value={deleteFirstName}
+                  onChange={(e) => setDeleteFirstName(e.target.value)}
+                  className="w-full rounded-xl bg-muted-bg border border-red/30 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red mb-4"
+                  placeholder="Your first name"
+                />
+                <div className="flex gap-3">
+                  <Button variant="secondary" className="flex-1" onClick={cancelDelete}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    className="flex-1 bg-red hover:bg-red/90"
+                    onClick={handleDeleteAccount}
+                    disabled={otpLoading || !deleteFirstName.trim()}
+                  >
+                    {otpLoading ? "Sending..." : "Continue"}
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-muted mb-4">
+                  Enter the verification code sent to <strong>{user?.email}</strong>:
+                </p>
+                <input
+                  type="text"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value)}
+                  className="w-full rounded-xl bg-muted-bg border border-red/30 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red mb-4"
+                  placeholder="123456"
+                />
+                <div className="flex gap-3">
+                  <Button variant="secondary" className="flex-1" onClick={cancelDelete}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    className="flex-1 bg-red hover:bg-red/90"
+                    onClick={handleOtpSubmit}
+                    disabled={otpLoading || !otpCode.trim()}
+                  >
+                    {otpLoading ? "Verifying..." : "Delete Account"}
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {otpMessage && (
+              <p className={`text-sm mt-4 text-center ${otpMessage.includes("deleted") ? "text-green" : "text-red"}`}>
+                {otpMessage}
+              </p>
+            )}
           </div>
         </div>
       )}
