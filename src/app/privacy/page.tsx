@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Shield, Lock, FileText, Server, Eye, Trash2, Loader2 } from "lucide-react";
+import { Shield, Lock, FileText, Server, Eye, Trash2 } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/card";
+import { LoadingDots } from "@/components/ui/loading-dots";
 
 export default function PrivacyPage() {
   const [content, setContent] = useState<string | null>(null);
@@ -60,8 +61,8 @@ If you have any questions about this Privacy Policy or how your data is handled,
   if (loading) {
     return (
       <div className="pt-24 pb-16 min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-10 w-10 animate-spin text-blue" />
+        <div className="flex flex-col items-center gap-5">
+          <LoadingDots />
           <p className="text-sm text-muted">Loading Privacy Policy…</p>
         </div>
       </div>
