@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { LoadingDots } from "@/components/ui/loading-dots";
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -17,6 +19,11 @@ export default function ContactPage() {
     priority: "normal",
     message: ""
   });
+
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 900);
+    return () => clearTimeout(t);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,6 +47,17 @@ export default function ContactPage() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="pt-24 pb-16 min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-5">
+          <LoadingDots />
+          <p className="text-sm text-muted">Loading Contact…</p>
+        </div>
+      </div>
+    );
   }
 
   return (
