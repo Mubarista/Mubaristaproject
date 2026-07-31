@@ -155,6 +155,10 @@ export interface User {
   subscriptionPlan?: string | null;
   subscriptionExpiry?: string | null;
   subscriptionDuration?: "weekly" | "monthly" | "yearly" | null;
+  subscriptionAutoRenew?: boolean;
+  subscriptionNextRenewal?: string | null;
+  subscriptionCanceledAt?: string | null;
+  subscriptionRenewalFailures?: number;
   emailVerified?: boolean;
   createdAt?: string;
   updatedAt?: string;

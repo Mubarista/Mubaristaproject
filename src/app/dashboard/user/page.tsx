@@ -37,9 +37,10 @@ interface Activity {
 }
 
 export default function UserDashboard() {
-  const { user, isPremium, upgradeToPremium, logout } = useAuth();
+  const { user, isPremium, upgradeToPremium, cancelSubscription, logout } = useAuth();
   const router = useRouter();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showMore, setShowMore] = useState(false);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -163,7 +164,7 @@ export default function UserDashboard() {
       value: isPremium ? "Active" : "Upgrade",
       icon: Crown,
       color: isPremium ? "text-yellow" : "text-muted",
-      action: () => upgradeToPremium("premium", "monthly"),
+      action: () => setShowSubscriptionModal(true),
     },
   ];
 
@@ -440,6 +441,52 @@ export default function UserDashboard() {
                 ✕
               </Button>
             </div>
+
+            {isPremium && user?.subscriptionPlan && (
+              <div className="mb-6 p-4 bg-blue/5 border border-blue/20 rounded-xl">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div>
+                    <p className="font-semibold text-blue">Current subscription active</p>
+                    <p className="text-sm text-muted">
+                      Expires: {user.subscriptionExpiry ? new Date(user.subscriptionExpiry).toLocaleDateString() : "N/A"}
+                    </p>
+                    {user.subscriptionAutoRenew ? (
+                      <p className="text-sm text-green">Auto-renew enabled</p>
+                    ) : (
+                      <p className="text-sm text-yellow">Auto-renew disabled</p>
+                    )}
+                  </div>
+                  {user.subscriptionAutoRenew && !showCancelConfirm && (
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowCancelConfirm(true)}
+                    >
+                      Cancel auto-renew
+                    </Button>
+                  )}
+                  {showCancelConfirm && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="red"
+                        onClick={async () => {
+                          await cancelSubscription();
+                          setShowCancelConfirm(false);
+                        }}
+                      >
+                        Confirm
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        onClick={() => setShowCancelConfirm(false)}
+                      >
+                        Keep
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {subscriptionPlans.map((plan) => (
                 <Card

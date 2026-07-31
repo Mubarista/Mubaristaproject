@@ -25,3 +25,18 @@ export const DEFAULT_IMAGE = "/logo-bimi.svg";
 export function getImageUrl(src?: string | null): string {
   return src && src.trim() !== "" ? src : DEFAULT_IMAGE;
 }
+
+export function addSubscriptionDuration(
+  date: Date,
+  duration: "weekly" | "monthly" | "yearly"
+): Date {
+  const result = new Date(date);
+  if (duration === "weekly") {
+    result.setDate(result.getDate() + 7);
+  } else if (duration === "monthly") {
+    result.setMonth(result.getMonth() + 1);
+  } else if (duration === "yearly") {
+    result.setFullYear(result.getFullYear() + 1);
+  }
+  return result;
+}

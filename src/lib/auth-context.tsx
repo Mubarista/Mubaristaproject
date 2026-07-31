@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useCallback, useEffect, type React
 import { useRouter } from "next/navigation";
 import type { User, UserRole } from "@/types";
 import { supabase } from "@/lib/supabase";
+import { addSubscriptionDuration } from "@/lib/utils";
 
 interface AuthContextType {
   user: User | null;
@@ -13,6 +14,7 @@ interface AuthContextType {
   register: (email: string, password: string, name: string, phone: string, country: string) => Promise<void>;
   logout: () => Promise<void>;
   upgradeToPremium: (planId: string, duration: "weekly" | "monthly" | "yearly") => Promise<void>;
+  cancelSubscription: () => Promise<void>;
   hasRole: (role: UserRole | UserRole[]) => boolean;
   isPremium: boolean;
   sendOTP: (identifier: string, method?: "email" | "phone") => Promise<{ success: boolean; message: string }>;
@@ -30,7 +32,9 @@ function mapSupabaseUser(authUser: any, profile?: any): User {
     email: authUser.email || "",
     name: profile?.name || authUser.user_metadata?.name || authUser.email?.split("@")[0] || "User",
     role: (profile?.role as UserRole) || "user",
-    isPremium: profile?.is_premium || false,
+    isPremium:
+      (profile?.is_premium || false) &&
+      (!profile?.subscription_expiry || new Date(profile.subscription_expiry) > new Date()),
     phone: profile?.phone || authUser.user_metadata?.phone || "",
     country: profile?.country || authUser.user_metadata?.country || "",
     avatar: profile?.avatar || authUser.user_metadata?.avatar || "",
@@ -39,6 +43,13 @@ function mapSupabaseUser(authUser: any, profile?: any): User {
     emailVerified: profile?.email_verified ?? false,
     createdAt: authUser.created_at || new Date().toISOString(),
     updatedAt: profile?.updated_at || new Date().toISOString(),
+    subscriptionPlan: profile?.subscription_plan || null,
+    subscriptionExpiry: profile?.subscription_expiry || null,
+    subscriptionDuration: profile?.subscription_duration || null,
+    subscriptionAutoRenew: profile?.subscription_auto_renew ?? true,
+    subscriptionNextRenewal: profile?.subscription_next_renewal || null,
+    subscriptionCanceledAt: profile?.subscription_canceled_at || null,
+    subscriptionRenewalFailures: profile?.subscription_renewal_failures || 0,
   };
 }
 
@@ -179,10 +190,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await router.push("/");
   }, [router]);
 
-  const upgradeToPremium = useCallback(async (_planId: string, _duration: "weekly" | "monthly" | "yearly") => {
+  const upgradeToPremium = useCallback(async (planId: string, duration: "weekly" | "monthly" | "yearly") => {
     if (!user) return;
-    await supabase.from("users").update({ is_premium: true, updated_at: new Date().toISOString() }).eq("id", user.id);
-    const updatedUser: User = { ...user, isPremium: true, updatedAt: new Date().toISOString() };
+    const now = new Date();
+    const expiry = addSubscriptionDuration(now, duration);
+    const updates = {
+      is_premium: true,
+      subscription_plan: planId,
+      subscription_duration: duration,
+      subscription_expiry: expiry.toISOString(),
+      subscription_next_renewal: expiry.toISOString(),
+      subscription_auto_renew: true,
+      subscription_canceled_at: null,
+      subscription_renewal_failures: 0,
+      updated_at: now.toISOString(),
+    };
+    await supabase.from("users").update(updates).eq("id", user.id);
+    const updatedUser: User = {
+      ...user,
+      isPremium: true,
+      subscriptionPlan: planId,
+      subscriptionDuration: duration,
+      subscriptionExpiry: expiry.toISOString(),
+      subscriptionNextRenewal: expiry.toISOString(),
+      subscriptionAutoRenew: true,
+      subscriptionCanceledAt: null,
+      subscriptionRenewalFailures: 0,
+      updatedAt: now.toISOString(),
+    };
+    setUser(updatedUser);
+  }, [user]);
+
+  const cancelSubscription = useCallback(async () => {
+    if (!user) return;
+    const now = new Date().toISOString();
+    const updates = {
+      subscription_auto_renew: false,
+      subscription_canceled_at: now,
+      updated_at: now,
+    };
+    await supabase.from("users").update(updates).eq("id", user.id);
+    const updatedUser: User = {
+      ...user,
+      subscriptionAutoRenew: false,
+      subscriptionCanceledAt: now,
+      updatedAt: now,
+    };
     setUser(updatedUser);
   }, [user]);
 
@@ -246,6 +299,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     register,
     logout,
     upgradeToPremium,
+    cancelSubscription,
     hasRole,
     isPremium: user?.isPremium || false,
     sendOTP,
