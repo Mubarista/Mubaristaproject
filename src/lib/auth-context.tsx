@@ -178,7 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (blocked) {
       throw new Error(
-        "This email or phone number was used by a deleted account. Please wait 30 days after deletion to register again."
+        "This email address or phone number is associated with a recently deleted account. You can register again 30 days after the account was deleted."
       );
     }
 
