@@ -3,7 +3,7 @@
 import { useState } from "react";
 import {
   X, Smartphone, CheckCircle2, XCircle, Loader2,
-  Lock, ShieldCheck, ChevronRight, ArrowLeft,
+  Lock, ShieldCheck, ChevronRight, ArrowLeft, Eye, EyeOff,
 } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
 import { Button } from "@/components/ui/button";
@@ -103,6 +103,7 @@ function PayPalLogo() {
 
 /* ─── Card form ────────────────────────────────────────────────── */
 function CardForm({ onSubmit, loading }: { onSubmit: (e: React.FormEvent) => void; loading: boolean }) {
+  const [showCvc, setShowCvc] = useState(false);
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
@@ -130,8 +131,17 @@ function CardForm({ onSubmit, loading }: { onSubmit: (e: React.FormEvent) => voi
         <div>
           <label className="text-xs text-muted mb-1 block">CVC</label>
           <div className="relative">
-            <input required placeholder="•••" maxLength={4} type="password" className="w-full rounded-xl bg-muted-bg border border-white/10 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue pr-10" />
-            <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted" />
+            <input required placeholder="•••" maxLength={4} type={showCvc ? "text" : "password"} className="w-full rounded-xl bg-muted-bg border border-white/10 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue pr-10" />
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={() => setShowCvc((s) => !s)}
+              aria-label={showCvc ? "Hide CVC" : "Show CVC"}
+              title={showCvc ? "Hide CVC" : "Show CVC"}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded text-muted hover:text-foreground transition-colors"
+            >
+              {showCvc ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+            </button>
           </div>
         </div>
       </div>

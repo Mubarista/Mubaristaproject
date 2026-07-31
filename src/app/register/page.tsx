@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useAdminData } from "@/lib/admin-data-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -203,18 +204,14 @@ export default function RegisterPage() {
 
           <div>
             <label className="text-sm text-muted mb-1 block">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="new-password"
-                className="w-full rounded-xl bg-muted-bg border border-white/10 pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue"
-                placeholder="••••••••"
-              />
-            </div>
+            <PasswordInput
+              leftIcon={<Lock className="h-4 w-4" />}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="new-password"
+              placeholder="••••••••"
+            />
             {password && (
               <div className="mt-2 space-y-1">
                 <p className="text-xs text-muted">Password requirements:</p>
@@ -241,18 +238,14 @@ export default function RegisterPage() {
 
           <div>
             <label className="text-sm text-muted mb-1 block">Confirm Password</label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                autoComplete="new-password"
-                className="w-full rounded-xl bg-muted-bg border border-white/10 pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue"
-                placeholder="••••••••"
-              />
-            </div>
+            <PasswordInput
+              leftIcon={<Lock className="h-4 w-4" />}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              autoComplete="new-password"
+              placeholder="••••••••"
+            />
           </div>
 
           <div>

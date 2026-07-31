@@ -6,6 +6,7 @@ import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { LoadingDots } from "@/components/ui/loading-dots";
+import { PasswordInput } from "@/components/ui/password-input";
 import { supabase } from "@/lib/supabase";
 
 function ResetPasswordForm() {
@@ -68,30 +69,22 @@ function ResetPasswordForm() {
           Enter your new password below.
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="relative">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full rounded-xl bg-muted-bg border border-white/10 pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue"
-              placeholder="New password"
-            />
-          </div>
-          <div className="relative">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full rounded-xl bg-muted-bg border border-white/10 pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue"
-              placeholder="Confirm new password"
-            />
-          </div>
+          <PasswordInput
+            leftIcon={<Lock className="h-4 w-4" />}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+            placeholder="New password"
+          />
+          <PasswordInput
+            leftIcon={<Lock className="h-4 w-4" />}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            minLength={6}
+            placeholder="Confirm new password"
+          />
           {error && <p className="text-sm text-red-500">{error}</p>}
           {message && <p className="text-sm text-green">{message}</p>}
           <Button variant="primary" type="submit" className="w-full" disabled={loading || !code}>

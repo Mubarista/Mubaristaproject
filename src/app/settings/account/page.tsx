@@ -1,18 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Lock, Key, Save, Eye, EyeOff, Trash2 } from "lucide-react";
+import { Lock, Key, Save, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/ui/password-input";
 import { supabase } from "@/lib/supabase";
 
 export default function AccountSettingsPage() {
   const { user, deleteAccount, isLoading } = useAuth();
   const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
   const [formData, setFormData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -108,55 +107,29 @@ export default function AccountSettingsPage() {
             <div className="space-y-4">
               <div>
                 <label className="text-sm text-muted mb-1 block">Current Password</label>
-                <div className="relative">
-                  <Key className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={formData.currentPassword}
-                    onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
-                    className="w-full rounded-xl bg-muted-bg border border-white/10 pl-11 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-foreground"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
+                <PasswordInput
+                  leftIcon={<Key className="h-4 w-4" />}
+                  value={formData.currentPassword}
+                  onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
+                />
               </div>
 
               <div>
                 <label className="text-sm text-muted mb-1 block">New Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-                  <input
-                    type={showNewPassword ? "text" : "password"}
-                    value={formData.newPassword}
-                    onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
-                    className="w-full rounded-xl bg-muted-bg border border-white/10 pl-11 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-foreground"
-                  >
-                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
+                <PasswordInput
+                  leftIcon={<Lock className="h-4 w-4" />}
+                  value={formData.newPassword}
+                  onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
+                />
               </div>
 
               <div>
                 <label className="text-sm text-muted mb-1 block">Confirm New Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-                  <input
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                    className="w-full rounded-xl bg-muted-bg border border-white/10 pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue"
-                  />
-                </div>
+                <PasswordInput
+                  leftIcon={<Lock className="h-4 w-4" />}
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                />
               </div>
             </div>
           </Card>

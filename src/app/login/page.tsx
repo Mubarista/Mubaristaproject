@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { OtpDialog } from "@/components/auth/otp-dialog";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -96,19 +97,15 @@ export default function LoginPage() {
           </div>
           <div>
             <label className="text-sm text-muted mb-1 block">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-                disabled={isBusy}
-                className="w-full rounded-xl bg-muted-bg border border-white/10 pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue disabled:opacity-50 transition-opacity"
-                placeholder="••••••••"
-              />
-            </div>
+            <PasswordInput
+              leftIcon={<Lock className="h-4 w-4" />}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
+              disabled={isBusy}
+              placeholder="••••••••"
+            />
           </div>
           <div className="text-right">
             <Link href="/forgot-password" className="text-sm text-blue hover:underline">
