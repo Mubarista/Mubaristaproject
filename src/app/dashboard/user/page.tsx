@@ -25,6 +25,12 @@ import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { type SubscriptionPlan } from "@/lib/admin-data-context";
 import { initiateRwandaPay, generateReference } from "@/lib/payment";
+import {
+  DashboardStatsSkeleton,
+  DashboardActivitySkeleton,
+  DashboardQuickActionsSkeleton,
+  SubscriptionPlanSkeleton,
+} from "@/components/ui/skeleton";
 
 interface Activity {
   id: string;
@@ -48,6 +54,7 @@ export default function UserDashboard() {
   const [orderCount, setOrderCount] = useState(0);
   const [liveCompetitionCount, setLiveCompetitionCount] = useState(0);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [loadingActivities, setLoadingActivities] = useState(true);
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [startingPlan, setStartingPlan] = useState<string | null>(null);
@@ -78,6 +85,7 @@ export default function UserDashboard() {
     const userId = user.id;
 
     async function fetchActivities() {
+      setLoadingActivities(true);
       try {
         const response = await fetch(`/api/user/activities?userId=${userId}&limit=10`);
         if (response.ok) {
@@ -86,6 +94,8 @@ export default function UserDashboard() {
         }
       } catch (error) {
         console.error("Failed to fetch activities:", error);
+      } finally {
+        setLoadingActivities(false);
       }
     }
 
@@ -232,32 +242,41 @@ export default function UserDashboard() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {stats.map((stat) => (
-            <div key={stat.label}>
-              {stat.link ? (
-                <Link href={stat.link}>
-                  <Card className="text-center cursor-pointer hover:border-blue/50 transition-colors">
+        {loadingStats ? (
+          <div className="mb-8">
+            <DashboardStatsSkeleton />
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            {stats.map((stat) => (
+              <div key={stat.label}>
+                {stat.link ? (
+                  <Link href={stat.link}>
+                    <Card className="text-center cursor-pointer hover:border-blue/50 transition-colors">
+                      <stat.icon className={`h-6 w-6 mx-auto mb-2 ${stat.color}`} />
+                      <p className="text-2xl font-bold">{stat.value}</p>
+                      <p className="text-xs text-muted">{stat.label}</p>
+                    </Card>
+                  </Link>
+                ) : (
+                  <Card className="text-center cursor-pointer hover:border-blue/50 transition-colors" onClick={stat.action}>
                     <stat.icon className={`h-6 w-6 mx-auto mb-2 ${stat.color}`} />
                     <p className="text-2xl font-bold">{stat.value}</p>
                     <p className="text-xs text-muted">{stat.label}</p>
                   </Card>
-                </Link>
-              ) : (
-                <Card className="text-center cursor-pointer hover:border-blue/50 transition-colors" onClick={stat.action}>
-                  <stat.icon className={`h-6 w-6 mx-auto mb-2 ${stat.color}`} />
-                  <p className="text-2xl font-bold">{stat.value}</p>
-                  <p className="text-xs text-muted">{stat.label}</p>
-                </Card>
-              )}
-            </div>
-          ))}
-        </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Quick Actions */}
           <Card className="lg:col-span-3">
             <CardTitle className="mb-4">Quick Actions</CardTitle>
+            {loadingStats ? (
+              <DashboardQuickActionsSkeleton />
+            ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {quickActions.slice(0, 4).map((item) => (
                 <Link key={item.title} href={item.link}>
@@ -302,12 +321,16 @@ export default function UserDashboard() {
                 )}
               </div>
             </div>
+            )}
           </Card>
         </div>
 
         {/* Recent Activity */}
         <Card className="mt-6">
           <CardTitle className="mb-4">Recent Activity</CardTitle>
+          {loadingActivities ? (
+            <DashboardActivitySkeleton count={5} />
+          ) : (
           <div className="space-y-3">
             {activities.length > 0 ? (
               activities.map((activity) => {
@@ -338,6 +361,7 @@ export default function UserDashboard() {
               </div>
             )}
           </div>
+          )}
         </Card>
 
         {/* Verification Prompt Banner */}
@@ -472,7 +496,14 @@ export default function UserDashboard() {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {subscriptionPlans.map((plan) => (
+              {loadingPlans ? (
+                <>
+                  <SubscriptionPlanSkeleton />
+                  <SubscriptionPlanSkeleton />
+                  <SubscriptionPlanSkeleton />
+                </>
+              ) : (
+              subscriptionPlans.map((plan) => (
                 <Card
                   key={plan.id}
                   className={`p-4 cursor-pointer transition-all ${
@@ -539,7 +570,8 @@ export default function UserDashboard() {
                     {startingPlan === plan.id ? "Processing..." : `Choose ${plan.name}`}
                   </Button>
                 </Card>
-              ))}
+              ))
+              )}
             </div>
           </Card>
         </div>

@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LoadingDots } from "@/components/ui/loading-dots";
+import { ApplicationCardSkeleton } from "@/components/ui/skeleton";
 import {
   FileText,
   Trophy,
@@ -90,8 +90,21 @@ export default function UserApplicationsPage() {
 
   if (loading) {
     return (
-      <div className="pt-24 pb-16 min-h-screen flex items-center justify-center">
-        <LoadingDots />
+      <div className="pt-24 pb-16 min-h-screen">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <div className="space-y-2">
+              <div className="h-8 w-48 animate-pulse rounded-lg bg-muted-bg" />
+              <div className="h-4 w-64 animate-pulse rounded-lg bg-muted-bg" />
+            </div>
+            <div className="h-10 w-44 animate-pulse rounded-xl bg-muted-bg" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <ApplicationCardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }

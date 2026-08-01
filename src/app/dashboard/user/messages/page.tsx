@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LoadingDots } from "@/components/ui/loading-dots";
+import { MessageCardSkeleton, MessageDetailSkeleton } from "@/components/ui/skeleton";
 import { MessageSquare, CheckCircle, Clock, Trash2, Reply } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
@@ -74,8 +74,24 @@ export default function UserMessagesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <LoadingDots />
+      <div>
+        <div className="mb-6 flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="h-7 w-40 animate-pulse rounded-lg bg-muted-bg" />
+            <div className="h-4 w-64 animate-pulse rounded-lg bg-muted-bg" />
+          </div>
+          <div className="h-10 w-36 animate-pulse rounded-lg bg-muted-bg" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1 space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <MessageCardSkeleton key={i} />
+            ))}
+          </div>
+          <div className="lg:col-span-2">
+            <MessageDetailSkeleton />
+          </div>
+        </div>
       </div>
     );
   }

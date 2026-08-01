@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { AddressCardSkeleton } from "@/components/ui/skeleton";
 
 interface Address {
   id: string;
@@ -412,7 +413,13 @@ export default function AddressesPage() {
 
   function renderAddressList(list: Address[], type: "delivery" | "pickup") {
     if (loading && addresses.length === 0) {
-      return <p className="text-muted text-center py-12">Loading addresses...</p>;
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <AddressCardSkeleton key={i} />
+          ))}
+        </div>
+      );
     }
     if (list.length === 0) {
       return (
