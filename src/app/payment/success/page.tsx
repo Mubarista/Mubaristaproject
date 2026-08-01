@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Check, X } from "lucide-react";
+import { Check, X, Loader2 } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,20 +10,36 @@ import { Button } from "@/components/ui/button";
 export default function PaymentSuccessPage() {
   const [status, setStatus] = useState<string>("");
   const [reference, setReference] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const { clearCart } = useCart();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+
     const params = new URLSearchParams(window.location.search);
     const rawStatus = params.get("status") || "successful";
     const rawReference = params.get("reference");
+
     setStatus(rawStatus);
     setReference(rawReference);
 
     if (rawStatus === "successful" || rawStatus === "success") {
       clearCart();
     }
-  }, [clearCart]);
+
+    setLoading(false);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (loading) {
+    return (
+      <div className="pt-24 pb-16 min-h-screen flex items-center justify-center px-4">
+        <Card className="max-w-md w-full p-8 text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue" />
+          <p className="text-muted">Confirming your payment...</p>
+        </Card>
+      </div>
+    );
+  }
 
   const isSuccess = status === "successful" || status === "success";
 
