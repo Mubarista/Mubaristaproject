@@ -178,7 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (blocked) {
       throw new Error(
-        "This email address or phone number is associated with a recently deleted account. You can register again 30 days after the account was deleted."
+        "Sorry! Our system has detected that the email or phone number you're trying to use is associated with a recently deleted account. For security reasons, these details cannot be reused immediately. You can register again by using the same email or phone number in 30 days after the account was deleted."
       );
     }
 

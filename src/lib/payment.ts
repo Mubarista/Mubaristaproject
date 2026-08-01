@@ -23,6 +23,7 @@ export function generateReference(prefix = "REF"): string {
 
 export function normalizePaymentMethod(method?: string): PaymentMethod {
   const m = method?.toLowerCase() ?? "";
+  if (m.includes("rwandapay")) return "rwandapay";
   if (m.includes("momo") || m.includes("mobile")) return "mobile_money";
   if (m.includes("visa") || m.includes("master") || m.includes("card")) return "card";
   if (m.includes("paypal")) return "paypal";

@@ -14,6 +14,7 @@ const METHOD_META: Record<PaymentMethod, { label: string; icon: React.ReactNode;
   mobile_money:  { label: "MomoPay",  icon: <Smartphone className="h-4 w-4" />,  color: "text-yellow", bar: "bg-yellow" },
   bank_transfer: { label: "Bank Transfer",     icon: <Building2 className="h-4 w-4" />,   color: "text-green",  bar: "bg-green" },
   paypal:        { label: "PayPal",            icon: <Wallet className="h-4 w-4" />,      color: "text-purple", bar: "bg-purple" },
+  rwandapay:     { label: "RwandaPay",         icon: <Smartphone className="h-4 w-4" />,  color: "text-blue",   bar: "bg-blue" },
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -56,7 +57,7 @@ export default function PaymentAnalyticsPage() {
   const totalRevenue = completed.reduce((s, p) => s + p.amount, 0);
 
   /* method breakdown */
-  const byMethod = (["card", "mobile_money", "bank_transfer", "paypal"] as PaymentMethod[]).map(m => {
+  const byMethod = (["card", "mobile_money", "bank_transfer", "paypal", "rwandapay"] as PaymentMethod[]).map(m => {
     const rows = completed.filter(p => p.method === m);
     return {
       method: m,
@@ -67,7 +68,7 @@ export default function PaymentAnalyticsPage() {
   }).sort((a, b) => b.revenue - a.revenue);
 
   /* method × type cross-tab */
-  const crossTab = (["card", "mobile_money", "bank_transfer", "paypal"] as PaymentMethod[]).map(m => {
+  const crossTab = (["card", "mobile_money", "bank_transfer", "paypal", "rwandapay"] as PaymentMethod[]).map(m => {
     const byType: Record<string, number> = {};
     completed.filter(p => p.method === m).forEach(p => {
       byType[p.type] = (byType[p.type] ?? 0) + p.amount;
@@ -80,7 +81,7 @@ export default function PaymentAnalyticsPage() {
   const maxRevenue = Math.max(...timeSeries.map(([, v]) => v.revenue), 1);
 
   /* method over time (stacked) */
-  const methodTimeSeries = (["card", "mobile_money", "bank_transfer", "paypal"] as PaymentMethod[]).map(m => ({
+  const methodTimeSeries = (["card", "mobile_money", "bank_transfer", "paypal", "rwandapay"] as PaymentMethod[]).map(m => ({
     method: m,
     data: groupByPeriod(payments.filter(p => p.method === m), period),
   }));
