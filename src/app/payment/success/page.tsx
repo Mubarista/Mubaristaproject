@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Check, X, Loader2 } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
@@ -11,10 +11,12 @@ export default function PaymentSuccessPage() {
   const [status, setStatus] = useState<string>("");
   const [reference, setReference] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const hasRun = useRef(false);
   const { clearCart } = useCart();
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || hasRun.current) return;
+    hasRun.current = true;
 
     const params = new URLSearchParams(window.location.search);
     const rawStatus = params.get("status") || "successful";
