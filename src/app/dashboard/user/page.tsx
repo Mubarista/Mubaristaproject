@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { type SubscriptionPlan } from "@/lib/admin-data-context";
+import { initiateRwandaPay, generateReference } from "@/lib/payment";
 
 interface Activity {
   id: string;
@@ -37,7 +38,7 @@ interface Activity {
 }
 
 export default function UserDashboard() {
-  const { user, isPremium, upgradeToPremium, cancelSubscription, logout } = useAuth();
+  const { user, isPremium, cancelSubscription, logout } = useAuth();
   const router = useRouter();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -50,6 +51,7 @@ export default function UserDashboard() {
   const [loadingStats, setLoadingStats] = useState(true);
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
+  const [startingPayment, setStartingPayment] = useState(false);
 
   const competitionCount = applicationCount + liveCompetitionCount;
 
@@ -517,12 +519,42 @@ export default function UserDashboard() {
                   <Button
                     variant={plan.popular ? "premium" : "primary"}
                     className="w-full"
-                    onClick={() => {
-                      upgradeToPremium(plan.id, plan.duration as "weekly" | "monthly" | "yearly");
-                      setShowSubscriptionModal(false);
+                    disabled={startingPayment}
+                    onClick={async () => {
+                      if (!user) return;
+                      setStartingPayment(true);
+                      try {
+                        const tx_ref = generateReference(`PREM-${plan.id}`);
+                        const { payment_url } = await initiateRwandaPay({
+                          amount: plan.price,
+                          tx_ref,
+                          customer: {
+                            name: user.name,
+                            email: user.email,
+                            phone: user.phone || "",
+                          },
+                          currency: plan.currency,
+                          description: `Premium subscription - ${plan.name}`,
+                          meta: {
+                            type: "premium_subscription",
+                            planId: plan.id,
+                            duration: plan.duration,
+                            userId: user.id,
+                            userCountry: user.country,
+                            userName: user.name,
+                            userEmail: user.email,
+                          },
+                        });
+
+                        window.location.href = payment_url;
+                      } catch (error: any) {
+                        console.error("Failed to start payment:", error);
+                        alert(error.message || "Failed to start payment.");
+                        setStartingPayment(false);
+                      }
                     }}
                   >
-                    Choose {plan.name}
+                    {startingPayment ? "Processing..." : `Choose ${plan.name}`}
                   </Button>
                 </Card>
               ))}
