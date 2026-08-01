@@ -8,10 +8,12 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const userEmail = searchParams.get('userEmail');
+    const reference = searchParams.get('reference');
 
     let query = supabaseAdmin.from("payments").select("*").order("created_at", { ascending: false });
     if (userId) query = query.eq('user_id', userId);
     if (userEmail) query = query.eq('user_email', userEmail);
+    if (reference) query = query.eq('reference', reference);
 
     const { data, error } = await query;
     if (error) throw error;
