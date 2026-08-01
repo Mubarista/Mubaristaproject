@@ -10,6 +10,7 @@ import { MtnMomoIcon } from "@/components/icons/mtn-momo";
 import { VisaIcon } from "@/components/icons/visa";
 import { MastercardIcon } from "@/components/icons/mastercard";
 import { formatCurrency } from "@/lib/utils";
+import { initiateRwandaPay, generateReference } from "@/lib/payment";
 import type { CompetitionApplication } from "@/types";
 
 export default function PaymentPage() {
@@ -45,38 +46,35 @@ export default function PaymentPage() {
   }, [applicationId]);
 
   async function handlePayment() {
-    if (!selectedMethod) return;
+    if (!selectedMethod || !application) return;
 
     setProcessing(true);
     setPaymentError(null);
     try {
-      const response = await fetch(`/api/payment/process`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const tx_ref = generateReference(`APP-${applicationId}`);
+      const { payment_url } = await initiateRwandaPay({
+        amount: application.competition?.entryFee ?? 0,
+        tx_ref,
+        customer: {
+          name: application.fullName || application.userName || "Participant",
+          email: application.email || application.userEmail || "",
+          phone: application.mobileNumber || "",
+        },
+        currency: "RWF",
+        description: `Entry fee for ${application.competition?.title || "competition"}`,
+        meta: {
+          type: "competition_entry",
           applicationId,
-          method: selectedMethod,
-          amount: application?.competition?.entryFee,
-          currency: "RWF",
-        }),
+          competitionId: application.competitionId,
+          competitionTitle: application.competition?.title || "",
+          userCountry: application.country,
+        },
       });
 
-      if (response.ok) {
-        setPaymentSuccess(true);
-        setTimeout(() => {
-          const token = application?.accessLink;
-          if (token) {
-            router.push(`/dashboard/participant?token=${token}`);
-          } else {
-            router.push("/dashboard/participant");
-          }
-        }, 2000);
-      } else {
-        setPaymentError("Payment failed. Please try again.");
-      }
-    } catch (error) {
+      window.location.href = payment_url;
+    } catch (error: any) {
       console.error("Payment error:", error);
-      setPaymentError("Payment failed. Please try again.");
+      setPaymentError(error.message || "Payment failed. Please try again.");
     } finally {
       setProcessing(false);
     }

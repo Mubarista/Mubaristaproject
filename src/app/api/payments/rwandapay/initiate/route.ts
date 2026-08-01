@@ -41,7 +41,8 @@ export async function POST(req: NextRequest) {
 
     const { publicKey, secretKey } = getRwandaPayKeys();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || req.nextUrl.origin;
-    const redirectUrl = `${siteUrl}/payment/success`;
+    const paymentType = meta?.type || "tool_purchase";
+    const redirectUrl = `${siteUrl}/payment/success?type=${encodeURIComponent(paymentType)}&amount=${encodeURIComponent(String(amount))}&currency=${encodeURIComponent(body.currency || "RWF")}`;
     const webhookUrl = `${siteUrl}/api/payments/rwandapay/webhook`;
 
     const payload = {
@@ -79,7 +80,6 @@ export async function POST(req: NextRequest) {
     }
 
     const now = new Date().toISOString();
-    const paymentType = meta?.type || "tool_purchase";
 
     const { error: insertError } = await supabaseAdmin.from("payments").insert({
       user_id: authData.user.id,
@@ -94,6 +94,8 @@ export async function POST(req: NextRequest) {
       method: "mobile_money",
       reference: tx_ref,
       notes: JSON.stringify(meta || {}),
+      competition_id: meta?.competitionId || null,
+      competition_title: meta?.competitionTitle || null,
       created_at: now,
     });
 

@@ -70,6 +70,18 @@ export async function POST(req: NextRequest) {
         .eq("id", payment.user_id);
     }
 
+    if (meta.type === "competition_entry" && meta.applicationId && payment.user_id) {
+      await supabaseAdmin
+        .from("competition_applications")
+        .update({
+          payment_status: "paid",
+          paid_at: now,
+          status: "active",
+          updated_at: now,
+        })
+        .eq("id", meta.applicationId);
+    }
+
     if (
       (meta.type === "tool_purchase" || meta.type === "book_purchase") &&
       Array.isArray(meta.items) &&
