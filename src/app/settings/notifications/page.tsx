@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Bell, Mail, Check, X } from "lucide-react";
+import { ArrowLeft, Bell, Mail, Check, CreditCard, Crown, Shield, AlertTriangle, CheckCircle } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,10 +26,15 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
-    if (user) {
+    if (!user) return;
+
+    fetchNotifications();
+    const interval = setInterval(() => {
       fetchNotifications();
-    }
-  }, [user]);
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [user?.id]);
 
   async function fetchNotifications() {
     if (!user) return;
@@ -127,12 +132,22 @@ export default function NotificationsPage() {
                     notification.type === 'competition' ? 'bg-yellow/10 text-yellow' :
                     notification.type === 'order' ? 'bg-green/10 text-green' :
                     notification.type === 'premium' ? 'bg-red/10 text-red' :
+                    notification.type === 'payment' ? 'bg-blue/10 text-blue' :
+                    notification.type === 'subscription' ? 'bg-purple/10 text-purple' :
+                    notification.type === 'security' ? 'bg-cyan/10 text-cyan' :
+                    notification.type === 'warning' ? 'bg-red/10 text-red' :
+                    notification.type === 'confirmation' ? 'bg-green/10 text-green' :
                     'bg-muted-bg text-muted'
                   }`}>
                     {notification.type === 'welcome' && <Mail className="h-5 w-5" />}
                     {notification.type === 'competition' && <Bell className="h-5 w-5" />}
                     {notification.type === 'order' && <Check className="h-5 w-5" />}
-                    {notification.type === 'premium' && <X className="h-5 w-5" />}
+                    {notification.type === 'premium' && <Crown className="h-5 w-5" />}
+                    {notification.type === 'payment' && <CreditCard className="h-5 w-5" />}
+                    {notification.type === 'subscription' && <Crown className="h-5 w-5" />}
+                    {notification.type === 'security' && <Shield className="h-5 w-5" />}
+                    {notification.type === 'warning' && <AlertTriangle className="h-5 w-5" />}
+                    {notification.type === 'confirmation' && <CheckCircle className="h-5 w-5" />}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-start justify-between gap-4">

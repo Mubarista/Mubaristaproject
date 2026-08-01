@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase } from "@/lib/supabase-utils";
+import { createNotification } from "@/lib/notifications";
 
 const ACCESS_LINK_VALID_DAYS = 3;
 
@@ -41,6 +43,16 @@ export async function POST(
         .eq("id", app.competitionId)
         .single();
       app.competitions = comp ? mapKeysToCamelCase(comp) : null;
+    }
+
+    if (app?.userId) {
+      createNotification({
+        userId: app.userId,
+        title: "Congratulations! You have been nominated",
+        description: `You have been nominated for ${app.competitions?.title || "a competition"}. Please pay the entry fee within 3 days to confirm your participation.`,
+        type: "competition",
+        metadata: { applicationId: app.id, competitionId: app.competitionId },
+      });
     }
 
     return NextResponse.json(app);

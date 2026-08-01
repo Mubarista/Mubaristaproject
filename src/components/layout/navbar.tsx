@@ -49,8 +49,12 @@ export function Navbar() {
     fetchSiteSettings();
     if (user) {
       fetchUnreadCount();
+      const interval = setInterval(() => {
+        fetchUnreadCount();
+      }, 30000);
+      return () => clearInterval(interval);
     }
-  }, [user]);
+  }, [user?.id]);
 
   async function fetchSiteSettings() {
     try {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { mapKeysToCamelCase, keysToSnakeCase } from "@/lib/supabase-utils";
 import { validatePhoneNumber } from "@/lib/phone-utils";
+import { createNotification } from "@/lib/notifications";
 
 export async function GET(
   request: Request,
@@ -76,6 +77,43 @@ export async function PUT(
     const updated = mapKeysToCamelCase(data);
     updated.email = updated.email || updated.userEmail;
     updated.fullName = updated.fullName || updated.userName;
+
+    if (updated?.userId && updated?.status && updated?.competitionId) {
+      const { data: comp } = await supabase
+        .from("competitions")
+        .select("title")
+        .eq("id", updated.competitionId)
+        .single();
+      const title = comp?.title || "competition";
+      const status = updated.status;
+
+      let notifTitle = "Application update";
+      let notifDescription = `Your application for ${title} has been updated.`;
+      let notifType = "competition";
+
+      if (status === "rejected") {
+        notifTitle = "Application not selected";
+        notifDescription = `Your application for ${title} was not selected. Thank you for your interest.`;
+        notifType = "warning";
+      } else if (status === "active") {
+        notifTitle = "Application confirmed";
+        notifDescription = `Your application for ${title} is now active. Good luck!`;
+        notifType = "confirmation";
+      } else if (status === "archived" || status === "revoked") {
+        notifTitle = "Application archived";
+        notifDescription = `Your application for ${title} has been archived.`;
+        notifType = "warning";
+      }
+
+      createNotification({
+        userId: updated.userId,
+        title: notifTitle,
+        description: notifDescription,
+        type: notifType,
+        metadata: { applicationId: updated.id, competitionId: updated.competitionId, status },
+      });
+    }
+
     return NextResponse.json(updated);
   } catch (error) {
     console.error("Error updating application:", error);

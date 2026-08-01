@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase } from "@/lib/supabase-utils";
 import { validatePhoneNumber } from "@/lib/phone-utils";
+import { createNotification } from "@/lib/notifications";
 import type { CompetitionApplication, Competition } from "@/types";
 
 export async function GET(request: Request) {
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
     // Check competition status and available slots before accepting applications
     const { data: competition, error: competitionError } = await supabaseAdmin
       .from("competitions")
-      .select("difficulty, status, total_slots, available_slots")
+      .select("title, difficulty, status, total_slots, available_slots")
       .eq("id", body.competitionId)
       .single();
 
@@ -228,6 +229,17 @@ export async function POST(request: Request) {
 
     if (updateError) {
       console.error("Error updating competition slots:", updateError);
+    }
+
+    if (data) {
+      const app = mapKeysToCamelCase(data) as CompetitionApplication;
+      createNotification({
+        userId: body.userId,
+        title: "Application submitted",
+        description: `Your application for ${competition?.title || "the competition"} has been received and is under review. You will be notified once it is reviewed.`,
+        type: "competition",
+        metadata: { applicationId: app.id, competitionId: body.competitionId },
+      });
     }
 
     return NextResponse.json(mapKeysToCamelCase(data));

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { addSubscriptionDuration } from "@/lib/utils";
+import { addSubscriptionDuration, formatCurrency } from "@/lib/utils";
+import { createNotification } from "@/lib/notifications";
 
 export async function POST(req: NextRequest) {
   try {
@@ -45,6 +46,15 @@ export async function POST(req: NextRequest) {
       .eq("id", payment.id);
 
     if (!isSuccess) {
+      if (payment.user_id) {
+        createNotification({
+          userId: payment.user_id,
+          title: "Payment failed",
+          description: `Your payment of ${formatCurrency(payment.amount, payment.currency || "RWF")} could not be completed. Reference: ${reference}. Please try again.`,
+          type: "warning",
+          metadata: { reference, transactionId },
+        });
+      }
       return NextResponse.json({ success: true, status: "failed" });
     }
 
@@ -112,6 +122,43 @@ export async function POST(req: NextRequest) {
             orderId: reference,
           }),
         }).catch((err) => console.error("Webhook book delivery failed:", err));
+      }
+    }
+
+    if (payment.user_id) {
+      if (meta.type === "premium_subscription") {
+        const expiryDate = addSubscriptionDuration(new Date(), meta.duration as "weekly" | "monthly" | "yearly").toLocaleDateString();
+        createNotification({
+          userId: payment.user_id,
+          title: "Premium subscription active",
+          description: `Your ${meta.duration} premium subscription is now active. You paid ${formatCurrency(payment.amount, payment.currency || "RWF")}. It expires on ${expiryDate}.`,
+          type: "subscription",
+          metadata: { planId: meta.planId, reference, transactionId },
+        });
+      } else if (meta.type === "competition_entry") {
+        createNotification({
+          userId: payment.user_id,
+          title: "Competition entry confirmed",
+          description: `Your application fee for ${payment.competition_title || "competition"} has been received. You are now active in the competition.`,
+          type: "competition",
+          metadata: { applicationId: meta.applicationId, reference, transactionId },
+        });
+      } else if (meta.type === "tool_purchase" || meta.type === "book_purchase") {
+        createNotification({
+          userId: payment.user_id,
+          title: "Payment confirmed",
+          description: `We received ${formatCurrency(payment.amount, payment.currency || "RWF")} for your order. Your items are being processed.`,
+          type: "order",
+          metadata: { reference, transactionId, items: meta.items },
+        });
+      } else {
+        createNotification({
+          userId: payment.user_id,
+          title: "Payment received",
+          description: `We received ${formatCurrency(payment.amount, payment.currency || "RWF")}. Reference: ${reference}.`,
+          type: "payment",
+          metadata: { reference, transactionId },
+        });
       }
     }
 
