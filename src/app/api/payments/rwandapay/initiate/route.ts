@@ -1,95 +1,117 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { initializeRwandaPay } from "@/lib/rwandapay";
+
+const RWANDAPAY_BASE_URL = "https://pay.rwandapay.rw/api/v1";
+
+function getRwandaPayKeys() {
+  const publicKey = process.env.RWANDAPAY_PUBLIC_KEY;
+  const secretKey = process.env.RWANDAPAY_SECRET_KEY;
+  if (!publicKey || !secretKey) {
+    throw new Error("RwandaPay API keys are not configured");
+  }
+  return { publicKey, secretKey };
+}
 
 export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get("authorization");
-  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-
-  if (!token) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: authData, error: authError } = await supabaseAdmin.auth.getUser(token);
-  if (authError || !authData?.user) {
-    return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-  }
-
-  const user = authData.user;
-  let body: any = {};
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
-  }
+    const authHeader = req.headers.get("authorization");
+    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
 
-  const {
-    amount,
-    tx_ref,
-    customer,
-    currency = "RWF",
-    redirect_url,
-    description,
-    type,
-    meta,
-  } = body;
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  if (!amount || !tx_ref || !customer?.phone || !customer?.email) {
+    const { data: authData, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !authData?.user) {
+      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const { amount, tx_ref, customer, description, meta } = body;
+
+    if (!amount || amount < 100) {
+      return NextResponse.json({ error: "Amount must be at least 100 RWF" }, { status: 400 });
+    }
+    if (!tx_ref || tx_ref.length > 50) {
+      return NextResponse.json({ error: "Invalid transaction reference" }, { status: 400 });
+    }
+    if (!customer?.name || !customer?.email || !customer?.phone) {
+      return NextResponse.json({ error: "Customer name, email and phone are required" }, { status: 400 });
+    }
+
+    const { publicKey, secretKey } = getRwandaPayKeys();
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || req.nextUrl.origin;
+    const redirectUrl = `${siteUrl}/payment/success`;
+    const webhookUrl = `${siteUrl}/api/payments/rwandapay/webhook`;
+
+    const payload = {
+      amount,
+      tx_ref,
+      customer,
+      currency: body.currency || "RWF",
+      redirect_url: redirectUrl,
+      webhook_url: webhookUrl,
+      description: description || "MUBARISTA payment",
+      meta: { ...meta, mubarista_reference: tx_ref },
+    };
+
+    const rwandaPayRes = await fetch(`${RWANDAPAY_BASE_URL}/checkout/initialize`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Public-Key": publicKey,
+        "X-Secret-Key": secretKey,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const rwandaPayData = await rwandaPayRes.json().catch(() => ({
+      success: false,
+      message: "Invalid response from RwandaPay",
+    }));
+
+    if (!rwandaPayRes.ok || !rwandaPayData.success || !rwandaPayData.data?.payment_url) {
+      console.error("RwandaPay initiate error:", rwandaPayData);
+      return NextResponse.json(
+        { error: rwandaPayData.message || "Failed to initialize RwandaPay checkout" },
+        { status: 500 }
+      );
+    }
+
+    const now = new Date().toISOString();
+    const paymentType = meta?.type || "tool_purchase";
+
+    const { error: insertError } = await supabaseAdmin.from("payments").insert({
+      user_id: authData.user.id,
+      user_name: customer.name,
+      user_email: customer.email,
+      user_country: meta?.userCountry || "",
+      type: paymentType,
+      description: description || "MUBARISTA payment",
+      amount,
+      currency: body.currency || "RWF",
+      status: "pending",
+      method: "mobile_money",
+      reference: tx_ref,
+      notes: JSON.stringify(meta || {}),
+      created_at: now,
+    });
+
+    if (insertError) {
+      console.error("Failed to create pending payment record:", insertError);
+      return NextResponse.json({ error: "Failed to save payment record" }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      payment_url: rwandaPayData.data.payment_url,
+      reference: tx_ref,
+    });
+  } catch (error: any) {
+    console.error("RwandaPay initiate route error:", error);
     return NextResponse.json(
-      { error: "Missing required fields: amount, tx_ref, customer phone/email" },
-      { status: 400 }
+      { error: error.message || "Internal server error" },
+      { status: 500 }
     );
   }
-
-  const { data: payment, error: insertError } = await supabaseAdmin
-    .from("payments")
-    .insert({
-      user_id: user.id,
-      user_name: customer.name || user.user_metadata?.name || user.email,
-      user_email: customer.email,
-      user_country: meta?.country || user.user_metadata?.country || "",
-      type: type || "tool_purchase",
-      description: description || "RwandaPay payment",
-      amount,
-      currency,
-      status: "pending",
-      method: "rwandapay",
-      reference: tx_ref,
-      notes: meta ? JSON.stringify(meta) : null,
-      created_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
-
-  if (insertError) {
-    console.error("RwandaPay initiate: failed to record payment", insertError);
-    return NextResponse.json({ error: "Failed to record payment" }, { status: 500 });
-  }
-
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mubarista.com";
-  const result = await initializeRwandaPay({
-    amount,
-    tx_ref,
-    customer,
-    currency,
-    redirect_url: redirect_url || `${siteUrl}/dashboard`,
-    webhook_url: `${siteUrl}/api/payments/rwandapay/webhook`,
-    description,
-    meta: { payment_id: payment.id, ...meta },
-  });
-
-  if (!result.success) {
-    await supabaseAdmin
-      .from("payments")
-      .update({ status: "failed", notes: result.message || "Init failed" })
-      .eq("id", payment.id);
-    return NextResponse.json({ error: result.message || "RwandaPay init failed" }, { status: 500 });
-  }
-
-  return NextResponse.json({
-    success: true,
-    checkout_url: result.checkout_url,
-    tx_ref,
-    payment_id: payment.id,
-  });
 }

@@ -6,8 +6,7 @@ import Link from "next/link";
 import { Crown, Check, ArrowRight, Star, Loader2 } from "lucide-react";
 import { useAdminData } from "@/lib/admin-data-context";
 import { useAuth } from "@/lib/auth-context";
-import { supabase } from "@/lib/supabase";
-import { generateReference } from "@/lib/payment";
+import { initiateRwandaPay, generateReference } from "@/lib/payment";
 import { formatCurrency } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,43 +31,32 @@ export default function PremiumPage() {
 
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      if (!token) throw new Error("Your session has expired. Please log in again.");
-
-      const txRef = generateReference(`PREM-${planId}`);
-      const res = await fetch("/api/payments/rwandapay/initiate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const tx_ref = generateReference(`PREM-${planId}`);
+      const { payment_url } = await initiateRwandaPay({
+        amount: plan.price,
+        tx_ref,
+        customer: {
+          name: user.name,
+          email: user.email,
+          phone: user.phone || "",
         },
-        body: JSON.stringify({
-          amount: plan.price,
-          tx_ref: txRef,
-          customer: {
-            name: user.name,
-            email: user.email,
-            phone: user.phone || "",
-          },
-          currency: plan.currency || "RWF",
-          redirect_url: `${window.location.origin}/dashboard?tx_ref=${txRef}`,
-          description: `Premium subscription - ${plan.name}`,
+        currency: plan.currency,
+        description: `Premium subscription - ${plan.name}`,
+        meta: {
           type: "premium_subscription",
-          meta: { planId, duration: plan.duration, country: user.country },
-        }),
+          planId,
+          duration: plan.duration,
+          userId: user.id,
+          userCountry: user.country,
+          userName: user.name,
+          userEmail: user.email,
+        },
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.checkout_url) {
-        throw new Error(data.error || "Failed to initialize RwandaPay payment");
-      }
-
-      window.location.href = data.checkout_url;
+      window.location.href = payment_url;
     } catch (error: any) {
       console.error("Upgrade failed:", error);
-      alert(error.message || "Failed to initialize payment. Please try again.");
-    } finally {
+      alert(error.message || "Failed to start payment. Please try again.");
       setLoading(false);
     }
   };

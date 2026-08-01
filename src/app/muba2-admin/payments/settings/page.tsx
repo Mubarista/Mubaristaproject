@@ -14,7 +14,6 @@ const METHOD_META: Record<PaymentMethod, { label: string; icon: React.ReactNode;
   mobile_money:  { label: "MomoPay",  icon: <Smartphone className="h-4 w-4" />,  color: "text-yellow", desc: "MomoPay USSD payments" },
   bank_transfer: { label: "Bank Transfer",     icon: <Building2 className="h-4 w-4" />,   color: "text-green",  desc: "Direct bank wire transfer" },
   paypal:        { label: "PayPal",            icon: <Wallet className="h-4 w-4" />,      color: "text-purple", desc: "PayPal for international users" },
-  rwandapay:     { label: "RwandaPay",         icon: <Smartphone className="h-4 w-4" />,  color: "text-blue",   desc: "RwandaPay mobile money gateway" },
 };
 
 const REGION_META = {

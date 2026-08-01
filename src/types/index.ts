@@ -1,5 +1,5 @@
 export type PaymentType = "competition_entry" | "premium_subscription" | "book_purchase" | "tool_purchase" | "job_access" | "refund";
-export type PaymentMethod = "card" | "mobile_money" | "bank_transfer" | "paypal" | "rwandapay";
+export type PaymentMethod = "card" | "mobile_money" | "bank_transfer" | "paypal";
 export type InvoiceStatus = "paid" | "pending" | "overdue" | "cancelled";
 
 export interface PaymentMethodRule {

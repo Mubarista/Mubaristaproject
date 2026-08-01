@@ -1,68 +1,59 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { addSubscriptionDuration } from "@/lib/utils";
-import { createInvoiceFromPayment } from "@/lib/invoice";
-import { mapKeysToCamelCase } from "@/lib/supabase-utils";
 
 export async function POST(req: NextRequest) {
-  let body: any = {};
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid webhook body" }, { status: 400 });
-  }
+    const body = await req.json().catch(() => ({}));
+    const reference = body.tx_ref || body.reference;
+    const status = body.status || body.payment_status;
+    const transactionId = body.transaction_id || body.id;
 
-  const txRef = body.tx_ref || body.txRef || body.reference;
-  const status = body.status || body.payment_status;
-
-  if (!txRef) {
-    return NextResponse.json({ error: "Missing tx_ref" }, { status: 400 });
-  }
-
-  const { data: payment, error } = await supabaseAdmin
-    .from("payments")
-    .select("*")
-    .eq("reference", txRef)
-    .order("created_at", { ascending: false })
-    .maybeSingle();
-
-  if (error || !payment) {
-    console.error("RwandaPay webhook: payment not found", txRef, error);
-    return NextResponse.json({ error: "Payment not found" }, { status: 404 });
-  }
-
-  const now = new Date().toISOString();
-  const isSuccess = String(status).toLowerCase() === "success" || String(status).toLowerCase() === "completed";
-
-  const update: any = {
-    status: isSuccess ? "completed" : "failed",
-    paid_at: isSuccess ? now : null,
-    notes: JSON.stringify(body),
-    updated_at: now,
-  };
-
-  const { data: updatedPayment } = await supabaseAdmin
-    .from("payments")
-    .update(update)
-    .eq("id", payment.id)
-    .select()
-    .single();
-
-  if (isSuccess && updatedPayment) {
-    const camel = mapKeysToCamelCase(updatedPayment) as any;
-    createInvoiceFromPayment(camel).catch((err) => {
-      console.error("RwandaPay webhook: invoice creation failed", err);
-    });
-
-    let meta: any = {};
-    try {
-      meta = payment.notes ? JSON.parse(payment.notes) : {};
-    } catch {
-      meta = {};
+    if (!reference) {
+      return NextResponse.json({ error: "Missing transaction reference" }, { status: 400 });
     }
 
-    if (payment.type === "premium_subscription" && meta.planId && meta.duration) {
-      const expiry = addSubscriptionDuration(new Date(), meta.duration);
+    const { data: payment, error: paymentError } = await supabaseAdmin
+      .from("payments")
+      .select("*")
+      .eq("reference", reference)
+      .maybeSingle();
+
+    if (paymentError || !payment) {
+      console.error("RwandaPay webhook: payment not found", reference, paymentError);
+      return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+    }
+
+    const isSuccess =
+      String(status).toLowerCase() === "successful" ||
+      String(status).toLowerCase() === "success";
+
+    const now = new Date().toISOString();
+    const meta = JSON.parse(payment.notes || "{}");
+
+    await supabaseAdmin
+      .from("payments")
+      .update({
+        status: isSuccess ? "completed" : "failed",
+        paid_at: isSuccess ? now : null,
+        notes: JSON.stringify({
+          ...meta,
+          webhook: body,
+          transaction_id: transactionId,
+        }),
+      })
+      .eq("id", payment.id);
+
+    if (!isSuccess) {
+      return NextResponse.json({ success: true, status: "failed" });
+    }
+
+    const origin = req.nextUrl.origin;
+
+    if (meta.type === "premium_subscription" && meta.planId && meta.duration && payment.user_id) {
+      const nowDate = new Date();
+      const expiry = addSubscriptionDuration(nowDate, meta.duration as "weekly" | "monthly" | "yearly");
+
       await supabaseAdmin
         .from("users")
         .update({
@@ -72,12 +63,52 @@ export async function POST(req: NextRequest) {
           subscription_expiry: expiry.toISOString(),
           subscription_next_renewal: expiry.toISOString(),
           subscription_auto_renew: true,
+          subscription_canceled_at: null,
           subscription_renewal_failures: 0,
           updated_at: now,
         })
         .eq("id", payment.user_id);
     }
-  }
 
-  return NextResponse.json({ received: true });
+    if (
+      (meta.type === "tool_purchase" || meta.type === "book_purchase") &&
+      Array.isArray(meta.items) &&
+      meta.items.length > 0
+    ) {
+      const toolItems = meta.items.filter((item: any) => item.type === "tool" && item.quantity > 0);
+      if (toolItems.length > 0) {
+        await fetch(`${origin}/api/tools/decrement-stock`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: toolItems.map((item: any) => ({ id: item.id, quantity: item.quantity })),
+          }),
+        }).catch((err) => console.error("Webhook stock decrement failed:", err));
+      }
+
+      const bookItems = meta.items.filter((item: any) => item.type === "book");
+      if (bookItems.length > 0) {
+        const email = meta.shippingAddress?.email || payment.user_email;
+        const customerName = meta.shippingAddress?.fullName || payment.user_name;
+        await fetch(`${origin}/api/books/deliver`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            bookIds: bookItems.map((item: any) => item.id),
+            email,
+            customerName,
+            orderId: reference,
+          }),
+        }).catch((err) => console.error("Webhook book delivery failed:", err));
+      }
+    }
+
+    return NextResponse.json({ success: true, status: "completed" });
+  } catch (error: any) {
+    console.error("RwandaPay webhook error:", error);
+    return NextResponse.json(
+      { error: error.message || "Internal server error" },
+      { status: 500 }
+    );
+  }
 }

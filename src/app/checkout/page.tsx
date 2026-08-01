@@ -9,8 +9,7 @@ import { useCart } from "@/lib/cart-context";
 import { useAuth } from "@/lib/auth-context";
 import { useAdminData } from "@/lib/admin-data-context";
 import { useOrders } from "@/lib/order-context";
-import { supabase } from "@/lib/supabase";
-import { createPayment, generateReference } from "@/lib/payment";
+import { initiateRwandaPay, createPayment, generateReference } from "@/lib/payment";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
@@ -26,8 +25,8 @@ export default function CheckoutPage() {
   const { supportedCountries } = useAdminData();
   const { addOrder } = useOrders();
   const [processing, setProcessing] = useState(false);
-  const [step, setStep] = useState<"details" | "payment-method" | "payment" | "momo" | "rwandapay" | "processing" | "success">("details");
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "momo" | "rwandapay" | null>(null);
+  const [step, setStep] = useState<"details" | "payment-method" | "payment" | "momo" | "processing" | "success">("details");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "momo" | null>(null);
   const [momoPhone, setMomoPhone] = useState("");
   const [momoPhoneError, setMomoPhoneError] = useState<string | null>(null);
   const [momoCode, setMomoCode] = useState("");
@@ -111,12 +110,10 @@ export default function CheckoutPage() {
     setStep("payment-method");
   };
 
-  const handlePaymentMethodSelect = (method: "card" | "momo" | "rwandapay") => {
+  const handlePaymentMethodSelect = (method: "card" | "momo") => {
     setPaymentMethod(method);
     if (method === "card") {
       setStep("payment");
-    } else if (method === "rwandapay") {
-      setStep("rwandapay");
     } else {
       setStep("momo");
     }
@@ -186,99 +183,47 @@ export default function CheckoutPage() {
     }
   }
 
-  const handleRwandaPaySubmit = async (e: React.FormEvent) => {
+  const handleMomoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
-      alert("Please log in to complete payment");
+    const validation = validatePhoneNumber(momoPhone);
+    if (!validation.valid) {
+      setMomoPhoneError(validation.error || "Enter a valid phone number");
       return;
     }
+    setMomoPhoneError(null);
 
-    const validation = validatePhoneNumber(formData.phone);
-    if (!validation.valid) {
-      alert(validation.error || "Enter a valid phone number");
+    if (!user) {
+      alert("Please log in to complete your purchase.");
       return;
     }
 
     setProcessing(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      if (!token) throw new Error("Your session has expired. Please log in again.");
-
-      const txRef = generateReference("ORD");
+      const orderId = generateReference("ORD");
       const paymentType = cartItems.some((item) => item.type === "tool") ? "tool_purchase" : "book_purchase";
-      const itemNames = cartItems.map((item) => `${item.title} x${item.quantity}`).join(", ");
-
-      const res = await fetch("/api/payments/rwandapay/initiate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const { payment_url } = await initiateRwandaPay({
+        amount: total,
+        tx_ref: orderId,
+        customer: {
+          name: formData.fullName || user.name,
+          email: formData.email || user.email,
+          phone: momoPhone,
         },
-        body: JSON.stringify({
-          amount: total,
-          tx_ref: txRef,
-          customer: {
-            name: formData.fullName,
-            email: formData.email,
-            phone: formData.phone,
-          },
-          currency: "RWF",
-          redirect_url: `${window.location.origin}/dashboard?tx_ref=${txRef}`,
-          description: `Order: ${itemNames}`,
+        currency: "RWF",
+        description: `MUBARISTA order - ${cartItems.map((item) => item.title).join(", ")}`,
+        meta: {
           type: paymentType,
-          meta: {
-            items: cartItems,
-            total,
-            shippingAddress: formData,
-            country: formData.country,
-          },
-        }),
+          items: cartItems,
+          shippingAddress: formData,
+          userCountry: formData.country,
+          userId: user.id,
+        },
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.checkout_url) {
-        throw new Error(data.error || "Failed to initialize RwandaPay payment");
-      }
-
-      window.location.href = data.checkout_url;
+      window.location.href = payment_url;
     } catch (error: any) {
-      console.error("RwandaPay checkout error:", error);
-      alert(error.message || "Failed to initialize payment. Please try again.");
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  const handleMomoSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (momoStep === "phone") {
-      const validation = validatePhoneNumber(momoPhone);
-      if (!validation.valid) {
-        setMomoPhoneError(validation.error || "Enter a valid phone number");
-        return;
-      }
-      setMomoPhoneError(null);
-      // Simulate sending SMS code
-      setMomoStep("code");
-    } else {
-      // Verify code and proceed
-      setProcessing(true);
-      if (!(await decrementStock())) {
-        setProcessing(false);
-        return;
-      }
-      setStep("processing");
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      const order = addOrder({
-        items: cartItems,
-        total,
-        shippingAddress: formData,
-      });
-      clearCart();
-      await recordPayment(order.id);
-      await deliverBookPdfs(order.id);
-      setStep("success");
+      console.error("RwandaPay checkout failed:", error);
+      alert(error.message || "Failed to start payment. Please try again.");
       setProcessing(false);
     }
   };
@@ -493,33 +438,19 @@ export default function CheckoutPage() {
                     </button>
 
                     {formData.country === "RW" && (
-                      <>
-                        <button
-                          onClick={() => handlePaymentMethodSelect("momo")}
-                          className="w-full p-4 rounded-xl border border-white/10 hover:border-yellow/50 transition-colors flex items-center gap-4 text-left"
-                        >
-                          <div className="h-12 w-12 rounded-lg bg-yellow/10 flex items-center justify-center">
-                            <Smartphone className="h-6 w-6 text-yellow" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-medium">MomoPay</h3>
-                            <p className="text-sm text-muted">Pay with your mobile money account</p>
-                          </div>
-                          <MtnMomoIcon className="h-8 w-12" />
-                        </button>
-                        <button
-                          onClick={() => handlePaymentMethodSelect("rwandapay")}
-                          className="w-full p-4 rounded-xl border border-white/10 hover:border-blue/50 transition-colors flex items-center gap-4 text-left"
-                        >
-                          <div className="h-12 w-12 rounded-lg bg-blue/10 flex items-center justify-center">
-                            <Smartphone className="h-6 w-6 text-blue" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-medium">RwandaPay</h3>
-                            <p className="text-sm text-muted">Pay via RwandaPay mobile money gateway</p>
-                          </div>
-                        </button>
-                      </>
+                      <button
+                        onClick={() => handlePaymentMethodSelect("momo")}
+                        className="w-full p-4 rounded-xl border border-white/10 hover:border-yellow/50 transition-colors flex items-center gap-4 text-left"
+                      >
+                        <div className="h-12 w-12 rounded-lg bg-yellow/10 flex items-center justify-center">
+                          <Smartphone className="h-6 w-6 text-yellow" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-medium">MomoPay</h3>
+                          <p className="text-sm text-muted">Pay with your mobile money account</p>
+                        </div>
+                        <MtnMomoIcon className="h-8 w-12" />
+                      </button>
                     )}
 
                     <Button
@@ -567,7 +498,7 @@ export default function CheckoutPage() {
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted mt-4">
                           <Lock className="h-3 w-3" />
-                          <span>You will receive an SMS confirmation code on this number.</span>
+                          <span>You will be redirected to RwandaPay to complete this payment.</span>
                         </div>
                       </>
                     )}
@@ -611,54 +542,7 @@ export default function CheckoutPage() {
                         Back
                       </Button>
                       <Button variant="primary" type="submit" className="flex-1" disabled={processing}>
-                        {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : momoStep === "phone" ? "Send Code" : "Confirm Payment"}
-                      </Button>
-                    </div>
-                  </form>
-                </Card>
-              </motion.div>
-            )}
-
-            {step === "rwandapay" && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-              >
-                <Card className="p-6">
-                  <CardTitle className="mb-6 flex items-center gap-2">
-                    <Smartphone className="h-5 w-5 text-blue" />
-                    RwandaPay
-                  </CardTitle>
-                  <form onSubmit={handleRwandaPaySubmit} className="space-y-4">
-                    <div>
-                      <label className="text-sm text-muted mb-1 block">Mobile Money Number</label>
-                      <input
-                        type="text"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        placeholder="+250 788 123 456"
-                        required
-                        className="w-full rounded-xl bg-muted-bg border border-white/10 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue"
-                      />
-                      <p className="text-xs text-muted mt-1">
-                        You will be redirected to RwandaPay to complete the payment via USSD/mobile money.
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-muted mt-4">
-                      <Lock className="h-3 w-3" />
-                      <span>Payment is processed securely through RwandaPay.</span>
-                    </div>
-                    <div className="flex gap-3">
-                      <Button
-                        variant="secondary"
-                        type="button"
-                        onClick={() => setStep("payment-method")}
-                        className="flex-1"
-                      >
-                        Back
-                      </Button>
-                      <Button variant="primary" type="submit" className="flex-1" disabled={processing}>
-                        {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : `Pay ${formatCurrency(total, "RWF")}`}
+                        {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Pay with RwandaPay"}
                       </Button>
                     </div>
                   </form>

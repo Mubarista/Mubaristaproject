@@ -1,4 +1,14 @@
 import type { PaymentType, PaymentMethod } from "@/types";
+import { supabase } from "@/lib/supabase";
+
+export interface RwandaPayInitiateInput {
+  amount: number;
+  tx_ref: string;
+  customer: { name: string; email: string; phone: string };
+  currency?: string;
+  description: string;
+  meta: Record<string, any>;
+}
 
 export interface CreatePaymentInput {
   userId?: string;
@@ -23,7 +33,6 @@ export function generateReference(prefix = "REF"): string {
 
 export function normalizePaymentMethod(method?: string): PaymentMethod {
   const m = method?.toLowerCase() ?? "";
-  if (m.includes("rwandapay")) return "rwandapay";
   if (m.includes("momo") || m.includes("mobile")) return "mobile_money";
   if (m.includes("visa") || m.includes("master") || m.includes("card")) return "card";
   if (m.includes("paypal")) return "paypal";
@@ -51,4 +60,28 @@ export async function createPayment(input: CreatePaymentInput) {
   }
 
   return await response.json();
+}
+
+export async function initiateRwandaPay(input: RwandaPayInitiateInput): Promise<{ payment_url: string; reference: string }> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) {
+    throw new Error("Please log in to make a payment.");
+  }
+
+  const response = await fetch("/api/payments/rwandapay/initiate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(input),
+  });
+
+  const data = await response.json().catch(() => ({ error: "Invalid response" }));
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to start RwandaPay payment");
+  }
+
+  return data as { payment_url: string; reference: string };
 }
