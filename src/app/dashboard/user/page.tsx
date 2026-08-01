@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -72,12 +71,6 @@ export default function UserDashboard() {
     }
 
     fetchPlans();
-
-    const interval = setInterval(() => {
-      fetchPlans();
-    }, 10000);
-
-    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -131,13 +124,7 @@ export default function UserDashboard() {
     }
 
     fetchDashboardData();
-
-    const interval = setInterval(() => {
-      fetchDashboardData();
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, [user]);
+  }, [user?.id]);
 
   const stats = [
     {
@@ -246,13 +233,8 @@ export default function UserDashboard() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {stats.map((stat, i) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-            >
+          {stats.map((stat) => (
+            <div key={stat.label}>
               {stat.link ? (
                 <Link href={stat.link}>
                   <Card className="text-center cursor-pointer hover:border-blue/50 transition-colors">
@@ -268,7 +250,7 @@ export default function UserDashboard() {
                   <p className="text-xs text-muted">{stat.label}</p>
                 </Card>
               )}
-            </motion.div>
+            </div>
           ))}
         </div>
 
