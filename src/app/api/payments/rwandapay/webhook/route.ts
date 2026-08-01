@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
           subscription_duration: meta.duration,
           subscription_expiry: expiry.toISOString(),
           subscription_next_renewal: expiry.toISOString(),
-          subscription_auto_renew: true,
+          subscription_auto_renew: false,
           subscription_canceled_at: null,
           subscription_renewal_failures: 0,
           updated_at: now,

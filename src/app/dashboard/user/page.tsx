@@ -458,51 +458,20 @@ export default function UserDashboard() {
 
             {isPremium && user?.subscriptionPlan && (
               <div className="mb-6 p-4 bg-blue/5 border border-blue/20 rounded-xl">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                  <div>
-                    <p className="font-semibold text-blue">Current subscription active</p>
-                    <p className="text-sm text-muted">
-                      Expires: {user.subscriptionExpiry ? new Date(user.subscriptionExpiry).toLocaleDateString() : "N/A"}
-                    </p>
-                    {user.subscriptionAutoRenew ? (
-                      <p className="text-sm text-green">Auto-renew enabled</p>
-                    ) : (
-                      <p className="text-sm text-yellow">Auto-renew disabled</p>
-                    )}
-                  </div>
-                  {user.subscriptionAutoRenew && !showCancelConfirm && (
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowCancelConfirm(true)}
-                    >
-                      Cancel auto-renew
-                    </Button>
-                  )}
-                  {showCancelConfirm && (
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="red"
-                        onClick={async () => {
-                          await cancelSubscription();
-                          setShowCancelConfirm(false);
-                        }}
-                      >
-                        Confirm
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        onClick={() => setShowCancelConfirm(false)}
-                      >
-                        Keep
-                      </Button>
-                    </div>
-                  )}
+                <div>
+                  <p className="font-semibold text-blue">Current subscription active</p>
+                  <p className="text-sm text-muted">
+                    Expires: {user.subscriptionExpiry ? new Date(user.subscriptionExpiry).toLocaleDateString() : "N/A"}
+                  </p>
+                  <p className="text-sm text-yellow">
+                    Your subscription will not auto-renew. Please pay again after it expires to keep premium access.
+                  </p>
                 </div>
               </div>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {showPlansSkeleton ? (
+              {!isPremium && (showPlansSkeleton ? (
                 <>
                   <SubscriptionPlanSkeleton />
                   <SubscriptionPlanSkeleton />
@@ -577,7 +546,7 @@ export default function UserDashboard() {
                   </Button>
                 </Card>
               ))
-              )}
+              ))}
             </div>
           </Card>
         </div>
