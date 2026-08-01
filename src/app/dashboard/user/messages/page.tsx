@@ -32,10 +32,15 @@ export default function UserMessagesPage() {
   const showSkeleton = useDelayedLoading(!loading, 750);
 
   useEffect(() => {
-    if (user) {
+    if (!user) return;
+
+    fetchMessages();
+    const interval = setInterval(() => {
       fetchMessages();
-    }
-  }, [user, filter]);
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [user?.id, filter]);
 
   async function fetchMessages() {
     if (!user) return;
