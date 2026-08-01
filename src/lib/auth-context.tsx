@@ -59,11 +59,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   async function ensureUserProfile(authUser: any) {
+    // Refresh the session first so all following requests use a valid token
+    const { data: { session } } = await supabase.auth.refreshSession();
+    if (!session) {
+      console.error("Session could not be refreshed; signing out.");
+      await supabase.auth.signOut({ scope: "local" });
+      return null;
+    }
+    const currentUser = session.user;
+
     // Try to fetch existing profile using maybeSingle to avoid empty-row errors
     const { data: profile, error: fetchError } = await supabase
       .from("users")
       .select("*")
-      .eq("id", authUser.id)
+      .eq("id", currentUser.id)
       .maybeSingle();
 
     if (fetchError) {
@@ -73,18 +82,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (profile) return profile;
 
     // Create a profile for OAuth users or missing profiles
-    const name = authUser.user_metadata?.name || authUser.user_metadata?.full_name || authUser.email?.split("@")[0] || "User";
-    const phone = authUser.user_metadata?.phone || "";
-    const country = authUser.user_metadata?.country || "";
-    const email = authUser.email || "";
+    const name = currentUser.user_metadata?.name || currentUser.user_metadata?.full_name || currentUser.email?.split("@")[0] || "User";
+    const phone = currentUser.user_metadata?.phone || "";
+    const country = currentUser.user_metadata?.country || "";
+    const email = currentUser.email || "";
 
     // For OAuth providers (Google, Apple, etc.), the email is already verified by the provider.
     // For email/password signups, email_verified must be false until the user completes OTP.
-    const isOAuthUser = !!(authUser.app_metadata?.provider && authUser.app_metadata.provider !== "email");
+    const isOAuthUser = !!(currentUser.app_metadata?.provider && currentUser.app_metadata.provider !== "email");
     const emailVerified = isOAuthUser ? true : false;
 
     const profileData = {
-      id: authUser.id,
+      id: currentUser.id,
       email,
       name,
       phone,
@@ -106,6 +115,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (error) {
       console.error("Error creating user profile:", error.message || error.code || JSON.stringify(error));
+      if (error.code === "401" || error.message?.includes("JWT expired")) {
+        await supabase.auth.signOut({ scope: "local" });
+        return null;
+      }
     }
 
     return newProfile;
@@ -113,30 +126,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    let heartbeat: NodeJS.Timeout | null = null;
 
     async function init() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user && mounted) {
         const profile = await ensureUserProfile(session.user);
-        setUser(mapSupabaseUser(session.user, profile));
+        if (mounted) {
+          if (profile) {
+            setUser(mapSupabaseUser(session.user, profile));
+          } else {
+            setUser(null);
+          }
+          setIsLoading(false);
+        }
+      } else if (mounted) {
+        setIsLoading(false);
       }
-      if (mounted) setIsLoading(false);
     }
 
     init();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+
+      if (event === "SIGNED_OUT" || !session?.user) {
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+
       if (session?.user) {
         const profile = await ensureUserProfile(session.user);
-        setUser(mapSupabaseUser(session.user, profile));
-      } else {
-        setUser(null);
+        if (mounted) {
+          if (profile) {
+            setUser(mapSupabaseUser(session.user, profile));
+          } else {
+            setUser(null);
+          }
+          setIsLoading(false);
+        }
       }
     });
+
+    // Keep the session alive while the tab is open so users can submit forms
+    heartbeat = setInterval(async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        if (mounted) setUser(null);
+      }
+    }, 60000);
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      if (heartbeat) clearInterval(heartbeat);
     };
   }, []);
 
