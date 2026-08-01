@@ -14,9 +14,8 @@ import { Badge } from "@/components/ui/badge";
 
 export default function PremiumPage() {
   const { subscriptionPlans } = useAdminData();
-  const { user, upgradeToPremium } = useAuth();
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
+  const [processingPlan, setProcessingPlan] = useState<string | null>(null);
 
   const activePlans = subscriptionPlans.filter(p => p.active);
 
@@ -29,7 +28,7 @@ export default function PremiumPage() {
     const plan = subscriptionPlans.find(p => p.id === planId);
     if (!plan) return;
 
-    setLoading(true);
+    setProcessingPlan(planId);
     try {
       const tx_ref = generateReference(`PREM-${planId}`);
       const { payment_url } = await initiateRwandaPay({
@@ -57,7 +56,7 @@ export default function PremiumPage() {
     } catch (error: any) {
       console.error("Upgrade failed:", error);
       alert(error.message || "Failed to start payment. Please try again.");
-      setLoading(false);
+      setProcessingPlan(null);
     }
   };
 
@@ -122,14 +121,14 @@ export default function PremiumPage() {
                   variant={plan.popular ? "primary" : "secondary"}
                   className="w-full"
                   onClick={() => handleSelectPlan(plan.id)}
-                  disabled={loading}
+                  disabled={processingPlan === plan.id}
                 >
-                  {loading ? (
+                  {processingPlan === plan.id ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Processing...
                     </>
-                  ) : selectedPlan === plan.id ? (
+                  ) : user?.subscriptionPlan === plan.id ? (
                     <>
                       <Check className="h-4 w-4 mr-2" />
                       Active

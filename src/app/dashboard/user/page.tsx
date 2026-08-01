@@ -51,7 +51,7 @@ export default function UserDashboard() {
   const [loadingStats, setLoadingStats] = useState(true);
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
-  const [startingPayment, setStartingPayment] = useState(false);
+  const [startingPlan, setStartingPlan] = useState<string | null>(null);
 
   const competitionCount = applicationCount + liveCompetitionCount;
 
@@ -519,10 +519,10 @@ export default function UserDashboard() {
                   <Button
                     variant={plan.popular ? "premium" : "primary"}
                     className="w-full"
-                    disabled={startingPayment}
+                    disabled={startingPlan === plan.id}
                     onClick={async () => {
                       if (!user) return;
-                      setStartingPayment(true);
+                      setStartingPlan(plan.id);
                       try {
                         const tx_ref = generateReference(`PREM-${plan.id}`);
                         const { payment_url } = await initiateRwandaPay({
@@ -550,11 +550,11 @@ export default function UserDashboard() {
                       } catch (error: any) {
                         console.error("Failed to start payment:", error);
                         alert(error.message || "Failed to start payment.");
-                        setStartingPayment(false);
+                        setStartingPlan(null);
                       }
                     }}
                   >
-                    {startingPayment ? "Processing..." : `Choose ${plan.name}`}
+                    {startingPlan === plan.id ? "Processing..." : `Choose ${plan.name}`}
                   </Button>
                 </Card>
               ))}
