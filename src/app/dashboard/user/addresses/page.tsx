@@ -92,11 +92,7 @@ export default function AddressesPage() {
 
   useEffect(() => {
     fetchAddresses();
-    const interval = setInterval(() => {
-      fetchAddresses();
-    }, 10000);
-    return () => clearInterval(interval);
-  }, [user]);
+  }, [user?.id]);
 
   const filtered = useMemo(
     () => addresses.filter((a) => a.type === activeTab),

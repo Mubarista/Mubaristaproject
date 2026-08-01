@@ -70,13 +70,7 @@ export default function UserApplicationsPage() {
     }
 
     fetchApplications();
-
-    const interval = setInterval(() => {
-      fetchApplications();
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, [user]);
+  }, [user?.id]);
 
   async function fetchApplications() {
     if (!user) return;
