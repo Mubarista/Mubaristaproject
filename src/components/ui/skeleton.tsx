@@ -1,10 +1,13 @@
+"use client";
+
 import { cn } from "@/lib/utils";
+import { useState, useEffect, useRef } from "react";
 
 export function Skeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "animate-pulse rounded-lg bg-muted-bg",
+        "skeleton-shimmer rounded-lg",
         className
       )}
     />
@@ -56,6 +59,82 @@ export function SkeletonIcon({ className }: { className?: string }) {
 
 export function SkeletonImage({ className }: { className?: string }) {
   return <Skeleton className={cn("h-40 w-full rounded-xl", className)} />;
+}
+
+/**
+ * Hook that ensures loading state is shown for a minimum duration.
+ * Prevents skeleton flash when data loads too quickly.
+ * 
+ * @param isDataReady - Whether the actual data has finished loading
+ * @param minDuration - Minimum time (ms) to show the skeleton (default: 600ms)
+ * @returns shouldShowSkeleton - Whether to display skeleton UI
+ */
+export function useDelayedLoading(isDataReady: boolean, minDuration: number = 600): boolean {
+  const [shouldShowSkeleton, setShouldShowSkeleton] = useState(true);
+  const startTimeRef = useRef<number>(Date.now());
+
+  useEffect(() => {
+    // Reset timer when data starts loading again
+    if (!isDataReady) {
+      startTimeRef.current = Date.now();
+      setShouldShowSkeleton(true);
+      return;
+    }
+
+    // Data is ready - check if minimum duration has passed
+    const elapsed = Date.now() - startTimeRef.current;
+    const remaining = minDuration - elapsed;
+
+    if (remaining <= 0) {
+      // Minimum time already passed, hide skeleton immediately
+      setShouldShowSkeleton(false);
+    } else {
+      // Wait for remaining time before hiding skeleton
+      const timer = setTimeout(() => {
+        setShouldShowSkeleton(false);
+      }, remaining);
+      return () => clearTimeout(timer);
+    }
+  }, [isDataReady, minDuration]);
+
+  return shouldShowSkeleton;
+}
+
+/**
+ * Wrapper component that fades in content after skeleton loading.
+ * Provides smooth transition from skeleton to actual content.
+ */
+export function SkeletonWrapper({
+  isLoading,
+  skeleton,
+  children,
+  minDuration = 600,
+  className,
+}: {
+  isLoading: boolean;
+  skeleton: React.ReactNode;
+  children: React.ReactNode;
+  minDuration?: number;
+  className?: string;
+}) {
+  const showSkeleton = useDelayedLoading(!isLoading, minDuration);
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!showSkeleton && !hasLoaded) {
+      setHasLoaded(true);
+    }
+  }, [showSkeleton, hasLoaded]);
+
+  if (showSkeleton) {
+    return <div className={className}>{skeleton}</div>;
+  }
+
+  return (
+    <div className={cn("skeleton-fade-in", className)}>
+      {children}
+    </div>
+  );
 }
 
 /* Dashboard-specific skeleton components */

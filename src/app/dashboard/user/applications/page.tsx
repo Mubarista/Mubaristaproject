@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ApplicationCardSkeleton } from "@/components/ui/skeleton";
+import { ApplicationCardSkeleton, useDelayedLoading } from "@/components/ui/skeleton";
 import {
   FileText,
   Trophy,
@@ -63,6 +63,9 @@ export default function UserApplicationsPage() {
   const [applications, setApplications] = useState<UserApplication[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Ensure skeleton shows for minimum duration to prevent flash
+  const showSkeleton = useDelayedLoading(!loading, 800);
+
   useEffect(() => {
     if (!user || user.role === "admin") {
       setLoading(false);
@@ -88,16 +91,16 @@ export default function UserApplicationsPage() {
     }
   }
 
-  if (loading) {
+  if (showSkeleton) {
     return (
       <div className="pt-24 pb-16 min-h-screen">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div className="space-y-2">
-              <div className="h-8 w-48 animate-pulse rounded-lg bg-muted-bg" />
-              <div className="h-4 w-64 animate-pulse rounded-lg bg-muted-bg" />
+              <div className="h-8 w-48 skeleton-shimmer rounded-lg" />
+              <div className="h-4 w-64 skeleton-shimmer rounded-lg" />
             </div>
-            <div className="h-10 w-44 animate-pulse rounded-xl bg-muted-bg" />
+            <div className="h-10 w-44 skeleton-shimmer rounded-xl" />
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -147,7 +150,7 @@ export default function UserApplicationsPage() {
             </Button>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 skeleton-fade-in">
             {applications.map((app) => (
               <Card key={app.id} className="flex flex-col">
                 <div className="flex items-start justify-between gap-4">

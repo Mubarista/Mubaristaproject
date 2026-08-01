@@ -30,6 +30,7 @@ import {
   DashboardActivitySkeleton,
   DashboardQuickActionsSkeleton,
   SubscriptionPlanSkeleton,
+  useDelayedLoading,
 } from "@/components/ui/skeleton";
 
 interface Activity {
@@ -58,6 +59,11 @@ export default function UserDashboard() {
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [startingPlan, setStartingPlan] = useState<string | null>(null);
+
+  // Ensure skeletons show for a minimum duration to prevent flash
+  const showStatsSkeleton = useDelayedLoading(!loadingStats, 700);
+  const showActivitiesSkeleton = useDelayedLoading(!loadingActivities, 900);
+  const showPlansSkeleton = useDelayedLoading(!loadingPlans, 600);
 
   const competitionCount = applicationCount + liveCompetitionCount;
 
@@ -242,12 +248,12 @@ export default function UserDashboard() {
         </div>
 
         {/* Stats */}
-        {loadingStats ? (
+        {showStatsSkeleton ? (
           <div className="mb-8">
             <DashboardStatsSkeleton />
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 skeleton-fade-in">
             {stats.map((stat) => (
               <div key={stat.label}>
                 {stat.link ? (
@@ -274,10 +280,10 @@ export default function UserDashboard() {
           {/* Quick Actions */}
           <Card className="lg:col-span-3">
             <CardTitle className="mb-4">Quick Actions</CardTitle>
-            {loadingStats ? (
+            {showStatsSkeleton ? (
               <DashboardQuickActionsSkeleton />
             ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 skeleton-fade-in">
               {quickActions.slice(0, 4).map((item) => (
                 <Link key={item.title} href={item.link}>
                   <Card className="cursor-pointer hover:border-blue/50 transition-colors p-4">
@@ -328,10 +334,10 @@ export default function UserDashboard() {
         {/* Recent Activity */}
         <Card className="mt-6">
           <CardTitle className="mb-4">Recent Activity</CardTitle>
-          {loadingActivities ? (
+          {showActivitiesSkeleton ? (
             <DashboardActivitySkeleton count={5} />
           ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 skeleton-fade-in">
             {activities.length > 0 ? (
               activities.map((activity) => {
                 const meta = getActivityMeta(activity);
@@ -496,7 +502,7 @@ export default function UserDashboard() {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {loadingPlans ? (
+              {showPlansSkeleton ? (
                 <>
                   <SubscriptionPlanSkeleton />
                   <SubscriptionPlanSkeleton />

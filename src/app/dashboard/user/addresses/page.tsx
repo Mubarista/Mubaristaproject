@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { AddressCardSkeleton } from "@/components/ui/skeleton";
+import { AddressCardSkeleton, useDelayedLoading } from "@/components/ui/skeleton";
 
 interface Address {
   id: string;
@@ -61,6 +61,9 @@ export default function AddressesPage() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Ensure skeleton shows for minimum duration to prevent flash
+  const showSkeleton = useDelayedLoading(!loading, 700);
   const [activeTab, setActiveTab] = useState<"delivery" | "pickup">("delivery");
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Address | null>(null);
@@ -412,7 +415,7 @@ export default function AddressesPage() {
   );
 
   function renderAddressList(list: Address[], type: "delivery" | "pickup") {
-    if (loading && addresses.length === 0) {
+    if (showSkeleton && addresses.length === 0) {
       return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -436,7 +439,7 @@ export default function AddressesPage() {
     }
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 skeleton-fade-in">
         {list.map((address) => (
           <Card key={address.id} className="p-5">
             <div className="flex items-start justify-between gap-4">

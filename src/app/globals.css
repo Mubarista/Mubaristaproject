@@ -315,3 +315,39 @@ body {
   border: 2px solid var(--blue);
   animation: otp-pulse-ring 1.5s ease-out infinite;
 }
+
+/* Skeleton loading animations */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--muted-bg) 25%,
+    color-mix(in srgb, var(--muted-bg) 60%, var(--foreground) 8%) 50%,
+    var(--muted-bg) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes skeleton-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.skeleton-fade-in {
+  animation: skeleton-fade-in 0.4s ease-out forwards;
+}

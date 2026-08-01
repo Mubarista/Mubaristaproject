@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageCardSkeleton, MessageDetailSkeleton } from "@/components/ui/skeleton";
+import { MessageCardSkeleton, MessageDetailSkeleton, useDelayedLoading } from "@/components/ui/skeleton";
 import { MessageSquare, CheckCircle, Clock, Trash2, Reply } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
@@ -27,6 +27,9 @@ export default function UserMessagesPage() {
   const [loading, setLoading] = useState(true);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [filter, setFilter] = useState<string>("all");
+
+  // Ensure skeleton shows for minimum duration to prevent flash
+  const showSkeleton = useDelayedLoading(!loading, 750);
 
   useEffect(() => {
     if (user) {
@@ -72,15 +75,15 @@ export default function UserMessagesPage() {
     resolved: CheckCircle,
   };
 
-  if (loading) {
+  if (showSkeleton) {
     return (
       <div>
         <div className="mb-6 flex items-center justify-between">
           <div className="space-y-2">
-            <div className="h-7 w-40 animate-pulse rounded-lg bg-muted-bg" />
-            <div className="h-4 w-64 animate-pulse rounded-lg bg-muted-bg" />
+            <div className="h-7 w-40 skeleton-shimmer rounded-lg" />
+            <div className="h-4 w-64 skeleton-shimmer rounded-lg" />
           </div>
-          <div className="h-10 w-36 animate-pulse rounded-lg bg-muted-bg" />
+          <div className="h-10 w-36 skeleton-shimmer rounded-lg" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-3">
@@ -125,7 +128,7 @@ export default function UserMessagesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 skeleton-fade-in">
         {/* Messages List */}
         <div className="lg:col-span-1 space-y-3">
           {messages.length === 0 ? (
