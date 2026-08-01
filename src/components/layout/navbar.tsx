@@ -15,7 +15,6 @@ import {
   Settings,
   Bell,
   Heart,
-  MessageSquare,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
 import { navLinks } from "@/data/mock-data";
@@ -32,7 +31,6 @@ export function Navbar() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [siteLogo, setSiteLogo] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
-  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   const { theme, setTheme } = useTheme();
   const { user, logout } = useAuth();
   const { cartCount } = useCart();
@@ -51,10 +49,8 @@ export function Navbar() {
     fetchSiteSettings();
     if (user) {
       fetchUnreadCount();
-      fetchUnreadMessagesCount();
       const interval = setInterval(() => {
         fetchUnreadCount();
-        fetchUnreadMessagesCount();
       }, 30000);
       return () => clearInterval(interval);
     }
@@ -91,18 +87,7 @@ export function Navbar() {
     }
   }
 
-  async function fetchUnreadMessagesCount() {
-    if (!user) return;
-    try {
-      const res = await fetch(`/api/messages?userId=${user.id}&status=unread`);
-      if (res.ok) {
-        const data = await res.json();
-        setUnreadMessagesCount(data.length);
-      }
-    } catch (error) {
-      console.error("Error fetching unread messages count:", error);
-    }
-  }
+
 
   const scrolled = scrollY > 20;
   // Clamp 0–1 over first 120px of scroll
@@ -207,16 +192,6 @@ export function Navbar() {
                     </span>
                   )}
                 </Link>
-                <Link href="/dashboard/user/messages" className="relative">
-                  <Button variant="ghost" size="sm">
-                    <MessageSquare className="h-4 w-4" />
-                  </Button>
-                  {unreadMessagesCount > 0 && (
-                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-red text-white text-xs rounded-full flex items-center justify-center font-medium">
-                      {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
-                    </span>
-                  )}
-                </Link>
                 <Link href="/settings">
                   <Button variant="ghost" size="sm">
                     <Settings className="h-4 w-4" />
@@ -263,14 +238,6 @@ export function Navbar() {
                   {unreadCount > 0 && (
                     <span className="absolute top-0 right-0 h-4 w-4 bg-red text-white text-[10px] rounded-full flex items-center justify-center font-medium">
                       {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </Link>
-                <Link href="/dashboard/user/messages" className="relative p-2 rounded-xl hover:bg-white/5 transition-colors">
-                  <MessageSquare className="h-5 w-5" />
-                  {unreadMessagesCount > 0 && (
-                    <span className="absolute top-0 right-0 h-4 w-4 bg-red text-white text-[10px] rounded-full flex items-center justify-center font-medium">
-                      {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
                     </span>
                   )}
                 </Link>
