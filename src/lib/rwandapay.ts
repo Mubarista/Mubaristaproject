@@ -56,6 +56,32 @@ export async function completePayment(
       .eq("id", payment.user_id);
   }
 
+  // Confirm paid job access
+  if (meta.type === "job_access" && meta.jobId && payment.user_id) {
+    const { data: existing } = await supabaseAdmin
+      .from("job_purchases")
+      .select("id")
+      .eq("job_id", meta.jobId)
+      .eq("user_id", payment.user_id)
+      .maybeSingle();
+
+    if (existing) {
+      await supabaseAdmin
+        .from("job_purchases")
+        .update({ status: "paid", paid_at: now, updated_at: now })
+        .eq("id", existing.id);
+    } else {
+      await supabaseAdmin.from("job_purchases").insert({
+        job_id: meta.jobId,
+        user_id: payment.user_id,
+        status: "paid",
+        created_at: now,
+        updated_at: now,
+        paid_at: now,
+      });
+    }
+  }
+
   // Confirm competition entry and invalidate the payment link
   if (meta.type === "competition_entry" && meta.applicationId && payment.user_id) {
     await supabaseAdmin
@@ -132,6 +158,14 @@ export async function completePayment(
         description: `Your application fee for ${payment.competition_title || "competition"} has been received. You are now active in the competition.`,
         type: "competition",
         metadata: { applicationId: meta.applicationId, reference: payment.reference, transactionId },
+      });
+    } else if (meta.type === "job_access" && meta.jobId) {
+      await createNotification({
+        userId: payment.user_id,
+        title: "Job access purchased",
+        description: `You now have access to ${meta.jobTitle || payment.description || "job details"} for ${formatCurrency(payment.amount, payment.currency || "RWF")}.`,
+        type: "payment",
+        metadata: { jobId: meta.jobId, reference: payment.reference, transactionId },
       });
     } else if (meta.type === "tool_purchase" || meta.type === "book_purchase") {
       await createNotification({

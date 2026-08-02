@@ -8,6 +8,7 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
+import { initiateRwandaPay, generateReference } from "@/lib/payment";
 import Link from "next/link";
 
 interface Job {
@@ -134,34 +135,35 @@ export default function JobsPage() {
       setError("Please log in to purchase job access.");
       return;
     }
-    const method = paymentMethods[job.id] || methodOptions[0]?.value || "mobile_money";
+    if (!user.phone) {
+      setError("Please add a phone number to your profile to pay with RwandaPay.");
+      return;
+    }
     setPurchasing(job.id);
     setError(null);
     try {
-      const res = await fetch("/api/jobs/purchase", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const tx_ref = generateReference(`JOB-${job.id.slice(0, 8)}`);
+      const { payment_url } = await initiateRwandaPay({
+        amount: job.price,
+        tx_ref,
+        customer: {
+          name: user.name || "Job Applicant",
+          email: user.email || "",
+          phone: user.phone,
+        },
+        currency,
+        description: `Job access: ${job.title}`,
+        meta: {
+          type: "job_access",
           jobId: job.id,
-          userId: user.id,
-          userName: user.name,
-          userEmail: user.email,
-          userCountry: user.country,
-          method,
-          amount: job.price,
-          currency,
-        }),
+          jobTitle: job.title,
+          userCountry: user.country || "",
+        },
       });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Purchase failed.");
-      } else {
-        await fetchJobs();
-      }
-    } catch (err) {
+      window.location.href = payment_url;
+    } catch (err: any) {
       console.error("Purchase error:", err);
-      setError("Purchase failed. Please try again.");
-    } finally {
+      setError(err.message || "Purchase failed. Please try again.");
       setPurchasing(null);
     }
   }
