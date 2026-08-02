@@ -205,6 +205,7 @@ export async function POST(request: Request) {
       skills: body.skills,
       motivation: body.motivation,
       video_url: body.videoUrl,
+      video_path: body.videoPath || null,
       profile_photo_url: body.profilePhotoUrl,
       status: "pending",
       payment_status: "unpaid",

@@ -27,10 +27,21 @@ export async function POST(
         updated_at: now.toISOString(),
       })
       .eq("id", id)
-      .select()
+      .select("*, video_path")
       .single();
 
     if (error) throw error;
+
+    // Delete the uploaded competition video immediately after nomination
+    if (data?.video_path) {
+      await supabaseAdmin.storage.from("Videos").remove([data.video_path]);
+      await supabaseAdmin
+        .from("competition_applications")
+        .update({ video_url: null, video_path: null, updated_at: now.toISOString() })
+        .eq("id", id);
+      data.video_url = null;
+      data.video_path = null;
+    }
 
     const app = mapKeysToCamelCase(data);
     app.email = app.email || app.userEmail;

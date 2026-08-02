@@ -47,6 +47,7 @@ export default function ApplyPage() {
     skills: "",
     motivation: "",
     videoUrl: "",
+    videoPath: "",
     profilePhotoUrl: "",
   });
   const [videoInputMethod, setVideoInputMethod] = useState<"url" | "upload">("url");
@@ -214,7 +215,7 @@ export default function ApplyPage() {
 
   const handleVideoSelect = (file: File) => {
     setErrorMessage(null);
-    setFormData((prev) => ({ ...prev, videoUrl: "" }));
+    setFormData((prev) => ({ ...prev, videoUrl: "", videoPath: "" }));
     setFieldErrors((prev) => ({ ...prev, videoUrl: false }));
 
     const maxSizeBytes = maxVideoSize * 1024 * 1024;
@@ -261,7 +262,7 @@ export default function ApplyPage() {
         cacheControl: "3600",
       });
       if (uploadError) throw uploadError;
-      setFormData((prev) => ({ ...prev, videoUrl: publicUrl }));
+      setFormData((prev) => ({ ...prev, videoUrl: publicUrl, videoPath: path }));
       setVideoPreviewUrl(null);
       setSelectedVideo(null);
       setVideoDuration(null);
@@ -365,6 +366,7 @@ export default function ApplyPage() {
           skills: formData.skills,
           motivation: formData.motivation,
           videoUrl: formData.videoUrl,
+          videoPath: formData.videoPath,
           profilePhotoUrl: formData.profilePhotoUrl,
         }),
       });
@@ -711,7 +713,7 @@ export default function ApplyPage() {
                       type="url"
                       value={formData.videoUrl}
                       onChange={(e) => {
-                        setFormData({ ...formData, videoUrl: e.target.value });
+                        setFormData({ ...formData, videoUrl: e.target.value, videoPath: "" });
                         setFieldErrors({ ...fieldErrors, videoUrl: false });
                       }}
                       className={`w-full rounded-xl bg-muted-bg border pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 ${fieldErrors.videoUrl ? 'border-red focus:ring-red' : 'border-white/10 focus:ring-blue'}`}
@@ -758,7 +760,7 @@ export default function ApplyPage() {
                               setVideoPreviewUrl(null);
                               setSelectedVideo(null);
                               setVideoDuration(null);
-                              setFormData((prev) => ({ ...prev, videoUrl: "" }));
+                              setFormData((prev) => ({ ...prev, videoUrl: "", videoPath: "" }));
                             }}
                           >
                             Change

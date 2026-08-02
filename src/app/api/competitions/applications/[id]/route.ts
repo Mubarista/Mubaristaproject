@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase, keysToSnakeCase } from "@/lib/supabase-utils";
 import { validatePhoneNumber } from "@/lib/phone-utils";
 import { createNotification } from "@/lib/notifications";
@@ -74,6 +75,18 @@ export async function PUT(
       .single();
     
     if (error) throw error;
+
+    // Delete the uploaded competition video immediately on rejection or archival
+    if ((data?.status === "rejected" || data?.status === "archived" || data?.status === "revoked") && data?.video_path) {
+      await supabaseAdmin.storage.from("Videos").remove([data.video_path]);
+      await supabaseAdmin
+        .from("competition_applications")
+        .update({ video_url: null, video_path: null, updated_at: new Date().toISOString() })
+        .eq("id", id);
+      data.video_url = null;
+      data.video_path = null;
+    }
+
     const updated = mapKeysToCamelCase(data);
     updated.email = updated.email || updated.userEmail;
     updated.fullName = updated.fullName || updated.userName;
@@ -127,11 +140,21 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    const { data: existing } = await supabase
+      .from("competition_applications")
+      .select("video_path")
+      .eq("id", id)
+      .single();
+
+    if (existing?.video_path) {
+      await supabaseAdmin.storage.from("Videos").remove([existing.video_path]);
+    }
+
     const { error } = await supabase
       .from("competition_applications")
       .delete()
       .eq("id", id);
-    
+
     if (error) throw error;
     return NextResponse.json({ success: true });
   } catch (error) {
