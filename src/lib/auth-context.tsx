@@ -212,10 +212,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(async (email: string, password: string, name: string, phone: string, country: string) => {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const conditions = [`email.eq.${email}`];
+    const trimmedPhone = phone?.trim();
+    if (trimmedPhone) {
+      conditions.push(`phone.eq.${trimmedPhone}`);
+    }
     const { data: blocked } = await supabase
       .from("deleted_accounts")
       .select("deleted_at")
-      .or(`email.eq.${email},phone.eq.${phone}`)
+      .or(conditions.join(","))
       .gte("deleted_at", since)
       .maybeSingle();
 
