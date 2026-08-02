@@ -14,6 +14,7 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, getImageUrl } from "@/lib/utils";
+import { addWishlistItem, removeWishlistItem, isInWishlist } from "@/lib/wishlist";
 
 export default function BookDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { books } = useAdminData();
@@ -31,6 +32,11 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
   useEffect(() => {
     fetchSiteSettings();
   }, []);
+
+  useEffect(() => {
+    if (!user || !book) return;
+    isInWishlist(book.id, "book").then(setAddedToWishlist);
+  }, [user, book]);
 
   async function fetchSiteSettings() {
     try {
@@ -97,14 +103,29 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
     window.location.href = "/checkout";
   };
 
-  const handleAddToWishlist = () => {
+  const handleAddToWishlist = async () => {
     if (!user) {
       setNotification({ show: true, message: "Please login to add items to wishlist", type: "error" });
       setTimeout(() => setNotification({ show: false, message: "", type: "success" }), 3000);
       return;
     }
-    setAddedToWishlist(!addedToWishlist);
-    setNotification({ show: true, message: addedToWishlist ? "Removed from wishlist" : "Added to wishlist", type: "success" });
+    if (addedToWishlist) {
+      const result = await removeWishlistItem(book.id, "book");
+      if (result.success) {
+        setAddedToWishlist(false);
+        setNotification({ show: true, message: "Removed from wishlist", type: "success" });
+      } else {
+        setNotification({ show: true, message: result.message, type: "error" });
+      }
+    } else {
+      const result = await addWishlistItem(book.id, "book");
+      if (result.success) {
+        setAddedToWishlist(true);
+        setNotification({ show: true, message: "Added to wishlist", type: "success" });
+      } else {
+        setNotification({ show: true, message: result.message, type: "error" });
+      }
+    }
     setTimeout(() => setNotification({ show: false, message: "", type: "success" }), 2000);
   };
 
