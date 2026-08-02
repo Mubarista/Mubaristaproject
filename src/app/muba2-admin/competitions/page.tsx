@@ -301,27 +301,29 @@ export default function AdminCompetitionsPage() {
                 <p className="text-sm text-muted">No events added yet.</p>
               )}
               {draft.eventTimeline.map((item, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <Input
-                    type="date"
-                    value={item.date}
-                    onChange={(e) => updateTimeline(index, "date", e.target.value)}
-                    className="w-36 shrink-0"
-                  />
+                <div key={index} className="rounded-xl bg-muted-bg p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="date"
+                      value={item.date}
+                      onChange={(e) => updateTimeline(index, "date", e.target.value)}
+                      className="w-40"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeTimeline(index)}
+                      className="text-red hover:text-red/80 px-2"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <Input
                     placeholder="Caption"
                     value={item.event}
                     onChange={(e) => updateTimeline(index, "event", e.target.value)}
                   />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeTimeline(index)}
-                    className="text-red hover:text-red/80 px-2"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
                 </div>
               ))}
               <Button
