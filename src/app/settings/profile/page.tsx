@@ -451,12 +451,10 @@ export default function ProfileSettingsPage() {
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <Camera className="h-4 w-4 mr-2" />
-                  {avatarUploading ? "Uploading..." : user?.avatar ? "Change Photo" : "Upload Photo"}
+                  {user?.avatar ? "Change Photo" : "Upload Photo"}
                 </Button>
                 <p className="text-xs text-muted mt-2">
-                  {avatarUploading
-                    ? "Uploading your photo..."
-                    : "PNG, JPG or WEBP. Max 5MB."}
+                  PNG, JPG or WEBP. Max 5MB.
                 </p>
                 {avatarError && (
                   <p className="text-xs text-red mt-2">{avatarError}</p>
