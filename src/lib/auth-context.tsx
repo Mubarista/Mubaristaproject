@@ -59,11 +59,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   async function ensureUserProfile(authUser: any) {
-    // Refresh the session first so all following requests use a valid token
-    const { data: { session } } = await supabase.auth.refreshSession();
+    // Use the current session without an extra refresh to avoid blocking sign-in.
+    // Supabase auto-refresh is enabled, so tokens stay fresh in the background.
+    const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      console.error("Session could not be refreshed; signing out.");
-      await supabase.auth.signOut({ scope: "local" });
+      console.error("No active session; signing out.");
+      supabase.auth.signOut({ scope: "local" });
       return null;
     }
     const currentUser = session.user;
@@ -188,19 +189,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       if (error.message === "Email not confirmed") {
-        await supabase.auth.signInWithOtp({ email });
+        await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
         throw new Error("OTP_SENT");
       }
       throw error;
     }
     if (data.user) {
-      // Email/password logins always require OTP verification.
-      // Sign out the password session and send a one-time code to the email.
-      await supabase.auth.signOut();
-      await supabase.auth.signInWithOtp({ email });
-      throw new Error("OTP_SENT");
+      // Valid, confirmed email/password login. Sign the user in immediately.
+      setUser(mapSupabaseUser(data.user, null));
     }
-  }, []);
+  }, [setUser]);
 
   const loginWithGoogle = useCallback(async () => {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
