@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, User, ArrowRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Mail, Lock, User, ArrowRight, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useAdminData } from "@/lib/admin-data-context";
 import { Button } from "@/components/ui/button";
@@ -331,53 +332,118 @@ export default function RegisterPage() {
       </Card>
 
       {/* OTP Verification Modal */}
-      {showOtpForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-2xl p-6 max-w-md w-full border border-white/10">
-            <div className="text-center mb-6">
-              <h3 className="text-xl font-bold mb-2">Verify your email</h3>
-              <p className="text-muted">
-                We sent a 6-digit code to <span className="text-foreground">{email}</span>. Enter it below to complete your registration.
-              </p>
-            </div>
-            <form onSubmit={handleVerify} className="space-y-4">
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                placeholder="123456"
-                className="w-full rounded-xl bg-muted-bg border border-white/10 px-4 py-3 text-center text-lg tracking-[0.5em] font-mono focus:outline-none focus:ring-2 focus:ring-blue"
-                required
-              />
-              {error && (
-                <div className="bg-red/10 border border-red/30 rounded-lg p-3 text-sm text-red">
-                  {error}
+      <AnimatePresence>
+        {showOtpForm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, y: 40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 24 }}
+              className="relative overflow-hidden bg-card rounded-2xl p-6 max-w-md w-full border border-white/10 shadow-2xl"
+            >
+              {/* Top accent bar */}
+              <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue via-green to-yellow" />
+
+              <div className="text-center mb-6">
+                {/* Animated icon */}
+                <div className="relative mx-auto mb-4 h-16 w-16">
+                  {[0, 0.5].map((delay) => (
+                    <motion.div
+                      key={delay}
+                      initial={{ scale: 0.7, opacity: 0.5 }}
+                      animate={{ scale: 1.8, opacity: 0 }}
+                      transition={{ duration: 1.6, delay, repeat: Infinity, ease: "easeOut" }}
+                      className="absolute inset-0 rounded-full border-2 border-blue/30"
+                    />
+                  ))}
+                  <motion.div
+                    initial={{ scale: 0, rotate: -20 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", stiffness: 260, damping: 16, delay: 0.1 }}
+                    className="relative flex h-16 w-16 items-center justify-center rounded-full bg-blue/10"
+                  >
+                    <ShieldCheck className="h-8 w-8 text-blue" />
+                  </motion.div>
                 </div>
-              )}
-              <div className="flex flex-col gap-3">
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className="w-full"
-                  disabled={otpLoading || otp.length !== 6}
+
+                <motion.h3
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25, duration: 0.35 }}
+                  className="text-xl font-bold mb-2"
                 >
-                  {otpLoading ? "Verifying..." : "Verify Email"}
-                </Button>
-                <button
-                  type="button"
-                  onClick={handleResend}
-                  disabled={countdown > 0}
-                  className="text-sm text-blue hover:underline disabled:text-muted disabled:no-underline"
+                  Verify your email
+                </motion.h3>
+                <motion.p
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.35, duration: 0.35 }}
+                  className="text-muted text-sm"
                 >
-                  {countdown > 0 ? `Resend OTP in ${countdown}s` : "Resend OTP"}
-                </button>
+                  We sent a 6-digit code to <span className="text-foreground font-medium">{email}</span>. Enter it below to complete your registration.
+                </motion.p>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
+
+              <motion.form
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.45, duration: 0.35 }}
+                onSubmit={handleVerify}
+                className="space-y-4"
+              >
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                  placeholder="------"
+                  autoFocus
+                  className="w-full rounded-xl bg-muted-bg border border-white/10 px-4 py-3 text-center text-lg tracking-[0.5em] font-mono focus:outline-none focus:ring-2 focus:ring-blue"
+                  required
+                />
+                <AnimatePresence>
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="bg-red/10 border border-red/30 rounded-lg p-3 text-sm text-red overflow-hidden"
+                    >
+                      {error}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                <div className="flex flex-col gap-3">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    className="w-full"
+                    disabled={otpLoading || otp.length !== 6}
+                  >
+                    {otpLoading ? "Verifying..." : "Verify Email"}
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={countdown > 0}
+                    className="text-sm text-blue hover:underline disabled:text-muted disabled:no-underline"
+                  >
+                    {countdown > 0 ? `Resend OTP in ${countdown}s` : "Resend OTP"}
+                  </button>
+                </div>
+              </motion.form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
