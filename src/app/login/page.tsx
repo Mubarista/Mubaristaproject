@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [logoLoading, setLogoLoading] = useState(true);
   const [showOtp, setShowOtp] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const { login, loginWithGoogle, isLoading } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -60,7 +60,7 @@ export default function LoginPage() {
     }
   };
 
-  const isBusy = submitting || isLoading;
+  const isBusy = submitting;
 
   return (
     <div className="pt-24 pb-16 min-h-screen flex items-center justify-center px-4">
