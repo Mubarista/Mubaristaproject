@@ -506,7 +506,7 @@ export default function ApplyPage() {
               </div>
 
               <div>
-                <label className="text-sm text-muted mb-1 block">Country *</label>
+                <label className="text-sm text-muted mb-1 block">Nationality *</label>
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
                   <select
@@ -529,7 +529,7 @@ export default function ApplyPage() {
                     className={`w-full rounded-xl bg-muted-bg border pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 appearance-none ${fieldErrors.country ? 'border-red focus:ring-red' : 'border-white/10 focus:ring-blue'}`}
                     required
                   >
-                    <option value="">Select country</option>
+                    <option value="">Select nationality</option>
                     {competition.countriesAllowed.map((country) => (
                       <option key={country} value={country}>
                         {country}

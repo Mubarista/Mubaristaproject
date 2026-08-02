@@ -494,7 +494,7 @@ export default function ProfileSettingsPage() {
               </div>
 
               <div>
-                <label className="text-sm text-muted mb-1 block">Country</label>
+                <label className="text-sm text-muted mb-1 block">Nationality</label>
                 <div className="relative">
                   <Globe className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none" />
                   <select
@@ -502,7 +502,7 @@ export default function ProfileSettingsPage() {
                     onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                     className="w-full rounded-xl bg-muted-bg border border-white/10 pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue appearance-none"
                   >
-                    <option value="">Select your country</option>
+                    <option value="">Select your nationality</option>
                     {supportedCountries.map((c) => (
                       <option key={c.code} value={c.code}>
                         {c.flag} {c.name}
