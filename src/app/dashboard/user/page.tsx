@@ -50,7 +50,6 @@ export default function UserDashboard() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [showMore, setShowMore] = useState(false);
   const [showAllActivities, setShowAllActivities] = useState(false);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [applicationCount, setApplicationCount] = useState(0);
@@ -285,7 +284,7 @@ export default function UserDashboard() {
               <DashboardQuickActionsSkeleton />
             ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 skeleton-fade-in">
-              {quickActions.slice(0, 4).map((item) => (
+              {quickActions.map((item) => (
                 <Link key={item.title} href={item.link}>
                   <Card className="cursor-pointer hover:border-blue/50 transition-colors p-4">
                     <item.icon className="h-6 w-6 text-blue mb-2" />
@@ -294,39 +293,6 @@ export default function UserDashboard() {
                   </Card>
                 </Link>
               ))}
-              {/* More button with dropdown */}
-              <div className="relative z-50">
-                <Card
-                  className="cursor-pointer hover:border-blue/50 transition-colors p-4"
-                  onClick={() => setShowMore(!showMore)}
-                >
-                  <ChevronDown className="h-6 w-6 text-blue mb-2" />
-                  <CardTitle className="text-base">More</CardTitle>
-                  <p className="text-sm text-muted">View all actions</p>
-                </Card>
-                {/* Dropdown menu */}
-                {showMore && (
-                  <div className="absolute top-full left-0 mt-2 w-64 bg-background rounded-xl shadow-2xl border border-white/10 z-50">
-                    <div className="p-2">
-                      {quickActions.slice(4).map((item) => (
-                        <Link
-                          key={item.title}
-                          href={item.link}
-                          onClick={() => setShowMore(false)}
-                        >
-                          <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted-bg transition-colors">
-                            <item.icon className="h-5 w-5 text-blue" />
-                            <div>
-                              <p className="text-sm font-medium">{item.title}</p>
-                              <p className="text-xs text-muted">{item.desc}</p>
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
             </div>
             )}
           </Card>
