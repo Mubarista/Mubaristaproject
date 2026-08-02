@@ -5,18 +5,18 @@ import Link from "next/link";
 import { Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
+import { SuccessPopup } from "@/components/ui/success-popup";
 import { supabaseReset } from "@/lib/supabase-reset";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setMessage(null);
     setError(null);
 
     try {
@@ -24,7 +24,7 @@ export default function ForgotPasswordPage() {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       if (resetError) throw resetError;
-      setMessage("Check your email for a password reset link.");
+      setShowSuccessPopup(true);
       setEmail("");
     } catch (err: any) {
       setError(err.message || "Failed to send reset link. Please try again.");
@@ -53,7 +53,6 @@ export default function ForgotPasswordPage() {
             />
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
-          {message && <p className="text-sm text-green">{message}</p>}
           <Button variant="primary" type="submit" className="w-full" disabled={loading}>
             {loading ? "Sending..." : "Send Reset Link"}
           </Button>
@@ -62,6 +61,16 @@ export default function ForgotPasswordPage() {
           <Link href="/login" className="text-blue hover:underline">Back to login</Link>
         </p>
       </Card>
+
+      {/* Success popup */}
+      <SuccessPopup
+        open={showSuccessPopup}
+        onClose={() => setShowSuccessPopup(false)}
+        title="Email Sent!"
+        message="Check your email for a password reset link."
+        icon="mail"
+        duration={6000}
+      />
     </div>
   );
 }
