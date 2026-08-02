@@ -309,7 +309,7 @@ export default function AdminCompetitionsPage() {
                     className="w-36 shrink-0"
                   />
                   <Input
-                    placeholder="Event description"
+                    placeholder="Caption"
                     value={item.event}
                     onChange={(e) => updateTimeline(index, "event", e.target.value)}
                   />
