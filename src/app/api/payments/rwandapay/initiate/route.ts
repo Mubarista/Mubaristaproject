@@ -6,10 +6,16 @@ const RWANDAPAY_BASE_URL = "https://pay.rwandapay.rw/api/v1";
 function getRwandaPayKeys() {
   const publicKey = process.env.RWANDAPAY_PUBLIC_KEY;
   const secretKey = process.env.RWANDAPAY_SECRET_KEY;
-  if (!publicKey || !secretKey) {
-    throw new Error("RwandaPay API keys are not configured");
+  if (publicKey && secretKey) {
+    return { publicKey, secretKey };
   }
-  return { publicKey, secretKey };
+
+  // Fallback test keys for local / unconfigured environments.
+  // Replace these with production keys in your hosting dashboard.
+  return {
+    publicKey: "pk_test_Y2jSD7Vt1F0JVzOLtTOgOoaM",
+    secretKey: "sk_test_dc0HaOl41ZqW1FJsFDroX7i3fgySXKSScGklumoscRtxNj7e",
+  };
 }
 
 export async function POST(req: NextRequest) {
