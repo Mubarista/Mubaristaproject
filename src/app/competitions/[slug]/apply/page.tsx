@@ -332,6 +332,8 @@ export default function ApplyPage() {
       setFieldErrors(errors);
       if (errors.mobileNumber && phoneValidation.error) {
         setErrorMessage(phoneValidation.error);
+      } else if (errors.videoUrl) {
+        setErrorMessage("Please upload a video first. Tap \"Upload Video\" before submitting.");
       }
       return;
     }
@@ -794,6 +796,14 @@ export default function ApplyPage() {
               </div>
             </div>
 
+            {!formData.videoUrl && (
+              <p className="text-sm text-red mb-4">
+                {selectedVideo
+                  ? 'Your video is selected. Tap "Upload Video" above to upload it, then you can submit.'
+                  : 'Please upload a video before submitting your application.'}
+              </p>
+            )}
+
             {errorMessage && (
               <p className="text-sm text-red-500 mb-4">{errorMessage}</p>
             )}
@@ -802,7 +812,11 @@ export default function ApplyPage() {
               <Button variant="secondary" onClick={() => setStep("terms")}>
                 Back
               </Button>
-              <Button variant="primary" onClick={handleSubmitApplication}>
+              <Button
+                variant="primary"
+                onClick={handleSubmitApplication}
+                disabled={!formData.videoUrl}
+              >
                 Submit Application
                 <ArrowRight className="h-4 w-4" />
               </Button>
