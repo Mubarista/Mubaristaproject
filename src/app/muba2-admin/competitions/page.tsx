@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Globe, Search } from "lucide-react";
+import { Globe, Search, X } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
 import { useAdminData } from "@/lib/admin-data-context";
 import { AdminTable } from "@/components/admin/admin-table";
 import { AdminModal, Field, Input, Textarea, Select, ImageUpload } from "@/components/admin/admin-modal";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Competition } from "@/types";
 
@@ -66,6 +67,21 @@ export default function AdminCompetitionsPage() {
           : [...without, name],
       };
     });
+  }
+
+  function addTimeline() {
+    setDraft(d => ({ ...d, eventTimeline: [...d.eventTimeline, { date: "", event: "" }] }));
+  }
+
+  function updateTimeline(index: number, key: "date" | "event", value: string) {
+    setDraft(d => ({
+      ...d,
+      eventTimeline: d.eventTimeline.map((t, i) => i === index ? { ...t, [key]: value } : t),
+    }));
+  }
+
+  function removeTimeline(index: number) {
+    setDraft(d => ({ ...d, eventTimeline: d.eventTimeline.filter((_, i) => i !== index) }));
   }
 
   function openAdd() { setDraft({ ...blank, id: "" }); setEditing(draft); }
@@ -279,20 +295,44 @@ export default function AdminCompetitionsPage() {
             <Field label="Total Slots"><Input type="number" value={draft.totalSlots} onChange={(e) => setDraft(d => ({ ...d, totalSlots: Number(e.target.value) }))} /></Field>
           </div>
           <Field label="Registration Deadline"><Input type="date" value={draft.registrationDeadline} onChange={set("registrationDeadline")} /></Field>
-          <Field label="Event Timeline (one per line: date | event)">
-            <Textarea
-              rows={4}
-              value={draft.eventTimeline.map((e) => `${e.date} | ${e.event}`).join("\n")}
-              onChange={(e) =>
-                setDraft((d) => ({
-                  ...d,
-                  eventTimeline: e.target.value.split("\n").map((line) => {
-                    const [date, ...eventParts] = line.split("|");
-                    return { date: (date || "").trim(), event: eventParts.join("|").trim() };
-                  }).filter((e) => e.date || e.event),
-                }))
-              }
-            />
+          <Field label="Event Timeline">
+            <div className="space-y-2">
+              {draft.eventTimeline.length === 0 && (
+                <p className="text-sm text-muted">No events added yet.</p>
+              )}
+              {draft.eventTimeline.map((item, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Input
+                    type="date"
+                    value={item.date}
+                    onChange={(e) => updateTimeline(index, "date", e.target.value)}
+                    className="w-36 shrink-0"
+                  />
+                  <Input
+                    placeholder="Event description"
+                    value={item.event}
+                    onChange={(e) => updateTimeline(index, "event", e.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeTimeline(index)}
+                    className="text-red hover:text-red/80 px-2"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={addTimeline}
+              >
+                + Add Event
+              </Button>
+            </div>
           </Field>
           <Field label="Rules (one per line)">
             <Textarea rows={4} value={draft.rules.join("\n")} onChange={(e) => setDraft(d => ({ ...d, rules: e.target.value.split("\n") }))} />
