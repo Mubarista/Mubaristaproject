@@ -201,9 +201,7 @@ export async function buildEmailHtml(input: BuildEmailHtmlInput): Promise<string
 export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
   const settings = await getSmtpSettings();
   if (settings) {
-    const smtp = await sendWithSmtp(settings, input);
-    if (smtp.sent) return smtp;
-    console.warn("SMTP failed, falling back to Resend:", smtp.error);
+    return sendWithSmtp(settings, input);
   }
   return sendWithResend(input);
 }

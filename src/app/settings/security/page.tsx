@@ -7,9 +7,12 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default function SecuritySettingsPage() {
-  const { user, resendVerificationEmail, reloadUser } = useAuth();
+  const { user, resendVerificationEmail, verifyOTP, reloadUser } = useAuth();
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [message, setMessage] = useState("");
+  const [otp, setOtp] = useState("");
+  const [showOtp, setShowOtp] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(user?.emailVerified || false);
 
   useEffect(() => {
@@ -24,15 +27,37 @@ export default function SecuritySettingsPage() {
   const handleResendEmail = async () => {
     setSendingEmail(true);
     setMessage("");
+    setShowOtp(false);
     try {
       await resendVerificationEmail();
-      await reloadUser();
-      setIsEmailVerified(user?.emailVerified || false);
-      setMessage("Verification email sent successfully!");
+      setMessage("Verification email sent successfully! Enter the 6-digit code below.");
+      setShowOtp(true);
     } catch (error: any) {
       setMessage(error.message || "Failed to send verification email");
     } finally {
       setSendingEmail(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!user?.email || otp.length !== 6) return;
+    setVerifying(true);
+    setMessage("");
+    try {
+      const result = await verifyOTP(user.email, otp);
+      if (result.success) {
+        await reloadUser();
+        setIsEmailVerified(true);
+        setShowOtp(false);
+        setOtp("");
+        setMessage("Email verified successfully!");
+      } else {
+        setMessage(result.message || "Invalid verification code");
+      }
+    } catch (error: any) {
+      setMessage(error.message || "Failed to verify code");
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -86,6 +111,30 @@ export default function SecuritySettingsPage() {
                 </Button>
               )}
             </div>
+
+            {showOtp && (
+              <div className="mt-4 space-y-3">
+                <label className="text-sm text-muted block">Enter the 6-digit code from your email</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                  className="w-full rounded-xl bg-muted-bg border border-white/10 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue"
+                  placeholder="000000"
+                />
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleVerifyOtp}
+                  disabled={verifying || otp.length !== 6}
+                  className="w-full"
+                >
+                  {verifying ? "Verifying..." : "Verify Code"}
+                </Button>
+              </div>
+            )}
 
             {message && (
               <div className={`mt-4 p-3 rounded-lg text-sm ${

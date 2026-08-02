@@ -349,7 +349,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const resendVerificationEmail = useCallback(async () => {
     if (!user?.email) return;
-    await sendOTP(user.email);
+    const result = await sendOTP(user.email);
+    if (!result.success) throw new Error(result.message || "Failed to send verification email");
   }, [user, sendOTP]);
 
   const deleteAccount = useCallback(async (firstName: string) => {
