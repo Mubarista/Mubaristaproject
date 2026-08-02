@@ -9,7 +9,7 @@ import {
   Package,
   BookOpen,
   ShoppingBag,
-  CreditCard,
+
   User,
   Crown,
   Shield,
@@ -179,7 +179,6 @@ export default function UserDashboard() {
     { icon: FileText, title: "My Applications", desc: "View your competition entries", link: "/dashboard/user/applications" },
     { icon: Trophy, title: "Browse Competitions", desc: "Discover live competitions", link: "/competitions" },
     { icon: Package, title: "Order History", desc: "View past purchases", link: "/orders" },
-    { icon: CreditCard, title: "Payment Methods", desc: "Manage your cards", link: "/settings/payment" },
     { icon: MapPin, title: "My Addresses", desc: "Manage delivery & pickup", link: "/settings/profile" },
     { icon: User, title: "My Profile", desc: "Update your profile", link: "/settings/profile" },
     { icon: MessageSquare, title: "Messages", desc: "View your messages", link: "/settings/notifications" },
