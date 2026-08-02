@@ -104,6 +104,16 @@ export async function sendInvoiceEmail(invoice: Invoice) {
 }
 
 export async function createInvoiceFromPayment(payment: Payment) {
+  // Prevent duplicate invoices if the payment has already been invoiced
+  const { data: existing } = await supabaseAdmin
+    .from("invoices")
+    .select("id")
+    .eq("payment_id", payment.id)
+    .maybeSingle();
+  if (existing) {
+    return mapKeysToCamelCase(existing) as Invoice;
+  }
+
   const now = new Date();
   const due = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 

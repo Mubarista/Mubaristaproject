@@ -35,19 +35,24 @@ export default function PaymentSuccessPage() {
     const rawStatus = params.get("status") || "successful";
     const rawTxRef = params.get("tx_ref");
     const rawReference = params.get("reference");
+    const rawTransactionId = params.get("transaction_id");
 
     setStatus(rawStatus);
     setTxRef(rawTxRef || rawReference);
 
     async function loadPayment() {
       const refToUse = rawTxRef || rawReference;
+      const transactionId = rawTransactionId || refToUse;
+      let paymentRecord: PaymentRecord | null = null;
+
       if (refToUse) {
         try {
           const res = await fetch(`/api/payments?reference=${encodeURIComponent(refToUse)}`);
           if (res.ok) {
             const data = (await res.json()) as PaymentRecord[];
             if (Array.isArray(data) && data.length > 0) {
-              setPayment(data[0]);
+              paymentRecord = data[0];
+              setPayment(paymentRecord);
             }
           }
         } catch (err) {
@@ -55,7 +60,33 @@ export default function PaymentSuccessPage() {
         }
       }
 
-      if (rawStatus === "successful" || rawStatus === "success") {
+      // Confirm the payment with the server so status/invoice update even if the webhook was missed
+      if (refToUse && paymentRecord && paymentRecord.status !== "completed") {
+        try {
+          const confirmRes = await fetch("/api/payments/rwandapay/confirm", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              tx_ref: refToUse,
+              status: rawStatus,
+              transaction_id: transactionId,
+            }),
+          });
+          if (confirmRes.ok) {
+            const res2 = await fetch(`/api/payments?reference=${encodeURIComponent(refToUse)}`);
+            if (res2.ok) {
+              const data2 = (await res2.json()) as PaymentRecord[];
+              if (Array.isArray(data2) && data2.length > 0) {
+                setPayment(data2[0]);
+                paymentRecord = data2[0];
+              }
+            }
+          }
+        } catch (err) {
+        }
+      }
+
+      if (paymentRecord?.status === "completed" || rawStatus === "successful" || rawStatus === "success") {
         clearCart();
       }
 

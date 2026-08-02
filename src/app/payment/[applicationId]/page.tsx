@@ -24,6 +24,7 @@ export default function PaymentPage() {
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [linkExpired, setLinkExpired] = useState(false);
 
   async function fetchApplication() {
     try {
@@ -31,6 +32,12 @@ export default function PaymentPage() {
       if (response.ok) {
         const data = (await response.json()) as CompetitionApplication;
         setApplication(data);
+
+        if (data.paymentStatus === "paid" || data.status === "active") {
+          setPaymentSuccess(true);
+        } else if (data.accessLinkExpiresAt && new Date(data.accessLinkExpiresAt) < new Date()) {
+          setLinkExpired(true);
+        }
       }
     } catch (error) {
       console.error("Error fetching application:", error);
@@ -111,6 +118,23 @@ export default function PaymentPage() {
           <CardTitle className="mb-2">Application Not Found</CardTitle>
           <p className="text-muted mb-6">
             Could not find the application. Please contact support.
+          </p>
+          <Button variant="secondary" onClick={() => router.push("/competitions")}>
+            Browse Competitions
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
+  if (linkExpired) {
+    return (
+      <div className="pt-24 pb-16 min-h-screen flex items-center justify-center px-4">
+        <Card className="max-w-md w-full text-center p-8">
+          <AlertCircle className="h-16 w-16 text-red mx-auto mb-4" />
+          <CardTitle className="mb-2">Payment Link Expired</CardTitle>
+          <p className="text-muted mb-6">
+            This payment link has expired. Please contact support if you still need to pay.
           </p>
           <Button variant="secondary" onClick={() => router.push("/competitions")}>
             Browse Competitions
