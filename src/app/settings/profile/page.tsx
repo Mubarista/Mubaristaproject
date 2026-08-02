@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { SuccessPopup } from "@/components/ui/success-popup";
 import { useAdminData } from "@/lib/admin-data-context";
 import { supabase } from "@/lib/supabase";
 
@@ -161,7 +162,6 @@ export default function ProfileSettingsPage() {
 
       await reloadUser();
       setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
     } catch (err: any) {
       setError(err.message || "Failed to update profile");
     } finally {
@@ -553,14 +553,20 @@ export default function ProfileSettingsPage() {
           {loading ? "Saving..." : "Save Changes"}
         </Button>
 
-        {saved && (
-          <p className="text-sm text-green text-center mt-4">Profile updated successfully</p>
-        )}
-
         {error && (
           <p className="text-sm text-red text-center mt-4">{error}</p>
         )}
       </div>
+
+      {/* Profile updated success popup */}
+      <SuccessPopup
+        open={saved}
+        onClose={() => setSaved(false)}
+        title="Profile Updated!"
+        message="Profile updated successfully"
+        icon="check"
+        duration={4000}
+      />
 
       {/* Address Modal */}
       {showModal && (

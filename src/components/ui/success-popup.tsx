@@ -11,6 +11,7 @@ interface SuccessPopupProps {
   message: string;
   icon?: "mail" | "check";
   duration?: number; // auto-close in ms, 0 = no auto-close
+  tip?: string | null; // helper tip line; null hides it
 }
 
 export function SuccessPopup({
@@ -20,7 +21,14 @@ export function SuccessPopup({
   message,
   icon = "mail",
   duration = 6000,
+  tip,
 }: SuccessPopupProps) {
+  const resolvedTip =
+    tip !== undefined
+      ? tip
+      : icon === "mail"
+        ? "Didn't receive it? Check your spam folder or try again in a minute."
+        : null;
   const [progress, setProgress] = useState(100);
 
   useEffect(() => {
@@ -153,14 +161,16 @@ export function SuccessPopup({
                 </div>
 
                 {/* Tip line */}
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.45, duration: 0.3 }}
-                  className="mt-4 rounded-xl bg-muted-bg px-4 py-2.5 text-xs text-muted"
-                >
-                  Didn't receive it? Check your spam folder or try again in a minute.
-                </motion.div>
+                {resolvedTip && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.45, duration: 0.3 }}
+                    className="mt-4 rounded-xl bg-muted-bg px-4 py-2.5 text-xs text-muted"
+                  >
+                    {resolvedTip}
+                  </motion.div>
+                )}
               </div>
 
               {/* Auto-dismiss progress bar */}
