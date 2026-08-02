@@ -12,6 +12,7 @@ import { useOrders } from "@/lib/order-context";
 import { initiateRwandaPay, createPayment, generateReference } from "@/lib/payment";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SuccessConfirmation } from "@/components/ui/success-confirmation";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { validatePhoneNumber } from "@/lib/phone-utils";
 import { formatCurrency } from "@/lib/utils";
@@ -268,39 +269,25 @@ export default function CheckoutPage() {
 
   if (step === "success") {
     return (
-      <div className="pt-24 pb-16 min-h-screen flex items-center justify-center">
-        <Card className="text-center py-16 max-w-md">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 200, damping: 15 }}
-            className="h-24 w-24 bg-green/10 rounded-full flex items-center justify-center mx-auto mb-6"
-          >
-            <motion.div
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 15 }}
-            >
-              <Check className="h-12 w-12 text-green" />
-            </motion.div>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <CardTitle className="mb-2">Payment Successful!</CardTitle>
-            <p className="text-muted mb-6">Thank you for your purchase. Your order has been confirmed.</p>
+      <div className="pt-24 pb-16 min-h-screen flex items-center justify-center px-4">
+        <SuccessConfirmation
+          icon={<Check className="h-10 w-10 text-green" />}
+          title="Payment Successful!"
+          color="green"
+          className="max-w-md w-full"
+          footer={
             <div className="space-y-3">
-              <Link href="/dashboard">
+              <Link href="/dashboard" className="block">
                 <Button variant="primary" className="w-full">Go to Account</Button>
               </Link>
-              <Link href="/tools">
+              <Link href="/tools" className="block">
                 <Button variant="ghost" className="w-full">Continue Shopping</Button>
               </Link>
             </div>
-          </motion.div>
-        </Card>
+          }
+        >
+          <p className="text-muted">Thank you for your purchase. Your order has been confirmed.</p>
+        </SuccessConfirmation>
       </div>
     );
   }

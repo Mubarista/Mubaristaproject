@@ -6,6 +6,7 @@ import { Check, X, Loader2, Package, Crown, Trophy, CreditCard } from "lucide-re
 import { useCart } from "@/lib/cart-context";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SuccessConfirmation } from "@/components/ui/success-confirmation";
 import { formatCurrency } from "@/lib/utils";
 
 type PaymentRecord = {
@@ -103,34 +104,37 @@ export default function PaymentSuccessPage() {
   const paidAmount = formatCurrency(amount, currency);
   const reference = payment?.reference || txRef;
 
-  const messages: Record<string, { title: string; icon: React.ReactNode; body: React.ReactNode }> = {
+  const messages: Record<string, { title: string; icon: React.ReactNode; color: "green" | "yellow" | "blue"; body: React.ReactNode }> = {
     tool_purchase: {
       title: "Thank you!",
-      icon: <Package className="h-8 w-8 text-green" />,
+      icon: <Package className="h-9 w-9 text-green" />,
+      color: "green",
       body: (
         <>
           <p className="text-muted mb-2">Your order is being processed.</p>
-          <p className="text-muted mb-4">You can track your shipment in your order history.</p>
+          <p className="text-muted">You can track your shipment in your order history.</p>
         </>
       ),
     },
     book_purchase: {
       title: "Thank you!",
-      icon: <Package className="h-8 w-8 text-green" />,
+      icon: <Package className="h-9 w-9 text-green" />,
+      color: "green",
       body: (
         <>
           <p className="text-muted mb-2">Your books are being prepared for delivery.</p>
-          <p className="text-muted mb-4">You will receive an email with your PDFs shortly.</p>
+          <p className="text-muted">You will receive an email with your PDFs shortly.</p>
         </>
       ),
     },
     premium_subscription: {
       title: "Welcome to Premium!",
-      icon: <Crown className="h-8 w-8 text-yellow" />,
+      icon: <Crown className="h-9 w-9 text-yellow" />,
+      color: "yellow",
       body: (
         <>
           <p className="text-muted mb-2">Thank you for subscribing.</p>
-          <p className="text-muted mb-4">
+          <p className="text-muted">
             You paid <strong>{paidAmount}</strong> for premium access. Your subscription is now active.
           </p>
         </>
@@ -138,11 +142,12 @@ export default function PaymentSuccessPage() {
     },
     competition_entry: {
       title: "Application Fee Received!",
-      icon: <Trophy className="h-8 w-8 text-green" />,
+      icon: <Trophy className="h-9 w-9 text-green" />,
+      color: "green",
       body: (
         <>
           <p className="text-muted mb-2">Thank you for your payment.</p>
-          <p className="text-muted mb-4">
+          <p className="text-muted">
             You paid <strong>{paidAmount}</strong> for {payment?.competitionTitle || "competition"}. Your nomination is being processed and you will receive access to the participant dashboard shortly.
           </p>
         </>
@@ -150,12 +155,13 @@ export default function PaymentSuccessPage() {
     },
     default: {
       title: "Thank you!",
-      icon: <CreditCard className="h-8 w-8 text-green" />,
+      icon: <CreditCard className="h-9 w-9 text-green" />,
+      color: "green",
       body: (
         <>
           <p className="text-muted mb-2">Your payment has been received and is being processed.</p>
           {amount > 0 && (
-            <p className="text-muted mb-4">
+            <p className="text-muted">
               Amount paid: <strong>{paidAmount}</strong>
             </p>
           )}
@@ -166,6 +172,29 @@ export default function PaymentSuccessPage() {
 
   const config = messages[paymentType] || messages.default;
 
+  if (!loading && isSuccess) {
+    return (
+      <div className="pt-24 pb-16 min-h-screen flex items-center justify-center px-4">
+        <SuccessConfirmation
+          icon={config.icon}
+          title={config.title}
+          color={config.color}
+          reference={reference}
+          className="max-w-md w-full"
+          footer={
+            <Link href="/" className="block">
+              <Button variant="primary" className="w-full">
+                Continue
+              </Button>
+            </Link>
+          }
+        >
+          {config.body}
+        </SuccessConfirmation>
+      </div>
+    );
+  }
+
   return (
     <div className="pt-24 pb-16 min-h-screen flex items-center justify-center px-4">
       <Card className="max-w-md w-full p-8 text-center">
@@ -173,19 +202,6 @@ export default function PaymentSuccessPage() {
           <>
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue" />
             <p className="text-muted">Confirming your payment...</p>
-          </>
-        ) : isSuccess ? (
-          <>
-            <div className="w-16 h-16 bg-green/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              {config.icon}
-            </div>
-            <h1 className="text-2xl font-bold mb-2">{config.title}</h1>
-            {config.body}
-            {reference && (
-              <p className="text-sm text-muted mb-6">
-                Reference: <strong>{reference}</strong>
-              </p>
-            )}
           </>
         ) : (
           <>

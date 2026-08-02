@@ -12,6 +12,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { validatePhoneNumber, parsePhoneValue } from "@/lib/phone-utils";
 import { ApplicationConfirmDialog } from "@/components/competitions/application-confirm-dialog";
 import { ImageUpload } from "@/components/admin/admin-modal";
+import { SuccessConfirmation } from "@/components/ui/success-confirmation";
 import { supabase } from "@/lib/supabase";
 import type { Competition } from "@/types";
 
@@ -825,15 +826,11 @@ export default function ApplyPage() {
         )}
 
         {step === "submitted" && (
-          <Card>
-            <div className="text-center py-8">
-              <div className="h-16 w-16 rounded-full bg-green/10 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="h-8 w-8 text-green" />
-              </div>
-              <CardTitle className="mb-2">Application Submitted!</CardTitle>
-              <p className="text-muted text-sm mb-6">
-                Your application has been received and will be reviewed by our team. If nominated, you will receive an email with a payment link.
-              </p>
+          <SuccessConfirmation
+            icon={<CheckCircle className="h-10 w-10 text-green" />}
+            title="Application Submitted!"
+            color="green"
+            footer={
               <div className="flex gap-3 justify-center">
                 <Button variant="secondary" onClick={() => router.push("/competitions")}>
                   Browse Competitions
@@ -842,8 +839,12 @@ export default function ApplyPage() {
                   Go Home
                 </Button>
               </div>
-            </div>
-          </Card>
+            }
+          >
+            <p className="text-muted text-sm">
+              Your application has been received and will be reviewed by our team. If nominated, you will receive an email with a payment link.
+            </p>
+          </SuccessConfirmation>
         )}
       </div>
 
