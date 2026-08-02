@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Lock, Key, Save, Trash2 } from "lucide-react";
+import { Lock, Key, Save, Trash2, Download } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -28,6 +28,8 @@ export default function AccountSettingsPage() {
   const [otpMessage, setOtpMessage] = useState<string | null>(null);
   const [showFirstConfirm, setShowFirstConfirm] = useState(false);
   const [showSecondConfirm, setShowSecondConfirm] = useState(false);
+  const [downloadLoading, setDownloadLoading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,6 +130,32 @@ export default function AccountSettingsPage() {
     setOtpMessage(null);
   };
 
+  const handleDownloadData = async () => {
+    if (!user) return;
+    setDownloadLoading(true);
+    setDownloadError(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/users/export", {
+        headers: { Authorization: `Bearer ${session?.access_token || ""}` },
+      });
+      if (!res.ok) throw new Error("Failed to download your data");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `mubarista-data-${new Date().toISOString().split("T")[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setDownloadError(err.message || "Failed to download your data");
+    } finally {
+      setDownloadLoading(false);
+    }
+  };
+
   return (
     <div className="pt-24 pb-16 min-h-screen">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
@@ -176,14 +204,25 @@ export default function AccountSettingsPage() {
           <Card className="p-6">
             <CardTitle className="mb-4">Account Actions</CardTitle>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 rounded-xl bg-muted-bg">
-                <div>
-                  <p className="font-medium">Download My Data</p>
-                  <p className="text-sm text-muted">Get a copy of your personal data</p>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-muted-bg">
+                  <div>
+                    <p className="font-medium">Download My Data</p>
+                    <p className="text-sm text-muted">Get a copy of your personal data</p>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleDownloadData}
+                    disabled={downloadLoading || !user}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    {downloadLoading ? "Preparing..." : "Download"}
+                  </Button>
                 </div>
-                <Button variant="secondary" size="sm" disabled>
-                  Download
-                </Button>
+                {downloadError && (
+                  <p className="text-sm text-red text-right">{downloadError}</p>
+                )}
               </div>
               <div className="p-4 rounded-xl bg-red/10 border border-red/30">
                 <div className="flex items-center justify-between mb-4">
