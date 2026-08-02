@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { User, Bell, CreditCard, LogOut, Shield } from "lucide-react";
+import { User, Bell, LogOut, Shield } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,12 +33,6 @@ export default function SettingsPage() {
       description: "Manage your notification preferences",
       icon: Bell,
       href: "/settings/notifications",
-    },
-    {
-      title: "Billing",
-      description: "View your subscription and payment history",
-      icon: CreditCard,
-      href: "/settings/payment",
     },
   ];
 
