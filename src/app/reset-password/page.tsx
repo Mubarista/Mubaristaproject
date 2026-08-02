@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -55,7 +56,16 @@ function ResetPasswordForm() {
       setMessage("Password updated successfully. Redirecting to login...");
       setTimeout(() => router.push("/login"), 2000);
     } catch (err: any) {
-      setError(err.message || "Failed to reset password. Please try again.");
+      const msg = err.message || "";
+      if (msg.toLowerCase().includes("pkce") || msg.toLowerCase().includes("code verifier")) {
+        setError(
+          "This reset link is only valid in the same browser where you requested it. " +
+          "If you opened it in a different app/device, or cleared your browser data, " +
+          "please request a new link using the same browser you will use to open it."
+        );
+      } else {
+        setError(msg || "Failed to reset password. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -85,7 +95,14 @@ function ResetPasswordForm() {
             minLength={6}
             placeholder="Confirm new password"
           />
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && (
+            <div className="p-4 rounded-xl bg-red/10 border border-red/30 text-sm">
+              <p className="text-red">{error}</p>
+              <Link href="/forgot-password" className="inline-block mt-2 text-blue hover:underline">
+                Request a new reset link
+              </Link>
+            </div>
+          )}
           {message && <p className="text-sm text-green">{message}</p>}
           <Button variant="primary" type="submit" className="w-full" disabled={loading || !code}>
             {loading ? "Updating..." : "Reset Password"}
