@@ -1,31 +1,72 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { LoadingDots } from "@/components/ui/loading-dots";
 import { PasswordInput } from "@/components/ui/password-input";
-import { supabase } from "@/lib/supabase";
+import { supabaseReset } from "@/lib/supabase-reset";
 
 function ResetPasswordForm() {
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const code = searchParams?.get("code");
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [verifying, setVerifying] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!code) {
-      setError("Invalid or expired reset link. Please request a new one.");
-    }
-  }, [code]);
+    let isMounted = true;
+
+    const verify = async () => {
+      const { data: { session } } = await supabaseReset.auth.getSession();
+      if (!isMounted) return;
+
+      if (session) {
+        setVerifying(false);
+        return;
+      }
+
+      // If no session yet, wait for the implicit recovery token to be processed
+      const { data: { subscription } } = supabaseReset.auth.onAuthStateChange(
+        (event, newSession) => {
+          if (!isMounted) return;
+          if (event === "SIGNED_IN" || event === "PASSWORD_RECOVERY" || newSession) {
+            setVerifying(false);
+          }
+        }
+      );
+
+      // Give the token a moment to be processed
+      setTimeout(() => {
+        if (isMounted && verifying) {
+          setVerifying(false);
+          supabaseReset.auth.getSession().then(({ data: { session: s } }) => {
+            if (!isMounted) return;
+            if (!s) {
+              setError("Invalid or expired reset link. Please request a new one.");
+            }
+          });
+        }
+      }, 2500);
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    };
+
+    verify();
+
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,32 +81,16 @@ function ResetPasswordForm() {
       setError("Password must be at least 6 characters.");
       return;
     }
-    if (!code) {
-      setError("Invalid or expired reset link.");
-      return;
-    }
 
     setLoading(true);
     try {
-      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-      if (exchangeError) throw exchangeError;
-
-      const { error: updateError } = await supabase.auth.updateUser({ password });
+      const { error: updateError } = await supabaseReset.auth.updateUser({ password });
       if (updateError) throw updateError;
 
       setMessage("Password updated successfully. Redirecting to login...");
       setTimeout(() => router.push("/login"), 2000);
     } catch (err: any) {
-      const msg = err.message || "";
-      if (msg.toLowerCase().includes("pkce") || msg.toLowerCase().includes("code verifier")) {
-        setError(
-          "This reset link is only valid in the same browser where you requested it. " +
-          "If you opened it in a different app/device, or cleared your browser data, " +
-          "please request a new link using the same browser you will use to open it."
-        );
-      } else {
-        setError(msg || "Failed to reset password. Please try again.");
-      }
+      setError(err.message || "Failed to reset password. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -78,36 +103,44 @@ function ResetPasswordForm() {
         <p className="text-muted text-sm text-center mb-6">
           Enter your new password below.
         </p>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <PasswordInput
-            leftIcon={<Lock className="h-4 w-4" />}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-            placeholder="New password"
-          />
-          <PasswordInput
-            leftIcon={<Lock className="h-4 w-4" />}
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            minLength={6}
-            placeholder="Confirm new password"
-          />
-          {error && (
-            <div className="p-4 rounded-xl bg-red/10 border border-red/30 text-sm">
-              <p className="text-red">{error}</p>
-              <Link href="/forgot-password" className="inline-block mt-2 text-blue hover:underline">
-                Request a new reset link
-              </Link>
-            </div>
-          )}
-          {message && <p className="text-sm text-green">{message}</p>}
-          <Button variant="primary" type="submit" className="w-full" disabled={loading || !code}>
-            {loading ? "Updating..." : "Reset Password"}
-          </Button>
-        </form>
+
+        {verifying ? (
+          <div className="py-12 flex flex-col items-center justify-center gap-3">
+            <LoadingDots />
+            <p className="text-sm text-muted">Verifying your reset link...</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <PasswordInput
+              leftIcon={<Lock className="h-4 w-4" />}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              placeholder="New password"
+            />
+            <PasswordInput
+              leftIcon={<Lock className="h-4 w-4" />}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              minLength={6}
+              placeholder="Confirm new password"
+            />
+            {error && (
+              <div className="p-4 rounded-xl bg-red/10 border border-red/30 text-sm">
+                <p className="text-red">{error}</p>
+                <Link href="/forgot-password" className="inline-block mt-2 text-blue hover:underline">
+                  Request a new reset link
+                </Link>
+              </div>
+            )}
+            {message && <p className="text-sm text-green">{message}</p>}
+            <Button variant="primary" type="submit" className="w-full" disabled={loading}>
+              {loading ? "Updating..." : "Reset Password"}
+            </Button>
+          </form>
+        )}
       </Card>
     </div>
   );
