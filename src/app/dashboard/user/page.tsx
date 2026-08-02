@@ -15,6 +15,7 @@ import {
   Shield,
   MessageSquare,
   ChevronDown,
+  ChevronUp,
   MapPin,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -50,6 +51,7 @@ export default function UserDashboard() {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showMore, setShowMore] = useState(false);
+  const [showAllActivities, setShowAllActivities] = useState(false);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [applicationCount, setApplicationCount] = useState(0);
   const [orderCount, setOrderCount] = useState(0);
@@ -335,38 +337,67 @@ export default function UserDashboard() {
         <Card className="mt-6">
           <CardTitle className="mb-4">Recent Activity</CardTitle>
           {showActivitiesSkeleton ? (
-            <DashboardActivitySkeleton count={5} />
+            <DashboardActivitySkeleton count={3} />
           ) : (
-          <div className="space-y-3 skeleton-fade-in">
-            {activities.length > 0 ? (
-              activities.map((activity) => {
-                const meta = getActivityMeta(activity);
-                const Icon = meta.icon;
-                return (
-                  <div key={activity.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted-bg">
-                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${meta.bg}`}>
-                      <Icon className={`h-5 w-5 ${meta.color}`} />
+          <>
+            <div
+              className={`space-y-3 skeleton-fade-in ${
+                showAllActivities && activities.length > 3
+                  ? "max-h-[420px] overflow-y-auto pr-1"
+                  : ""
+              }`}
+            >
+              {activities.length > 0 ? (
+                (showAllActivities ? activities : activities.slice(0, 3)).map((activity) => {
+                  const meta = getActivityMeta(activity);
+                  const Icon = meta.icon;
+                  return (
+                    <div key={activity.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted-bg">
+                      <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${meta.bg}`}>
+                        <Icon className={`h-5 w-5 ${meta.color}`} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{meta.title}</p>
+                        <p className="text-xs text-muted">
+                          {activity.createdAt ? new Date(activity.createdAt).toLocaleString() : "—"}
+                        </p>
+                      </div>
+                      {activity.status && (
+                        <Badge variant={getStatusVariant(activity.status)}>
+                          {activity.status}
+                        </Badge>
+                      )}
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{meta.title}</p>
-                      <p className="text-xs text-muted">
-                        {activity.createdAt ? new Date(activity.createdAt).toLocaleString() : "—"}
-                      </p>
-                    </div>
-                    {activity.status && (
-                      <Badge variant={getStatusVariant(activity.status)}>
-                        {activity.status}
-                      </Badge>
-                    )}
-                  </div>
-                );
-              })
-            ) : (
-              <div className="text-center py-8 text-muted">
-                No recent activity
+                  );
+                })
+              ) : (
+                <div className="text-center py-8 text-muted">
+                  No recent activity
+                </div>
+              )}
+            </div>
+            {activities.length > 3 && (
+              <div className="mt-4 text-center">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowAllActivities((s) => !s)}
+                >
+                  {showAllActivities ? (
+                    <>
+                      <ChevronUp className="h-4 w-4 mr-2" />
+                      Show less
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-4 w-4 mr-2" />
+                      Show all ({activities.length - 3} more)
+                    </>
+                  )}
+                </Button>
               </div>
             )}
-          </div>
+          </>
           )}
         </Card>
 
