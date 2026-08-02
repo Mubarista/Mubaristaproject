@@ -320,44 +320,10 @@ export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "b
   const inputRef = useRef<HTMLInputElement>(null);
   const cropImageRef = useRef<HTMLImageElement>(null);
   const [uploading, setUploading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showCropModal, setShowCropModal] = useState(false);
   const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
   const [cropSelection, setCropSelection] = useState<Crop | undefined>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | undefined>();
-
-  useEffect(() => {
-    let objectUrl: string | null = null;
-    let cancelled = false;
-
-    async function loadPreview() {
-      if (!value) {
-        setPreviewUrl(null);
-        return;
-      }
-      try {
-        const res = await fetch(value, { mode: "cors", cache: "no-cache" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const blob = await res.blob();
-        objectUrl = URL.createObjectURL(blob);
-        if (cancelled) {
-          URL.revokeObjectURL(objectUrl);
-          return;
-        }
-        setPreviewUrl(objectUrl);
-      } catch (error) {
-        console.error("ImageUpload preview fetch error:", error);
-        setPreviewUrl(null);
-      }
-    }
-
-    loadPreview();
-
-    return () => {
-      cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [value]);
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -575,15 +541,9 @@ export function ImageUpload({ value, onChange, label = "Image", aspectRatio = "b
         <div className={`relative rounded-xl overflow-hidden border border-white/10 bg-muted-bg flex items-center justify-center ${heightClass}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={previewUrl || value}
+            src={value}
             alt={label}
             className="max-w-full max-h-full object-contain mx-auto"
-            onError={() => {
-              if (previewUrl) {
-                URL.revokeObjectURL(previewUrl);
-                setPreviewUrl(null);
-              }
-            }}
           />
           <button
             type="button"
