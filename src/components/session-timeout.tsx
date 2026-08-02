@@ -21,30 +21,43 @@ export function SessionTimeout() {
   const { user, logout } = useAuth();
 
   useEffect(() => {
-    if (!user) return;
-
     const events = ["mousedown", "keydown", "touchstart", "scroll", "click", "mousemove"];
     const resetTimer = () => updateLastActivity();
     events.forEach((e) => window.addEventListener(e, resetTimer, { passive: true }));
+
+    const redirectToStart = () => {
+      window.location.href = user ? "/dashboard" : "/";
+    };
 
     const handleVisibility = () => {
       if (document.visibilityState !== "visible") return;
       const inactiveFor = Date.now() - getLastActivity();
 
       if (inactiveFor > SIGN_OUT_AFTER) {
-        logout();
+        if (user) {
+          logout();
+        }
         return;
       }
 
       if (inactiveFor > REFRESH_AFTER) {
-        window.location.reload();
+        redirectToStart();
         return;
       }
     };
 
     const checkTimeout = () => {
-      if (Date.now() - getLastActivity() > SIGN_OUT_AFTER) {
-        logout();
+      const inactiveFor = Date.now() - getLastActivity();
+
+      if (inactiveFor > SIGN_OUT_AFTER) {
+        if (user) {
+          logout();
+        }
+        return;
+      }
+
+      if (inactiveFor > REFRESH_AFTER) {
+        redirectToStart();
       }
     };
 
