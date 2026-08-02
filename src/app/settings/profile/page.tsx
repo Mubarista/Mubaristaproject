@@ -16,6 +16,7 @@ import {
   X,
   Home,
   Store,
+  Loader2,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -420,7 +421,9 @@ export default function ProfileSettingsPage() {
             <CardTitle className="mb-4">Profile Photo</CardTitle>
             <div className="flex items-center gap-6">
               <div className="h-24 w-24 rounded-full bg-muted-bg flex items-center justify-center overflow-hidden shrink-0">
-                {user?.avatar ? (
+                {avatarUploading ? (
+                  <Loader2 className="h-8 w-8 text-blue animate-spin" />
+                ) : user?.avatar ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={user.avatar}
