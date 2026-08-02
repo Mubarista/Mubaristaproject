@@ -189,7 +189,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       if (error.message === "Email not confirmed") {
-        await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+        const result = await sendOTP(email);
+        if (!result.success) throw new Error(result.message);
         throw new Error("OTP_SENT");
       }
       throw error;
@@ -234,11 +235,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // If autoconfirm is enabled, sign out so the user must verify with OTP first
       if (data.session) await supabase.auth.signOut();
       await ensureUserProfile(data.user);
-      // Send email OTP for verification
-      const { error: otpError } = await supabase.auth.signInWithOtp({ email });
-      if (otpError) throw otpError;
+      // Send custom email OTP for verification (uses project SMTP/Resend)
+      const result = await sendOTP(email);
+      if (!result.success) throw new Error(result.message || "Failed to send verification code");
     }
-  }, []);
+  }, [ensureUserProfile]);
 
   const logout = useCallback(async () => {
     await supabase.auth.signOut({ scope: "global" });
@@ -306,25 +307,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.signInWithOtp({ phone: identifier });
       return { success: !error, message: error?.message || "OTP sent" };
     }
-    const { error } = await supabase.auth.signInWithOtp({ email: identifier });
-    return { success: !error, message: error?.message || "OTP sent" };
+    const res = await fetch("/api/auth/send-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: identifier }),
+    });
+    const data = await res.json().catch(() => ({ error: "Invalid response" }));
+    return { success: res.ok, message: data.error || "OTP sent" };
   }, []);
 
   const verifyOTP = useCallback(async (identifier: string, code: string) => {
-    const result = identifier.startsWith("+")
-      ? await supabase.auth.verifyOtp({ phone: identifier, token: code, type: "sms" })
-      : await supabase.auth.verifyOtp({ email: identifier, token: code, type: "email" });
-    if (!result.error && result.data?.user) {
-      // OTP verified successfully — mark the user's email as verified in the database
-      await supabase
-        .from("users")
-        .update({ email_verified: true, updated_at: new Date().toISOString() })
-        .eq("id", result.data.user.id);
+    if (identifier.startsWith("+")) {
+      const result = await supabase.auth.verifyOtp({ phone: identifier, token: code, type: "sms" });
+      if (!result.error && result.data?.user) {
+        await supabase
+          .from("users")
+          .update({ email_verified: true, updated_at: new Date().toISOString() })
+          .eq("id", result.data.user.id);
 
-      const profile = await ensureUserProfile(result.data.user);
-      setUser(mapSupabaseUser(result.data.user, profile));
+        const profile = await ensureUserProfile(result.data.user);
+        setUser(mapSupabaseUser(result.data.user, profile));
+      }
+      return { success: !result.error, message: result.error?.message || "OTP verified" };
     }
-    return { success: !result.error, message: result.error?.message || "OTP verified" };
+    const res = await fetch("/api/auth/verify-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: identifier, code }),
+    });
+    const data = await res.json().catch(() => ({ error: "Invalid response" }));
+    return { success: res.ok, message: data.error || "OTP verified" };
   }, []);
 
   const reloadUser = useCallback(async () => {
@@ -337,8 +349,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const resendVerificationEmail = useCallback(async () => {
     if (!user?.email) return;
-    await supabase.auth.resend({ type: "signup", email: user.email });
-  }, [user]);
+    await sendOTP(user.email);
+  }, [user, sendOTP]);
 
   const deleteAccount = useCallback(async (firstName: string) => {
     if (!user) return;

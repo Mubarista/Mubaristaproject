@@ -22,7 +22,7 @@ export default function RegisterPage() {
   const [otp, setOtp] = useState("");
   const [countdown, setCountdown] = useState(60);
   const [otpLoading, setOtpLoading] = useState(false);
-  const { register, loginWithGoogle, isLoading, sendOTP, verifyOTP } = useAuth();
+  const { register, login, loginWithGoogle, isLoading, sendOTP, verifyOTP } = useAuth();
   const { supportedCountries, defaultCountryCode } = useAdminData();
   const router = useRouter();
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -121,6 +121,7 @@ export default function RegisterPage() {
     try {
       const result = await verifyOTP(email, otp);
       if (result.success) {
+        await login(email, password);
         router.push("/dashboard");
       } else {
         setError(result.message || "Invalid OTP");

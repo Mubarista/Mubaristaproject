@@ -172,7 +172,10 @@ export default function LoginPage() {
         email={email}
         open={showOtp}
         onClose={() => setShowOtp(false)}
-        onSuccess={() => router.push("/dashboard")}
+        onSuccess={async () => {
+          await login(email, password);
+          router.push("/dashboard");
+        }}
       />
     </div>
   );
