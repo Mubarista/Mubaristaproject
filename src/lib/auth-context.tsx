@@ -41,6 +41,7 @@ function mapSupabaseUser(authUser: any, profile?: any): User {
     // Use the database email_verified column as source of truth, not Supabase's email_confirmed_at
     // (which is auto-set when enable_confirmations=false)
     emailVerified: profile?.email_verified ?? false,
+    subscribed: profile?.subscribed ?? false,
     createdAt: authUser.created_at || new Date().toISOString(),
     updatedAt: profile?.updated_at || new Date().toISOString(),
     subscriptionPlan: profile?.subscription_plan || null,

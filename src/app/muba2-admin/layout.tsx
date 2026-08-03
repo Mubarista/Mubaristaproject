@@ -43,6 +43,7 @@ import {
   Moon,
   Pin,
   PinOff,
+  Megaphone,
 } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
 import { useAdminAuth } from "@/lib/admin-auth-context";
@@ -55,6 +56,7 @@ const sections = [
   { label: "How It Works", href: "/mbhubteam/how-it-works", icon: ListOrdered, module: "how_it_works" },
   { label: "Competitions", href: "/mbhubteam/competitions", icon: Trophy, module: "competitions" },
   { label: "Applicants", href: "/mbhubteam/applications", icon: UserCheck, module: "applications" },
+  { label: "Broadcast", href: "/mbhubteam/broadcast", icon: Megaphone, module: "broadcast" },
   { label: "Winners", href: "/mbhubteam/winners", icon: Medal, module: "winners" },
   { label: "Latte Art", href: "/mbhubteam/latte-art", icon: Image, module: "latte_art" },
   { label: "Testimonials", href: "/mbhubteam/testimonials", icon: Star, module: "testimonials" },

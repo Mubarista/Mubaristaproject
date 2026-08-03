@@ -236,6 +236,67 @@ export async function buildEmailHtml(input: BuildEmailHtmlInput): Promise<string
   `;
 }
 
+export async function sendBatchWithResend(
+  inputs: SendEmailInput[]
+): Promise<{ sent: number; error?: string }> {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.RESEND_FROM_EMAIL || "mubarista@platform.com";
+
+  if (!resendApiKey) {
+    return { sent: 0, error: "No email provider configured" };
+  }
+
+  if (inputs.length === 0) {
+    return { sent: 0 };
+  }
+
+  const payloads = inputs.map((input) => {
+    const payload: any = {
+      from: `"${input.fromName || "MUBARISTA"}" <${input.fromEmail || fromEmail}>`,
+      to: input.to,
+      subject: input.subject,
+    };
+    if (input.templateId) {
+      payload.template = {
+        id: input.templateId,
+        variables: input.templateData || {},
+      };
+    } else if (input.html) {
+      payload.html = input.html;
+      if (input.text) payload.text = input.text;
+    }
+    return payload;
+  });
+
+  const BATCH_SIZE = 100;
+  let sent = 0;
+  for (let i = 0; i < payloads.length; i += BATCH_SIZE) {
+    const chunk = payloads.slice(i, i + BATCH_SIZE);
+    try {
+      const response = await fetch("https://api.resend.com/emails/batch", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${resendApiKey}`,
+        },
+        body: JSON.stringify(chunk),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error("Resend batch API error:", text);
+        return { sent, error: text };
+      }
+      sent += chunk.length;
+    } catch (error) {
+      console.error("Resend batch send error:", error);
+      return { sent, error: String(error) };
+    }
+  }
+
+  return { sent };
+}
+
 export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
   if (input.templateId) {
     return sendWithResend(input);

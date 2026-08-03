@@ -160,6 +160,7 @@ export interface User {
   subscriptionCanceledAt?: string | null;
   subscriptionRenewalFailures?: number;
   emailVerified?: boolean;
+  subscribed?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

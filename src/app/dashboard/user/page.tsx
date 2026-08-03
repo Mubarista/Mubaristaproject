@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { type SubscriptionPlan } from "@/lib/admin-data-context";
+import { SubscribePrompt } from "@/components/subscribe-prompt";
 import { initiateRwandaPay, generateReference } from "@/lib/payment";
 import {
   DashboardStatsSkeleton,
@@ -244,6 +245,8 @@ export default function UserDashboard() {
             {isPremium && <Badge variant="premium">Premium Member</Badge>}
           </div>
         </div>
+
+        <SubscribePrompt />
 
         {/* Stats */}
         {showStatsSkeleton ? (
