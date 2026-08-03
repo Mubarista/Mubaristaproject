@@ -1,6 +1,26 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendBatchWithResend } from "@/lib/email";
+import { mapKeysToCamelCase } from "@/lib/supabase-utils";
+
+export async function GET() {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("broadcasts")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching broadcast history:", error);
+      return NextResponse.json({ error: "Failed to fetch history" }, { status: 500 });
+    }
+
+    return NextResponse.json((data || []).map(mapKeysToCamelCase));
+  } catch (error) {
+    console.error("Error in broadcast history API:", error);
+    return NextResponse.json({ error: "Failed to fetch history" }, { status: 500 });
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -57,6 +77,16 @@ export async function POST(request: Request) {
       console.error("Broadcast send error:", sendError);
       return NextResponse.json({ error: sendError, sent }, { status: 500 });
     }
+
+    await supabaseAdmin.from("broadcasts").insert({
+      subject,
+      message,
+      audience,
+      cta_url: ctaUrl,
+      cta_text: ctaText,
+      sent_count: sent,
+      total: recipients.length,
+    });
 
     return NextResponse.json({ sent, total: recipients.length });
   } catch (error) {

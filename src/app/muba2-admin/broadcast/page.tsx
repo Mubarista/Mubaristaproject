@@ -1,9 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { Megaphone, Send } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Megaphone, Send, Repeat, Clock } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+
+interface Broadcast {
+  id: string;
+  subject: string;
+  message: string;
+  audience: "all" | "subscribers" | "verified";
+  ctaUrl?: string;
+  ctaText?: string;
+  sentCount: number;
+  total: number;
+  createdAt: string;
+}
 
 export default function BroadcastPage() {
   const [subject, setSubject] = useState("");
@@ -14,6 +26,36 @@ export default function BroadcastPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<Broadcast[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  async function fetchHistory() {
+    try {
+      const res = await fetch("/api/admin/broadcast");
+      if (res.ok) {
+        const data = await res.json();
+        setHistory(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch broadcast history:", error);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+
+  function reuse(b: Broadcast) {
+    setSubject(b.subject);
+    setMessage(b.message);
+    setAudience(b.audience);
+    setCtaUrl(b.ctaUrl || "https://mubarista.com");
+    setCtaText(b.ctaText || "Visit MUBARISTA");
+    setResult("Form pre-filled from a previous broadcast. You can edit and send.");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -32,6 +74,7 @@ export default function BroadcastPage() {
         setResult(`Broadcast sent to ${data.sent} of ${data.total} recipients`);
         setSubject("");
         setMessage("");
+        await fetchHistory();
       } else {
         setError(data.error || "Failed to send broadcast");
       }
@@ -52,7 +95,7 @@ export default function BroadcastPage() {
           <p className="text-muted">Send announcements, competition updates, or winner notifications to registered users.</p>
         </div>
 
-        <Card className="p-6">
+        <Card className="p-6 mb-6">
           <CardTitle className="mb-6">New Broadcast</CardTitle>
 
           <form onSubmit={handleSend} className="space-y-5">
@@ -125,6 +168,36 @@ export default function BroadcastPage() {
               {loading ? "Sending..." : <><Send className="h-4 w-4 mr-2" /> Send Broadcast</>}
             </Button>
           </form>
+        </Card>
+
+        <Card className="p-6">
+          <CardTitle className="mb-6">Broadcast History</CardTitle>
+          {historyLoading ? (
+            <p className="text-muted text-sm">Loading history...</p>
+          ) : history.length === 0 ? (
+            <p className="text-muted text-sm">No broadcasts yet.</p>
+          ) : (
+            <div className="space-y-4">
+              {history.map((b) => (
+                <div key={b.id} className="p-4 rounded-xl bg-muted-bg/30 border border-white/5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{b.subject}</p>
+                      <p className="text-sm text-muted truncate">{b.message}</p>
+                      <div className="flex items-center gap-3 mt-2 text-xs text-muted">
+                        <span className="capitalize badge px-2 py-0.5 rounded-md bg-blue/10 text-blue">{b.audience}</span>
+                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {new Date(b.createdAt).toLocaleString()}</span>
+                        <span>Sent {b.sentCount} / {b.total}</span>
+                      </div>
+                    </div>
+                    <Button variant="secondary" size="sm" onClick={() => reuse(b)}>
+                      <Repeat className="h-4 w-4 mr-2" /> Reuse
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </Card>
       </div>
     </div>
