@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Check, X, Mail, ExternalLink, Clock, Trash2, Archive, Ban, CheckCircle, AlertTriangle } from "lucide-react";
+import { Search, Check, X, Mail, RefreshCw, Clock, Trash2, Archive, Ban, CheckCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +53,7 @@ export default function ApplicationsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [sendingCongratulation, setSendingCongratulation] = useState(false);
+  const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
 
   function showError(msg: string) {
     setErrorMsg(msg);
@@ -225,6 +226,28 @@ export default function ApplicationsPage() {
       showError("Failed to send congratulation email");
     } finally {
       setSendingCongratulation(false);
+    }
+  }
+
+  async function regenerateAccessLink(id: string) {
+    setRegeneratingId(id);
+    try {
+      const response = await fetch(`/api/competitions/applications/${id}/regenerate-link`, {
+        method: "POST",
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setApplications(applications.map((a) => (a.id === id ? data : a)));
+        if (selectedApp?.id === id) setSelectedApp(data);
+        showSuccess("Access link regenerated successfully");
+      } else {
+        showError(data.error || "Failed to regenerate access link");
+      }
+    } catch (error) {
+      console.error("Failed to regenerate access link:", error);
+      showError("Failed to regenerate access link");
+    } finally {
+      setRegeneratingId(null);
     }
   }
 
@@ -810,14 +833,15 @@ export default function ApplicationsPage() {
                             <code className="text-xs flex-1 break-all">
                               {typeof window !== "undefined" ? window.location.origin : ""}/access/{selectedApp.accessLink}
                             </code>
-                            <a
-                              href={`/access/${selectedApp.accessLink}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-1.5 rounded-lg hover:bg-blue/20 text-blue"
+                            <button
+                              type="button"
+                              onClick={() => regenerateAccessLink(selectedApp.id)}
+                              disabled={regeneratingId === selectedApp.id}
+                              title="Regenerate access link"
+                              className="p-1.5 rounded-lg hover:bg-blue/20 text-blue disabled:opacity-50"
                             >
-                              <ExternalLink className="h-4 w-4" />
-                            </a>
+                              <RefreshCw className={`h-4 w-4 ${regeneratingId === selectedApp.id ? "animate-spin" : ""}`} />
+                            </button>
                           </div>
                           {selectedApp.accessLinkExpiresAt && (
                             <p className="text-xs text-muted mt-1 flex items-center gap-1">
