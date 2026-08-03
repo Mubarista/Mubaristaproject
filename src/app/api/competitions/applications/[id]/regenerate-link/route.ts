@@ -23,7 +23,7 @@ export async function POST(
         updated_at: now.toISOString(),
       })
       .eq("id", id)
-      .select("*, competitions:competition_id (id, title, entry_fee)")
+      .select("*")
       .single();
 
     if (error || !data) {
@@ -32,8 +32,18 @@ export async function POST(
     }
 
     const app = mapKeysToCamelCase(data);
-    app.email = app.email || app.userEmail;
-    app.fullName = app.fullName || app.userName;
+    app.email = app.userEmail;
+    app.fullName = app.userName;
+
+    if (app.competitionId) {
+      const { data: comp } = await supabaseAdmin
+        .from("competitions")
+        .select("id, title, entry_fee")
+        .eq("id", app.competitionId)
+        .single();
+      app.competitions = comp ? mapKeysToCamelCase(comp) : null;
+    }
+
     return NextResponse.json(app);
   } catch (error) {
     console.error("Error regenerating access link:", error);
