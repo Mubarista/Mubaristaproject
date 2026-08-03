@@ -13,15 +13,16 @@ export async function POST(
 
     const { data: app, error } = await supabaseAdmin
       .from("competition_applications")
-      .select("id, email, full_name, access_link, access_link_expires_at, competition_id")
+      .select("id, user_email, full_name, access_link, access_link_expires_at, competition_id")
       .eq("id", id)
       .single();
 
     if (error || !app) {
+      console.error("Application lookup error:", error);
       return NextResponse.json({ error: "Application not found" }, { status: 404 });
     }
 
-    if (!app.email) {
+    if (!app.user_email) {
       return NextResponse.json({ error: "Applicant email is missing" }, { status: 400 });
     }
 
@@ -39,7 +40,7 @@ export async function POST(
     const paymentUrl = `${baseUrl}/access/${app.access_link}`;
 
     const { sent, error: sendError } = await sendEmail({
-      to: app.email,
+      to: app.user_email,
       subject: "Congratulations on your nomination",
       templateId: "competition-nomination",
       templateData: {
