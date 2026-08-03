@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase } from "@/lib/supabase-utils";
 import { createNotification } from "@/lib/notifications";
+import { sendEmail } from "@/lib/email";
 
 const ACCESS_LINK_VALID_DAYS = 3;
 
@@ -64,6 +65,24 @@ export async function POST(
         type: "competition",
         metadata: { applicationId: app.id, competitionId: app.competitionId },
       });
+    }
+
+    if (app?.email) {
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
+      const paymentUrl = `${baseUrl}/access/${token}`;
+      const { sent, error } = await sendEmail({
+        to: app.email,
+        subject: "Congratulations on your nomination",
+        templateId: "competition-nomination",
+        templateData: {
+          FULL_NAME: app.fullName || "Participant",
+          COMPETITION_TITLE: app.competitions?.title || "a competition",
+          ENTRY_FEE: String(app.competitions?.entryFee || "0"),
+          PAYMENT_LINK: paymentUrl,
+          EXPIRES_DAYS: String(ACCESS_LINK_VALID_DAYS),
+        },
+      });
+      if (!sent) console.error("Failed to send nomination email:", error);
     }
 
     return NextResponse.json(app);

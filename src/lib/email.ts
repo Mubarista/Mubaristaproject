@@ -13,10 +13,12 @@ export interface SmtpSettings {
 export interface SendEmailInput {
   to: string | string[];
   subject: string;
-  html: string;
+  html?: string;
   text?: string;
   fromEmail?: string;
   fromName?: string;
+  templateId?: string;
+  templateData?: Record<string, string | number | boolean>;
 }
 
 export interface SendEmailResult {
@@ -115,6 +117,42 @@ async function sendWithResend(input: SendEmailInput): Promise<SendEmailResult> {
     return { sent: false, error: "No email provider configured" };
   }
 
+  if (input.templateId) {
+    try {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${resendApiKey}`,
+        },
+        body: JSON.stringify({
+          from: `"${input.fromName || "MUBARISTA"}" <${fromEmail}>`,
+          to: input.to,
+          subject: input.subject,
+          template: {
+            id: input.templateId,
+            variables: input.templateData || {},
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error("Resend API error:", text);
+        return { sent: false, error: text };
+      }
+
+      return { sent: true };
+    } catch (error) {
+      console.error("Resend send error:", error);
+      return { sent: false, error: String(error) };
+    }
+  }
+
+  if (!input.html) {
+    return { sent: false, error: "No email content provided" };
+  }
+
   try {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -199,6 +237,9 @@ export async function buildEmailHtml(input: BuildEmailHtmlInput): Promise<string
 }
 
 export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
+  if (input.templateId) {
+    return sendWithResend(input);
+  }
   const settings = await getSmtpSettings();
   if (settings) {
     return sendWithSmtp(settings, input);
