@@ -51,10 +51,17 @@ export default function ApplicationsPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [sendingCongratulation, setSendingCongratulation] = useState(false);
 
   function showError(msg: string) {
     setErrorMsg(msg);
     setTimeout(() => setErrorMsg(null), 3000);
+  }
+
+  function showSuccess(msg: string) {
+    setSuccessMsg(msg);
+    setTimeout(() => setSuccessMsg(null), 3000);
   }
 
   useEffect(() => {
@@ -191,39 +198,34 @@ export default function ApplicationsPage() {
     }
   }
 
-  function sendCongratulationEmail(app: Application) {
-    const recipient = app.email?.trim();
-    if (!recipient) {
-      showError("Applicant email is missing. Cannot open email client.");
+  async function sendCongratulationEmail(app: Application) {
+    if (!app.email?.trim()) {
+      showError("Applicant email is missing. Cannot send email.");
+      return;
+    }
+    if (!app.accessLink) {
+      showError("No access link. Nominate the applicant first.");
       return;
     }
 
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const accessUrl = `${origin}/access/${app.accessLink}`;
-    const expiry = app.accessLinkExpiresAt
-      ? new Date(app.accessLinkExpiresAt).toLocaleString()
-      : "3 days from now";
-    const subject = `Congratulations! You have been nominated for ${app.competitions?.title || "the competition"}`;
-    const bodyLines = [
-      `Dear ${app.fullName || "Applicant"},`,
-      "",
-      `Congratulations! Your application for ${app.competitions?.title || "the competition"} has been reviewed and you have been NOMINATED to participate.`,
-      "",
-      `To secure your spot, please complete your entry-fee payment of ${formatCurrency(app.competitions?.entryFee ?? 0, "RWF")} using your personal access link below:`,
-      "",
-      accessUrl,
-      "",
-      `IMPORTANT: This access link is temporary and will expire on ${expiry}. You must complete payment before it expires.`,
-      "",
-      "After successful payment, you will gain access to your participant dashboard where you can track your progress, submit entries, and view live rankings.",
-      "",
-      "We look forward to seeing you compete!",
-      "",
-      "Warm regards,",
-      "The Mubarista Team",
-    ];
-    const mailtoUrl = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines.join("\n"))}`;
-    window.location.href = mailtoUrl;
+    setSendingCongratulation(true);
+    try {
+      const response = await fetch(`/api/competitions/applications/${app.id}/send-congratulation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        showSuccess("Congratulation email sent successfully!");
+      } else {
+        showError(data.error || "Failed to send congratulation email");
+      }
+    } catch (error) {
+      console.error("Failed to send congratulation email:", error);
+      showError("Failed to send congratulation email");
+    } finally {
+      setSendingCongratulation(false);
+    }
   }
 
   async function updateApplication(id: string, data: Partial<Application>) {
@@ -313,6 +315,12 @@ export default function ApplicationsPage() {
         <div className="fixed top-24 right-4 z-50 px-4 py-3 rounded-xl shadow-lg bg-red text-white text-sm flex items-center gap-2">
           <X className="h-4 w-4" />
           {errorMsg}
+        </div>
+      )}
+      {successMsg && (
+        <div className="fixed top-24 right-4 z-50 px-4 py-3 rounded-xl shadow-lg bg-green text-white text-sm flex items-center gap-2">
+          <Check className="h-4 w-4" />
+          {successMsg}
         </div>
       )}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -849,10 +857,11 @@ export default function ApplicationsPage() {
                 <Button
                   variant="primary"
                   onClick={() => sendCongratulationEmail(selectedApp)}
+                  disabled={sendingCongratulation}
                   className="w-full"
                 >
                   <Mail className="h-4 w-4 mr-2" />
-                  Send Congratulation Email
+                  {sendingCongratulation ? "Sending..." : "Send Congratulation Email"}
                 </Button>
               )}
             </Card>
