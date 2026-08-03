@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { sendBatchWithResend } from "@/lib/email";
+import { sendBatchWithResend, getSiteLogo } from "@/lib/email";
 import { mapKeysToCamelCase } from "@/lib/supabase-utils";
+
+const DEFAULT_LOGO = "https://mubarista.com/logo-bimi.svg";
 
 export async function GET() {
   try {
@@ -59,11 +61,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No recipients found" }, { status: 400 });
     }
 
+    const logoUrl = (await getSiteLogo()) || DEFAULT_LOGO;
+
     const inputs = recipients.map((user: any) => ({
       to: user.email,
       subject,
       templateId: "broadcast" as const,
       templateData: {
+        LOGO_URL: logoUrl,
         TITLE: subject,
         MESSAGE: message,
         CTA_URL: ctaUrl,

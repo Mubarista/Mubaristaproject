@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, getSiteLogo } from "@/lib/email";
 
 const ACCESS_LINK_VALID_DAYS = 3;
+const DEFAULT_LOGO = "https://mubarista.com/logo-bimi.svg";
 
 export async function POST(
   request: Request,
@@ -38,12 +39,14 @@ export async function POST(
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
     const paymentUrl = `${baseUrl}/access/${app.access_link}`;
+    const logoUrl = (await getSiteLogo()) || DEFAULT_LOGO;
 
     const { sent, error: sendError } = await sendEmail({
       to: app.user_email,
       subject: "Congratulations on your nomination",
       templateId: "competition-nomination",
       templateData: {
+        LOGO_URL: logoUrl,
         FULL_NAME: app.full_name || "Participant",
         COMPETITION_TITLE: comp?.title || "a competition",
         ENTRY_FEE: String(comp?.entry_fee ?? 0),
