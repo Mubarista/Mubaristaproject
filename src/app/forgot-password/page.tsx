@@ -6,7 +6,6 @@ import { Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { SuccessPopup } from "@/components/ui/success-popup";
-import { supabaseReset } from "@/lib/supabase-reset";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -20,10 +19,12 @@ export default function ForgotPasswordPage() {
     setError(null);
 
     try {
-      const { error: resetError } = await supabaseReset.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
       });
-      if (resetError) throw resetError;
+      if (!res.ok) throw new Error("Failed to send reset link");
       setShowSuccessPopup(true);
       setEmail("");
     } catch (err: any) {
