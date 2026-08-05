@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
+    const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "") || "https://mubarista.com";
     const redirectTo = `${baseUrl}/reset-password`;
 
     const { data, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
