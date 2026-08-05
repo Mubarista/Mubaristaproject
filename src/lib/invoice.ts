@@ -1,7 +1,9 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase, keysToSnakeCase } from "@/lib/supabase-utils";
-import { sendEmail, buildEmailHtml } from "@/lib/email";
+import { sendEmail, buildEmailHtml, getSiteLogo } from "@/lib/email";
 import type { Payment, Invoice } from "@/types";
+
+const DEFAULT_LOGO = "https://www.mubarista.com/logo-bimi.svg";
 
 function formatDate(date: Date) {
   return date.toISOString().split("T")[0];
@@ -94,12 +96,23 @@ export async function buildInvoiceHtml(invoice: Invoice) {
 }
 
 export async function sendInvoiceEmail(invoice: Invoice) {
+  const logoUrl = (await getSiteLogo()) || DEFAULT_LOGO;
+  const paymentLink = `https://www.mubarista.com/dashboard/user`;
   return sendEmail({
     to: invoice.userEmail,
     subject: `Your MUBARISTA Invoice ${invoice.invoiceNumber}`,
-    html: await buildInvoiceHtml(invoice),
-    fromEmail: process.env.SMTP_FROM_EMAIL || process.env.RESEND_FROM_EMAIL,
-    fromName: process.env.SMTP_FROM_NAME || process.env.RESEND_FROM_NAME || "MUBARISTA",
+    fromName: "MUBARISTA HUB LTD",
+    fromEmail: "customer@mubarista.com",
+    templateId: "invoice",
+    templateData: {
+      LOGO_URL: logoUrl,
+      FULL_NAME: invoice.userName,
+      INVOICE_NUMBER: invoice.invoiceNumber,
+      AMOUNT: String(invoice.total),
+      CURRENCY: invoice.currency,
+      DESCRIPTION: invoice.description || invoice.type || "Invoice",
+      PAYMENT_LINK: paymentLink,
+    },
   });
 }
 

@@ -87,6 +87,18 @@ function ResetPasswordForm() {
       const { error: updateError } = await supabaseReset.auth.updateUser({ password });
       if (updateError) throw updateError;
 
+      try {
+        const { data: { session } } = await supabaseReset.auth.getSession();
+        if (session?.access_token) {
+          await fetch("/api/auth/notify-password-changed", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          });
+        }
+      } catch (notifyError) {
+        console.error("Failed to send password changed notification:", notifyError);
+      }
+
       setMessage("Password updated successfully. Redirecting to login...");
       setTimeout(() => router.push("/login"), 2000);
     } catch (err: any) {
