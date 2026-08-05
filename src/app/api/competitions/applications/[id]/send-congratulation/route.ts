@@ -43,7 +43,9 @@ export async function POST(
 
     const { sent, error: sendError } = await sendEmail({
       to: app.user_email,
-      subject: "Congratulations on your nomination",
+      subject: "Congratulations on your competition nomination",
+      fromName: "MUBARISTA HUB LTD",
+      fromEmail: "team@mubarista.com",
       templateId: "competition-nomination",
       templateData: {
         LOGO_URL: logoUrl,

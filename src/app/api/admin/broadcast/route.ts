@@ -66,6 +66,8 @@ export async function POST(request: Request) {
     const inputs = recipients.map((user: any) => ({
       to: user.email,
       subject,
+      fromName: "MUBARISTA HUB LTD",
+      fromEmail: "info@mubarista.com",
       templateId: "broadcast" as const,
       templateData: {
         LOGO_URL: logoUrl,

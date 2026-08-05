@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, getSiteLogo } from "@/lib/email";
+
+const DEFAULT_LOGO = "https://www.mubarista.com/logo-bimi.svg";
 
 export async function POST(request: Request) {
   try {
@@ -38,12 +40,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
+    const logoUrl = (await getSiteLogo()) || DEFAULT_LOGO;
+
     const { sent, error: sendError } = await sendEmail({
       to: email,
       subject: "Reset your MUBARISTA HUB LTD password",
       fromName: "MUBARISTA HUB LTD",
+      fromEmail: "support@mubarista.com",
       templateId: "password-reset",
       templateData: {
+        LOGO_URL: logoUrl,
         FULL_NAME: user.name || "User",
         RESET_LINK: data.properties.action_link,
       },
