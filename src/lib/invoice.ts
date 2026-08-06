@@ -14,8 +14,7 @@ export function generateInvoiceNumber() {
 }
 
 export async function buildInvoiceHtml(invoice: Invoice) {
-  const fmt = (n: number) =>
-    new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(n);
+
 
   const itemsRows = invoice.items
     .map(
@@ -23,8 +22,8 @@ export async function buildInvoiceHtml(invoice: Invoice) {
     <tr style="background:${i % 2 === 0 ? "#f9fafb" : "#ffffff"}">
       <td style="padding:12px;border:1px solid #e5e7eb">${item.description}</td>
       <td style="padding:12px;border:1px solid #e5e7eb;text-align:center">${item.quantity}</td>
-      <td style="padding:12px;border:1px solid #e5e7eb;text-align:right">${invoice.currency} ${fmt(item.amount)}</td>
-      <td style="padding:12px;border:1px solid #e5e7eb;text-align:right;font-weight:600">${invoice.currency} ${fmt(item.amount * item.quantity)}</td>
+      <td style="padding:12px;border:1px solid #e5e7eb;text-align:right">${invoice.currency} ${formatNumber(item.amount)}</td>
+      <td style="padding:12px;border:1px solid #e5e7eb;text-align:right;font-weight:600">${invoice.currency} ${formatNumber(item.amount * item.quantity)}</td>
     </tr>
   `
     )
@@ -72,15 +71,15 @@ export async function buildInvoiceHtml(invoice: Invoice) {
     <div style="margin-left:auto;max-width:240px">
       <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb">
         <span style="color:#6b7280">Subtotal</span>
-        <span style="font-weight:600">${invoice.currency} ${fmt(invoice.subtotal)}</span>
+        <span style="font-weight:600">${invoice.currency} ${formatNumber(invoice.subtotal)}</span>
       </div>
       <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb">
         <span style="color:#6b7280">Tax</span>
-        <span style="font-weight:600">${invoice.currency} ${fmt(invoice.tax)}</span>
+        <span style="font-weight:600">${invoice.currency} ${formatNumber(invoice.tax)}</span>
       </div>
       <div style="display:flex;justify-content:space-between;padding:12px 0;font-size:18px;font-weight:700">
         <span>Total</span>
-        <span>${invoice.currency} ${fmt(invoice.total)}</span>
+        <span>${invoice.currency} ${formatNumber(invoice.total)}</span>
       </div>
     </div>
     <div style="margin-top:32px;padding-top:24px;border-top:1px solid #e5e7eb;text-align:center;color:#6b7280;font-size:14px">
@@ -95,9 +94,49 @@ export async function buildInvoiceHtml(invoice: Invoice) {
   });
 }
 
+function formatNumber(n: number) {
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(n);
+}
+
+function formatInvoiceDate(value?: string | null) {
+  return value ? new Date(value).toLocaleDateString("en-GB", { year: "numeric", month: "short", day: "numeric" }) : "—";
+}
+
+function formatInvoiceTime(value?: string | null) {
+  return value ? new Date(value).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "—";
+}
+
+const paymentMethodLabels: Record<string, string> = {
+  card: "Credit / Debit Card",
+  mobile_money: "Mobile Money",
+  bank_transfer: "Bank Transfer",
+  paypal: "PayPal",
+};
+
 export async function sendInvoiceEmail(invoice: Invoice) {
   const logoUrl = (await getSiteLogo()) || DEFAULT_LOGO;
-  const paymentLink = `https://www.mubarista.com/dashboard/user`;
+
+  const { data: profile } = await supabaseAdmin
+    .from("users")
+    .select("phone")
+    .eq("id", invoice.userId)
+    .maybeSingle();
+
+  const phone = profile?.phone || "—";
+
+  const itemsRows = invoice.items
+    .map(
+      (item, i) => `
+    <tr style="background:${i % 2 === 0 ? "#f9fafb" : "#ffffff"};">
+      <td style="padding:12px;border:1px solid #e5e7eb;font-size:14px;font-family:Arial,Helvetica,sans-serif;">${item.description}</td>
+      <td style="padding:12px;border:1px solid #e5e7eb;text-align:center;font-size:14px;font-family:Arial,Helvetica,sans-serif;">${item.quantity}</td>
+      <td style="padding:12px;border:1px solid #e5e7eb;text-align:right;font-size:14px;font-family:Arial,Helvetica,sans-serif;">${invoice.currency} ${formatNumber(item.amount)}</td>
+      <td style="padding:12px;border:1px solid #e5e7eb;text-align:right;font-weight:600;font-size:14px;font-family:Arial,Helvetica,sans-serif;">${invoice.currency} ${formatNumber(item.amount * item.quantity)}</td>
+    </tr>
+  `
+    )
+    .join("");
+
   return sendEmail({
     to: invoice.userEmail,
     subject: `Your MUBARISTA Invoice ${invoice.invoiceNumber}`,
@@ -107,11 +146,25 @@ export async function sendInvoiceEmail(invoice: Invoice) {
     templateData: {
       LOGO_URL: logoUrl,
       FULL_NAME: invoice.userName,
+      BILLING_EMAIL: invoice.userEmail,
+      BILLING_PHONE: phone,
+      BILLING_ADDRESS: invoice.userCountry || "—",
       INVOICE_NUMBER: invoice.invoiceNumber,
-      AMOUNT: String(invoice.total),
-      CURRENCY: invoice.currency,
-      DESCRIPTION: invoice.description || invoice.type || "Invoice",
-      PAYMENT_LINK: paymentLink,
+      ISSUED_DATE: formatInvoiceDate(invoice.issuedAt),
+      ISSUED_TIME: formatInvoiceTime(invoice.issuedAt),
+      DUE_DATE: formatInvoiceDate(invoice.dueAt),
+      DUE_TIME: formatInvoiceTime(invoice.dueAt),
+      PAID_DATE: formatInvoiceDate(invoice.paidAt),
+      PAID_TIME: formatInvoiceTime(invoice.paidAt),
+      PAYMENT_METHOD: paymentMethodLabels[invoice.method] || (invoice.method ? invoice.method.replace(/_/g, " ") : "—"),
+      INVOICE_STATUS: invoice.status,
+      ITEMS: itemsRows,
+      INVOICE_SUBTOTAL: formatNumber(invoice.subtotal),
+      INVOICE_TAX: formatNumber(invoice.tax),
+      INVOICE_TOTAL: formatNumber(invoice.total),
+      INVOICE_CURRENCY: invoice.currency,
+      PDF_URL: `https://www.mubarista.com/dashboard/user`,
+      CONTACT_EMAIL: "customer@mubarista.com",
     },
   });
 }
@@ -141,6 +194,7 @@ export async function createInvoiceFromPayment(payment: Payment) {
     amount: payment.amount,
     currency: payment.currency,
     status: payment.status === "completed" ? "paid" : "pending",
+    method: payment.method,
     issuedAt: now.toISOString(),
     dueAt: formatDate(due),
     paidAt: payment.paidAt,

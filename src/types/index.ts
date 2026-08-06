@@ -100,6 +100,7 @@ export interface Invoice {
   total: number;
   currency: string;
   status: InvoiceStatus;
+  method: PaymentMethod;
   issuedAt: string;
   dueAt: string;
   paidAt?: string;
