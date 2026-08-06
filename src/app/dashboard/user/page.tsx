@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   FileText,
   Trophy,
@@ -443,45 +444,88 @@ export default function UserDashboard() {
       )}
 
       {/* Subscription Modal */}
-      {showSubscriptionModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <CardTitle className="text-2xl">Choose Your Plan</CardTitle>
-              <Button variant="ghost" onClick={() => setShowSubscriptionModal(false)}>
-                ✕
-              </Button>
-            </div>
+      <AnimatePresence>
+        {showSubscriptionModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowSubscriptionModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, y: 50 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              transition={{ type: "spring", stiffness: 300, damping: 26 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Card className="relative max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
+                {/* Top accent bar */}
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-yellow via-green to-blue rounded-t-2xl" />
 
-            {isPremium && user?.subscriptionPlan && (
-              <div className="mb-6 p-4 bg-blue/5 border border-blue/20 rounded-xl">
-                <div>
-                  <p className="font-semibold text-blue">Current subscription active</p>
-                  <p className="text-sm text-muted">
-                    Expires: {user.subscriptionExpiry ? new Date(user.subscriptionExpiry).toLocaleDateString() : "N/A"}
-                  </p>
-                  <p className="text-sm text-yellow">
-                    Your subscription will not auto-renew. Please pay again after it expires to keep premium access.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {!isPremium && (showPlansSkeleton ? (
-                <>
-                  <SubscriptionPlanSkeleton />
-                  <SubscriptionPlanSkeleton />
-                  <SubscriptionPlanSkeleton />
-                </>
-              ) : (
-              subscriptionPlans.map((plan) => (
-                <Card
-                  key={plan.id}
-                  className={`p-4 cursor-pointer transition-all ${
-                    plan.popular ? "border-yellow border-2 bg-yellow/5" : "hover:border-blue/50"
-                  }`}
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15, duration: 0.3 }}
+                  className="flex justify-between items-center mb-6"
                 >
+                  <div className="flex items-center gap-3">
+                    <motion.div
+                      initial={{ scale: 0, rotate: -30 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.2 }}
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow/15"
+                    >
+                      <Crown className="h-5 w-5 text-yellow" />
+                    </motion.div>
+                    <CardTitle className="text-2xl">Choose Your Plan</CardTitle>
+                  </div>
+                  <Button variant="ghost" onClick={() => setShowSubscriptionModal(false)}>
+                    ✕
+                  </Button>
+                </motion.div>
+
+                {isPremium && user?.subscriptionPlan && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.25, duration: 0.3 }}
+                    className="mb-6 p-4 bg-blue/5 border border-blue/20 rounded-xl"
+                  >
+                    <div>
+                      <p className="font-semibold text-blue">Current subscription active</p>
+                      <p className="text-sm text-muted">
+                        Expires: {user.subscriptionExpiry ? new Date(user.subscriptionExpiry).toLocaleDateString() : "N/A"}
+                      </p>
+                      <p className="text-sm text-yellow">
+                        Your subscription will not auto-renew. Please pay again after it expires to keep premium access.
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {!isPremium && (showPlansSkeleton ? (
+                    <>
+                      <SubscriptionPlanSkeleton />
+                      <SubscriptionPlanSkeleton />
+                      <SubscriptionPlanSkeleton />
+                    </>
+                  ) : (
+                  subscriptionPlans.map((plan, index) => (
+                    <motion.div
+                      key={plan.id}
+                      initial={{ opacity: 0, y: 24, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ delay: 0.3 + index * 0.1, duration: 0.35, ease: "easeOut" }}
+                    >
+                      <Card
+                        className={`p-4 cursor-pointer transition-all ${
+                          plan.popular ? "border-yellow border-2 bg-yellow/5" : "hover:border-blue/50"
+                        }`}
+                      >
                   {plan.popular && (
                     <div className="text-center mb-2">
                       <Badge variant="premium">Most Popular</Badge>
@@ -501,11 +545,11 @@ export default function UserDashboard() {
                       </li>
                     ))}
                   </ul>
-                  <Button
-                    variant={plan.popular ? "premium" : "primary"}
-                    className="w-full"
-                    disabled={startingPlan === plan.id}
-                    onClick={async () => {
+                    <Button
+                      variant={plan.popular ? "premium" : "primary"}
+                      className="w-full"
+                      disabled={startingPlan === plan.id}
+                      onClick={async () => {
                       if (!user) return;
                       setStartingPlan(plan.id);
                       try {
@@ -538,16 +582,19 @@ export default function UserDashboard() {
                         setStartingPlan(null);
                       }
                     }}
-                  >
-                    {startingPlan === plan.id ? "Processing..." : `Choose ${plan.name}`}
-                  </Button>
-                </Card>
-              ))
-              ))}
-            </div>
-          </Card>
-        </div>
-      )}
+                    >
+                      {startingPlan === plan.id ? "Processing..." : `Choose ${plan.name}`}
+                    </Button>
+                      </Card>
+                    </motion.div>
+                  ))
+                  ))}
+                </div>
+              </Card>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
