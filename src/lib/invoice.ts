@@ -163,7 +163,7 @@ export async function sendInvoiceEmail(invoice: Invoice) {
       INVOICE_TAX: formatNumber(invoice.tax),
       INVOICE_TOTAL: formatNumber(invoice.total),
       INVOICE_CURRENCY: invoice.currency,
-      PDF_URL: `https://www.mubarista.com/dashboard/user`,
+      PDF_URL: `https://www.mubarista.com/api/invoices/${encodeURIComponent(invoice.invoiceNumber)}/pdf`,
       CONTACT_EMAIL: "customer@mubarista.com",
     },
   });
