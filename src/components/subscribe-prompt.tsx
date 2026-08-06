@@ -6,14 +6,15 @@ import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 
 export function SubscribePrompt() {
-  const { user } = useAuth();
+  const { user, isLoading, reloadUser } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [subscribed, setSubscribed] = useState(user?.subscribed || false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  if (!user || subscribed) return null;
+  if (isLoading || !user || user.subscribed) return null;
 
   async function handleSubscribe() {
     setLoading(true);
+    setShowSuccess(false);
     try {
       const { data } = await import("@/lib/supabase").then((m) => m.supabase.auth.getSession());
       const token = data.session?.access_token;
@@ -24,7 +25,8 @@ export function SubscribePrompt() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        setSubscribed(true);
+        await reloadUser();
+        setShowSuccess(true);
       }
     } finally {
       setLoading(false);
@@ -47,7 +49,7 @@ export function SubscribePrompt() {
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Bell className="h-4 w-4 mr-2" /> Subscribe</>}
         </Button>
       </div>
-      {subscribed && (
+      {showSuccess && (
         <div className="mt-4 p-3 rounded-lg bg-green/10 text-green text-sm flex items-center gap-2">
           <Check className="h-4 w-4" /> You are now subscribed.
         </div>
