@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin,
   Plus,
@@ -245,21 +246,47 @@ export default function AddressesPage() {
       </div>
 
       {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <CardTitle>{editing ? "Edit Address" : "Add New Address"}</CardTitle>
-              <button
-                type="button"
-                onClick={closeModal}
-                className="p-2 rounded-lg hover:bg-muted-bg transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+      <AnimatePresence>
+        {showModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={closeModal}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85, y: 40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", stiffness: 320, damping: 24 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15, duration: 0.3 }}
+                  className="flex items-center justify-between mb-4"
+                >
+                  <CardTitle>{editing ? "Edit Address" : "Add New Address"}</CardTitle>
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="p-2 rounded-lg hover:bg-muted-bg transition-colors"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </motion.div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <motion.form
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25, duration: 0.3 }}
+              onSubmit={handleSubmit}
+              className="space-y-4"
+            >
               {/* Type */}
               <div>
                 <label className="text-sm text-muted mb-1 block">Type</label>
@@ -407,10 +434,12 @@ export default function AddressesPage() {
                   {editing ? "Save Changes" : "Add Address"}
                 </Button>
               </div>
-            </form>
-          </Card>
-        </div>
-      )}
+            </motion.form>
+              </Card>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 

@@ -32,6 +32,7 @@ import {
   DashboardActivitySkeleton,
   DashboardQuickActionsSkeleton,
   SubscriptionPlanSkeleton,
+  SkeletonButton,
   useDelayedLoading,
 } from "@/components/ui/skeleton";
 
@@ -46,7 +47,7 @@ interface Activity {
 }
 
 export default function UserDashboard() {
-  const { user, isPremium, cancelSubscription, logout } = useAuth();
+  const { user, isLoading, isPremium, cancelSubscription, logout } = useAuth();
   const router = useRouter();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -379,7 +380,9 @@ export default function UserDashboard() {
                 Verify your account for enhanced security
               </p>
             </div>
-            {user?.emailVerified ? (
+            {isLoading ? (
+              <SkeletonButton />
+            ) : user?.emailVerified ? (
               <Button variant="secondary" disabled className="bg-green/10 text-green border-green/30">
                 ✓ Verified
               </Button>
@@ -414,34 +417,62 @@ export default function UserDashboard() {
       </div>
 
       {/* Logout Confirmation Dialog */}
-      {showLogoutConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="max-w-md w-full p-6">
-            <CardTitle className="mb-2">Confirm Logout</CardTitle>
-            <p className="text-muted mb-6">Are you sure you want to log out of your account?</p>
-            <div className="flex gap-3">
-              <Button
-                variant="secondary"
-                onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={async () => {
-                  await logout();
-                  setShowLogoutConfirm(false);
-                  router.push("/");
-                }}
-                className="flex-1"
-              >
-                Logout
-              </Button>
-            </div>
-          </Card>
-        </div>
-      )}
+      <AnimatePresence>
+        {showLogoutConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowLogoutConfirm(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, y: 40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", stiffness: 320, damping: 24 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Card className="max-w-md w-full p-6">
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15, duration: 0.3 }}
+                >
+                  <CardTitle className="mb-2">Confirm Logout</CardTitle>
+                  <p className="text-muted mb-6">Are you sure you want to log out of your account?</p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25, duration: 0.3 }}
+                  className="flex gap-3"
+                >
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowLogoutConfirm(false)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={async () => {
+                      await logout();
+                      setShowLogoutConfirm(false);
+                      router.push("/");
+                    }}
+                    className="flex-1"
+                  >
+                    Logout
+                  </Button>
+                </motion.div>
+              </Card>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Subscription Modal */}
       <AnimatePresence>

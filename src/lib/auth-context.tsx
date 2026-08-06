@@ -38,9 +38,8 @@ function mapSupabaseUser(authUser: any, profile?: any): User {
     phone: profile?.phone || authUser.user_metadata?.phone || "",
     country: profile?.country || authUser.user_metadata?.country || "",
     avatar: profile?.avatar || authUser.user_metadata?.avatar || "",
-    // Use the database email_verified column as source of truth, not Supabase's email_confirmed_at
-    // (which is auto-set when enable_confirmations=false)
-    emailVerified: profile?.email_verified ?? false,
+    // Use the database email_verified column as source of truth, then Supabase's email_confirmed_at
+    emailVerified: (profile?.email_verified ?? !!authUser.email_confirmed_at) || false,
     subscribed: profile?.subscribed ?? false,
     createdAt: authUser.created_at || new Date().toISOString(),
     updatedAt: profile?.updated_at || new Date().toISOString(),
@@ -81,7 +80,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("Error fetching user profile:", fetchError.message || fetchError);
     }
 
-    if (profile) return profile;
+    if (profile) {
+      if (!profile.email_verified && currentUser.email_confirmed_at) {
+        const { data: updated } = await supabase
+          .from("users")
+          .update({ email_verified: true, updated_at: new Date().toISOString() })
+          .eq("id", currentUser.id)
+          .select()
+          .single();
+        if (updated) return updated;
+      }
+      return profile;
+    }
 
     // Create a profile for OAuth users or missing profiles
     const name = currentUser.user_metadata?.name || currentUser.user_metadata?.full_name || currentUser.email?.split("@")[0] || "User";
