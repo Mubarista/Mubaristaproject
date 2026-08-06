@@ -136,8 +136,12 @@ export async function completePayment(
     const camelPayment = mapKeysToCamelCase(payment);
     camelPayment.status = "completed";
     camelPayment.paidAt = now;
-    await createInvoiceFromPayment(camelPayment);
+    const invoice = await createInvoiceFromPayment(camelPayment);
+    if (!invoice) {
+      console.error("Invoice was not created for payment:", payment.reference);
+    }
   } catch (err) {
+    console.error("Error creating invoice from completed payment:", err);
   }
 
   // Notify user

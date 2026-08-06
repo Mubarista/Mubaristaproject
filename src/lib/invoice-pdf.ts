@@ -20,7 +20,7 @@ function fmtTime(value?: string | null) {
   return value ? new Date(value).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "—";
 }
 
-export async function buildInvoicePdfBuffer(invoice: Invoice, phone?: string | null): Promise<Uint8Array> {
+export async function buildInvoicePdfBuffer(invoice: Invoice, phone?: string | null, paymentMethod?: string | null): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
   let page = pdfDoc.addPage([612, 792]);
   const { width, height } = page.getSize();
@@ -28,7 +28,9 @@ export async function buildInvoicePdfBuffer(invoice: Invoice, phone?: string | n
   const bold = await pdfDoc.embedFont("Helvetica-Bold");
   const normal = await pdfDoc.embedFont("Helvetica");
 
-  const m = paymentMethodLabels[invoice.method] || (invoice.method ? invoice.method.replace(/_/g, " ") : "—");
+  const m = paymentMethod
+    ? (paymentMethodLabels[paymentMethod] || paymentMethod.replace(/_/g, " "))
+    : "—";
 
   // Header
   page.drawText("MUBARISTA HUB LTD", { x: 50, y: height - 60, size: 22, font: bold, color: rgb(0.07, 0.08, 0.1) });

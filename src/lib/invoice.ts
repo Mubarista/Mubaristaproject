@@ -113,7 +113,7 @@ const paymentMethodLabels: Record<string, string> = {
   paypal: "PayPal",
 };
 
-export async function sendInvoiceEmail(invoice: Invoice) {
+export async function sendInvoiceEmail(invoice: Invoice, paymentMethod?: string) {
   const logoUrl = (await getSiteLogo()) || DEFAULT_LOGO;
 
   const { data: profile } = await supabaseAdmin
@@ -137,7 +137,11 @@ export async function sendInvoiceEmail(invoice: Invoice) {
     )
     .join("");
 
-  return sendEmail({
+  const methodLabel = paymentMethod
+    ? (paymentMethodLabels[paymentMethod] || paymentMethod.replace(/_/g, " "))
+    : "—";
+
+  const result = await sendEmail({
     to: invoice.userEmail,
     subject: `Your MUBARISTA Invoice ${invoice.invoiceNumber}`,
     fromName: "MUBARISTA HUB LTD",
@@ -156,7 +160,7 @@ export async function sendInvoiceEmail(invoice: Invoice) {
       DUE_TIME: formatInvoiceTime(invoice.dueAt),
       PAID_DATE: formatInvoiceDate(invoice.paidAt),
       PAID_TIME: formatInvoiceTime(invoice.paidAt),
-      PAYMENT_METHOD: paymentMethodLabels[invoice.method] || (invoice.method ? invoice.method.replace(/_/g, " ") : "—"),
+      PAYMENT_METHOD: methodLabel,
       INVOICE_STATUS: invoice.status,
       ITEMS: itemsRows,
       INVOICE_SUBTOTAL: formatNumber(invoice.subtotal),
@@ -167,6 +171,14 @@ export async function sendInvoiceEmail(invoice: Invoice) {
       CONTACT_EMAIL: "customer@mubarista.com",
     },
   });
+
+  if (!result.sent) {
+    console.error(`Failed to send invoice email for ${invoice.invoiceNumber}:`, result.error);
+  } else {
+    console.log(`Invoice email sent for ${invoice.invoiceNumber}`);
+  }
+
+  return result;
 }
 
 export async function createInvoiceFromPayment(payment: Payment) {
@@ -194,7 +206,6 @@ export async function createInvoiceFromPayment(payment: Payment) {
     amount: payment.amount,
     currency: payment.currency,
     status: payment.status === "completed" ? "paid" : "pending",
-    method: payment.method,
     issuedAt: now.toISOString(),
     dueAt: formatDate(due),
     paidAt: payment.paidAt,
@@ -217,6 +228,6 @@ export async function createInvoiceFromPayment(payment: Payment) {
   }
 
   const created = mapKeysToCamelCase(data) as Invoice;
-  await sendInvoiceEmail(created);
+  await sendInvoiceEmail(created, payment.method);
   return created;
 }

@@ -37,7 +37,17 @@ export async function GET(
       .eq("id", invoice.userId)
       .maybeSingle();
 
-    const pdfBuffer = await buildInvoicePdfBuffer(invoice, profile?.phone);
+    let paymentMethod: string | null = null;
+    if (invoice.paymentId) {
+      const { data: payment } = await supabaseAdmin
+        .from("payments")
+        .select("method")
+        .eq("id", invoice.paymentId)
+        .maybeSingle();
+      paymentMethod = payment?.method || null;
+    }
+
+    const pdfBuffer = await buildInvoicePdfBuffer(invoice, profile?.phone, paymentMethod);
 
     return new Response(pdfBuffer as any, {
       status: 200,
