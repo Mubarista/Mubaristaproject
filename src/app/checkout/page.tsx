@@ -111,11 +111,60 @@ export default function CheckoutPage() {
     setStep("payment-method");
   };
 
-  const handlePaymentMethodSelect = (method: "card" | "momo") => {
+  async function processMomoPayment(phone: string) {
+    if (!user) {
+      alert("Please log in to complete your purchase.");
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const orderId = generateReference("ORD");
+      const paymentType = cartItems.some((item) => item.type === "tool") ? "tool_purchase" : "book_purchase";
+      const { payment_url } = await initiateRwandaPay({
+        amount: total,
+        tx_ref: orderId,
+        customer: {
+          name: formData.fullName || user.name,
+          email: formData.email || user.email,
+          phone,
+        },
+        currency: "RWF",
+        description: `MUBARISTA order - ${cartItems.map((item) => item.title).join(", ")}`,
+        meta: {
+          type: paymentType,
+          items: cartItems,
+          shippingAddress: formData,
+          userCountry: formData.country,
+          userId: user.id,
+        },
+      });
+
+      window.location.href = payment_url;
+    } catch (error: any) {
+      console.error("RwandaPay checkout failed:", error);
+      alert(error.message || "Failed to start payment. Please try again.");
+      setProcessing(false);
+    }
+  }
+
+  const handlePaymentMethodSelect = async (method: "card" | "momo") => {
     setPaymentMethod(method);
     if (method === "card") {
       setStep("payment");
+      return;
+    }
+
+    const phone = formData.phone || user?.phone || "";
+    const validation = validatePhoneNumber(phone);
+    setMomoPhone(phone);
+
+    if (validation.valid) {
+      setMomoPhoneError(null);
+      await processMomoPayment(phone);
     } else {
+      setMomoPhoneError(null);
+      setMomoStep("phone");
       setStep("momo");
     }
   };
@@ -192,41 +241,7 @@ export default function CheckoutPage() {
       return;
     }
     setMomoPhoneError(null);
-
-    if (!user) {
-      alert("Please log in to complete your purchase.");
-      return;
-    }
-
-    setProcessing(true);
-    try {
-      const orderId = generateReference("ORD");
-      const paymentType = cartItems.some((item) => item.type === "tool") ? "tool_purchase" : "book_purchase";
-      const { payment_url } = await initiateRwandaPay({
-        amount: total,
-        tx_ref: orderId,
-        customer: {
-          name: formData.fullName || user.name,
-          email: formData.email || user.email,
-          phone: momoPhone,
-        },
-        currency: "RWF",
-        description: `MUBARISTA order - ${cartItems.map((item) => item.title).join(", ")}`,
-        meta: {
-          type: paymentType,
-          items: cartItems,
-          shippingAddress: formData,
-          userCountry: formData.country,
-          userId: user.id,
-        },
-      });
-
-      window.location.href = payment_url;
-    } catch (error: any) {
-      console.error("RwandaPay checkout failed:", error);
-      alert(error.message || "Failed to start payment. Please try again.");
-      setProcessing(false);
-    }
+    await processMomoPayment(momoPhone);
   };
 
   const handlePaymentSubmit = async (e: React.FormEvent) => {
