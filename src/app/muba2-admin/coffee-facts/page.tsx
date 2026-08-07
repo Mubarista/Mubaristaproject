@@ -133,7 +133,14 @@ export default function AdminCoffeeFactsPage() {
             <Input value={draft.icon} onChange={(e) => setDraft((d: any) => ({ ...d, icon: e.target.value }))} placeholder="☕" />
           </Field>
           <Field label="Fact" required>
-            <Textarea value={draft.fact} onChange={(e) => setDraft((d: any) => ({ ...d, fact: e.target.value }))} rows={4} />
+            <Textarea value={draft.fact} onChange={(e) => {
+              const value = e.target.value;
+              const words = value.trim().split(/\s+/).filter(Boolean);
+              if (words.length <= 100) setDraft((d: any) => ({ ...d, fact: value }));
+            }} rows={4} />
+            <p className={`text-xs mt-1 ${draft.fact.trim().split(/\s+/).filter(Boolean).length >= 100 ? "text-red-500" : "text-muted"}`}>
+              {draft.fact.trim().split(/\s+/).filter(Boolean).length} / 100 words
+            </p>
           </Field>
         </AdminModal>
       )}
