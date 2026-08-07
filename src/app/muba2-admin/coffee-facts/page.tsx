@@ -135,11 +135,10 @@ export default function AdminCoffeeFactsPage() {
           <Field label="Fact" required>
             <Textarea value={draft.fact} onChange={(e) => {
               const value = e.target.value;
-              const words = value.trim().split(/\s+/).filter(Boolean);
-              if (words.length <= 100) setDraft((d: any) => ({ ...d, fact: value }));
+              if (value.length <= 100) setDraft((d: any) => ({ ...d, fact: value }));
             }} rows={4} />
-            <p className={`text-xs mt-1 ${draft.fact.trim().split(/\s+/).filter(Boolean).length >= 100 ? "text-red-500" : "text-muted"}`}>
-              {draft.fact.trim().split(/\s+/).filter(Boolean).length} / 100 words
+            <p className={`text-xs mt-1 ${draft.fact.length >= 100 ? "text-red-500" : "text-muted"}`}>
+              {draft.fact.length} / 100 characters
             </p>
           </Field>
         </AdminModal>
