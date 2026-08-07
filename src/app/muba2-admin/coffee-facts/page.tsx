@@ -7,7 +7,7 @@ import { AdminModal, Field, Input, Textarea } from "@/components/admin/admin-mod
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { LoadingDots } from "@/components/ui/loading-dots";
 
-const blank = { id: "", fact: "", icon: "☕" };
+const blank = { fact: "", icon: "☕" };
 
 export default function AdminCoffeeFactsPage() {
   const [coffeeFacts, setCoffeeFacts] = useState<any[]>([]);
@@ -34,7 +34,7 @@ export default function AdminCoffeeFactsPage() {
     }
   }
 
-  function openAdd() { const d = { ...blank, id: String(Date.now()) }; setDraft(d); setEditing(d); }
+  function openAdd() { const d = { ...blank, id: "new" }; setDraft(d); setEditing(d); }
   function openEdit(f: any) { setDraft({ ...f }); setEditing(f); }
   function closeModal() { setEditing(null); }
 
@@ -43,10 +43,11 @@ export default function AdminCoffeeFactsPage() {
     try {
       const exists = coffeeFacts.find((f) => f.id === draft.id);
       const method = exists ? "PUT" : "POST";
+      const body = exists ? draft : { fact: draft.fact, icon: draft.icon };
       const res = await fetch("/api/coffee-facts", {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draft),
+        body: JSON.stringify(body),
       });
       if (res.ok) {
         await fetchCoffeeFacts();
