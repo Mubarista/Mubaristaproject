@@ -37,6 +37,7 @@ export default function PaymentSuccessPage() {
     const rawTxRef = params.get("tx_ref");
     const rawReference = params.get("reference");
     const rawTransactionId = params.get("transaction_id");
+    const provider = params.get("provider") || "rwandapay";
 
     setStatus(rawStatus);
     setTxRef(rawTxRef || rawReference);
@@ -64,16 +65,30 @@ export default function PaymentSuccessPage() {
       // Confirm the payment with the server so status/invoice update even if the webhook was missed
       if (refToUse && paymentRecord && paymentRecord.status !== "completed") {
         try {
-          const confirmRes = await fetch("/api/payments/rwandapay/confirm", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              tx_ref: refToUse,
-              status: rawStatus,
-              transaction_id: transactionId,
-            }),
-          });
-          if (confirmRes.ok) {
+          let confirmRes: Response | undefined;
+
+          if (provider === "pesapal") {
+            confirmRes = await fetch("/api/payments/pesapal/confirm", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                reference: refToUse,
+                order_tracking_id: transactionId,
+              }),
+            });
+          } else {
+            confirmRes = await fetch("/api/payments/rwandapay/confirm", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                tx_ref: refToUse,
+                status: rawStatus,
+                transaction_id: transactionId,
+              }),
+            });
+          }
+
+          if (confirmRes?.ok) {
             const res2 = await fetch(`/api/payments?reference=${encodeURIComponent(refToUse)}`);
             if (res2.ok) {
               const data2 = (await res2.json()) as PaymentRecord[];
@@ -210,7 +225,7 @@ export default function PaymentSuccessPage() {
             </div>
             <h1 className="text-2xl font-bold mb-2">Payment not completed</h1>
             <p className="text-muted mb-6">
-              We could not confirm your payment. If you completed the payment on RwandaPay, it may take a few moments to reflect in our system.
+              We could not confirm your payment. If you completed the payment on our payment provider, it may take a few moments to reflect in our system.
             </p>
           </>
         )}

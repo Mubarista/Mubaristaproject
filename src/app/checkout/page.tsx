@@ -9,7 +9,7 @@ import { useCart } from "@/lib/cart-context";
 import { useAuth } from "@/lib/auth-context";
 import { useAdminData } from "@/lib/admin-data-context";
 import { useOrders } from "@/lib/order-context";
-import { initiateRwandaPay, createPayment, generateReference } from "@/lib/payment";
+import { initiateRwandaPay, initiatePesapal, createPayment, generateReference } from "@/lib/payment";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SuccessConfirmation } from "@/components/ui/success-confirmation";
@@ -51,6 +51,7 @@ export default function CheckoutPage() {
   });
 
   const [settings, setSettings] = useState<any>({});
+  const [paymentSettings, setPaymentSettings] = useState<any>({});
   const [tools, setTools] = useState<any[]>([]);
   const [stockError, setStockError] = useState<string | null>(null);
 
@@ -59,6 +60,10 @@ export default function CheckoutPage() {
       .then((res) => res.json())
       .then((data) => setSettings(data || {}))
       .catch((error) => console.error("Error fetching site settings:", error));
+    fetch("/api/payment-settings")
+      .then((res) => res.json())
+      .then((data) => setPaymentSettings(data || {}))
+      .catch((error) => console.error("Error fetching payment settings:", error));
     fetch("/api/tools")
       .then((res) => res.json())
       .then((data) => setTools(data || []))
@@ -148,10 +153,53 @@ export default function CheckoutPage() {
     }
   }
 
+  async function processPesapalPayment() {
+    if (!user) {
+      alert("Please log in to complete your purchase.");
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const orderId = generateReference("ORD");
+      const paymentType = cartItems.some((item) => item.type === "tool") ? "tool_purchase" : "book_purchase";
+      const paymentCurrency = paymentSettings?.currency || "RWF";
+      const { payment_url } = await initiatePesapal({
+        amount: total,
+        reference: orderId,
+        customer: {
+          name: formData.fullName || user.name,
+          email: formData.email || user.email,
+          phone: formData.phone,
+          country: formData.country,
+          address: formData.address,
+          city: formData.city,
+          state: "",
+          zipCode: formData.zipCode,
+        },
+        currency: paymentCurrency,
+        description: `MUBARISTA order - ${cartItems.map((item) => item.title).join(", ")}`.slice(0, 100),
+        meta: {
+          type: paymentType,
+          items: cartItems,
+          shippingAddress: formData,
+          userCountry: formData.country,
+          userId: user.id,
+        },
+      });
+
+      window.location.href = payment_url;
+    } catch (error: any) {
+      console.error("Pesapal checkout failed:", error);
+      alert(error.message || "Failed to start Pesapal payment. Please try again.");
+      setProcessing(false);
+    }
+  }
+
   const handlePaymentMethodSelect = async (method: "card" | "momo") => {
     setPaymentMethod(method);
     if (method === "card") {
-      setStep("payment");
+      await processPesapalPayment();
       return;
     }
 

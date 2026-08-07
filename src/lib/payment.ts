@@ -10,6 +10,24 @@ export interface RwandaPayInitiateInput {
   meta: Record<string, any>;
 }
 
+export interface PesapalInitiateInput {
+  amount: number;
+  reference: string;
+  customer: {
+    name: string;
+    email: string;
+    phone: string;
+    country: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+  };
+  currency: string;
+  description: string;
+  meta: Record<string, any>;
+}
+
 export interface CreatePaymentInput {
   userId?: string;
   userName: string;
@@ -84,4 +102,33 @@ export async function initiateRwandaPay(input: RwandaPayInitiateInput): Promise<
   }
 
   return data as { payment_url: string; reference: string };
+}
+
+export async function initiatePesapal(input: PesapalInitiateInput): Promise<{
+  payment_url: string;
+  reference: string;
+  order_tracking_id: string;
+  currency: string;
+}> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) {
+    throw new Error("Please log in to make a payment.");
+  }
+
+  const response = await fetch("/api/payments/pesapal/initiate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(input),
+  });
+
+  const data = await response.json().catch(() => ({ error: "Invalid response" }));
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to start Pesapal payment");
+  }
+
+  return data as { payment_url: string; reference: string; order_tracking_id: string; currency: string };
 }
