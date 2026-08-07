@@ -17,7 +17,16 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { id, ...rest } = body;
-    const { data, error } = await supabaseAdmin.from("coffee_facts").insert({ ...keysToSnakeCase(rest), created_at: new Date().toISOString() }).select().single();
+    let insertData: any = { ...keysToSnakeCase(rest), created_at: new Date().toISOString() };
+    let { data, error } = await supabaseAdmin.from("coffee_facts").insert(insertData).select().single();
+
+    // Fallback if the icon column doesn't exist yet (migration pending)
+    if (error && (error as any).code === "PGRST204" && (error as any).message?.includes("'icon'")) {
+      const { icon, ...restNoIcon } = rest;
+      insertData = { ...keysToSnakeCase(restNoIcon), created_at: new Date().toISOString() };
+      ({ data, error } = await supabaseAdmin.from("coffee_facts").insert(insertData).select().single());
+    }
+
     if (error) throw error;
     return NextResponse.json(mapKeysToCamelCase(data));
   } catch (error) {
@@ -30,7 +39,15 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json();
     const { id, ...updateData } = body;
-    const { data, error } = await supabaseAdmin.from("coffee_facts").update({ ...keysToSnakeCase(updateData), updated_at: new Date().toISOString() }).eq("id", id).select().single();
+    let updatePayload: any = { ...keysToSnakeCase(updateData), updated_at: new Date().toISOString() };
+    let { data, error } = await supabaseAdmin.from("coffee_facts").update(updatePayload).eq("id", id).select().single();
+
+    if (error && (error as any).code === "PGRST204" && (error as any).message?.includes("'icon'")) {
+      const { icon, ...updateNoIcon } = updateData;
+      updatePayload = { ...keysToSnakeCase(updateNoIcon), updated_at: new Date().toISOString() };
+      ({ data, error } = await supabaseAdmin.from("coffee_facts").update(updatePayload).eq("id", id).select().single());
+    }
+
     if (error) throw error;
     return NextResponse.json(mapKeysToCamelCase(data));
   } catch (error) {

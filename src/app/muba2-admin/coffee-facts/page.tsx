@@ -117,7 +117,7 @@ export default function AdminCoffeeFactsPage() {
           onEdit={openEdit}
           onDelete={del}
           columns={[
-            { label: "Icon", render: (f) => <span className="text-2xl">{f.icon}</span> },
+            { label: "Icon", render: (f) => <span className="text-2xl">{f.icon || "☕"}</span> },
             { label: "Fact", render: (f) => <span className="text-sm line-clamp-2">{f.fact}</span> },
           ]}
         />
