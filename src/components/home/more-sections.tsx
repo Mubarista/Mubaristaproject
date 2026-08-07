@@ -87,6 +87,10 @@ export function CoffeeFactsSection() {
   const [loading, setLoading] = useState(true);
   const [selectedFact, setSelectedFact] = useState<any | null>(null);
   const [viewedFacts, setViewedFacts] = useState<Set<string>>(new Set());
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [direction, setDirection] = useState(0); // -1 for left, 1 for right
 
   useEffect(() => {
     fetchCoffeeFacts();
@@ -109,6 +113,57 @@ export function CoffeeFactsSection() {
   const handleFactClick = (fact: any) => {
     setSelectedFact(fact);
     setViewedFacts((prev) => new Set([...prev, fact.id]));
+    
+    // Auto-advance to next fact after viewing
+    if (coffeeFacts.length > 0) {
+      const nextIndex = (currentIndex + 1) % coffeeFacts.length;
+      setTimeout(() => {
+        setDirection(1);
+        setCurrentIndex(nextIndex);
+      }, 300);
+    }
+  };
+
+  const goToNext = () => {
+    if (coffeeFacts.length === 0) return;
+    setDirection(1);
+    setCurrentIndex((prev) => (prev + 1) % coffeeFacts.length);
+  };
+
+  const goToPrev = () => {
+    if (coffeeFacts.length === 0) return;
+    setDirection(-1);
+    setCurrentIndex((prev) => (prev - 1 + coffeeFacts.length) % coffeeFacts.length);
+  };
+
+  const goToSlide = (index: number) => {
+    setDirection(index > currentIndex ? 1 : -1);
+    setCurrentIndex(index);
+  };
+
+  // Touch handlers for mobile swipe
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe) {
+      goToNext();
+    } else if (isRightSwipe) {
+      goToPrev();
+    }
   };
 
   if (loading) {
@@ -127,6 +182,8 @@ export function CoffeeFactsSection() {
       </section>
     );
   }
+
+  const currentFact = coffeeFacts[currentIndex];
 
   return (
     <section className="section-padding bg-gradient-to-b from-muted-bg/30 via-background to-muted-bg/30 relative overflow-hidden">
@@ -150,7 +207,7 @@ export function CoffeeFactsSection() {
         />
       </div>
 
-      <div className="mx-auto max-w-7xl relative">
+      <div className="mx-auto max-w-4xl relative">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -160,7 +217,7 @@ export function CoffeeFactsSection() {
           <SectionHeading
             eyebrow="Did You Know?"
             title="Coffee Facts"
-            description="Click on any fact card to discover more fascinating details about your favorite beverage."
+            description="Swipe or click to explore fascinating coffee facts. Each fact reveals more when you interact with it."
           />
         </motion.div>
 
@@ -190,100 +247,164 @@ export function CoffeeFactsSection() {
           </motion.div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {coffeeFacts.map((fact, i) => (
-            <motion.div
-              key={fact.id}
-              initial={{ opacity: 0, y: 40, scale: 0.9 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ 
-                delay: i * 0.15,
-                duration: 0.6,
-                type: "spring",
-                stiffness: 100,
-              }}
-              whileHover={{ 
-                y: -8,
-                scale: 1.02,
-                transition: { duration: 0.3 }
-              }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => handleFactClick(fact)}
-              className="group cursor-pointer relative"
-            >
-              {/* Animated gradient border */}
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow via-blue to-yellow rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm" />
-              
-              <div className="relative glass-card rounded-2xl p-6 h-full overflow-hidden">
-                {/* Shimmer effect on hover */}
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
-                  initial={{ x: "-100%" }}
-                  whileHover={{ x: "100%" }}
-                  transition={{ duration: 0.8, ease: "easeInOut" }}
-                />
+        {/* Carousel container */}
+        <div className="relative">
+          {/* Navigation arrows */}
+          {coffeeFacts.length > 1 && (
+            <>
+              <button
+                onClick={goToPrev}
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-12 z-10 w-12 h-12 rounded-full glass-card flex items-center justify-center hover:scale-110 transition-transform"
+                aria-label="Previous fact"
+              >
+                <span className="text-2xl">←</span>
+              </button>
+              <button
+                onClick={goToNext}
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-12 z-10 w-12 h-12 rounded-full glass-card flex items-center justify-center hover:scale-110 transition-transform"
+                aria-label="Next fact"
+              >
+                <span className="text-2xl">→</span>
+              </button>
+            </>
+          )}
 
-                {/* Floating icon with animation */}
+          {/* Carousel slide */}
+          <div
+            className="relative min-h-[400px] flex items-center justify-center"
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+          >
+            <AnimatePresence mode="wait" custom={direction}>
+              {currentFact && (
                 <motion.div
-                  className="relative mb-4"
-                  animate={{
-                    y: [0, -5, 0],
+                  key={currentFact.id}
+                  custom={direction}
+                  initial={{ opacity: 0, x: direction * 300, scale: 0.9 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: direction * -300, scale: 0.9 }}
+                  transition={{ 
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 30,
                   }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: i * 0.2,
-                  }}
+                  className="w-full max-w-2xl"
                 >
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow/20 to-blue/20 group-hover:from-yellow/30 group-hover:to-blue/30 transition-all duration-300">
-                    <motion.span 
-                      className="text-4xl"
-                      whileHover={{ 
-                        rotate: [0, -10, 10, -10, 0],
-                        scale: 1.2,
-                      }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      {fact.icon}
-                    </motion.span>
+                  <div
+                    onClick={() => handleFactClick(currentFact)}
+                    className="group cursor-pointer relative"
+                  >
+                    {/* Animated gradient border */}
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow via-blue to-yellow rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm" />
+                    
+                    <div className="relative glass-card rounded-2xl p-8 md:p-12 overflow-hidden">
+                      {/* Shimmer effect on hover */}
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
+                        initial={{ x: "-100%" }}
+                        whileHover={{ x: "100%" }}
+                        transition={{ duration: 0.8, ease: "easeInOut" }}
+                      />
+
+                      {/* Floating icon with animation */}
+                      <motion.div
+                        className="relative mb-6 flex justify-center"
+                        animate={{
+                          y: [0, -8, 0],
+                        }}
+                        transition={{
+                          duration: 3,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                        }}
+                      >
+                        <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-yellow/20 to-blue/20 group-hover:from-yellow/30 group-hover:to-blue/30 transition-all duration-300">
+                          <motion.span 
+                            className="text-6xl"
+                            whileHover={{ 
+                              rotate: [0, -10, 10, -10, 0],
+                              scale: 1.2,
+                            }}
+                            transition={{ duration: 0.5 }}
+                          >
+                            {currentFact.icon}
+                          </motion.span>
+                        </div>
+                      </motion.div>
+
+                      {/* Fact text */}
+                      <p className="text-lg md:text-xl leading-relaxed text-foreground/90 group-hover:text-foreground transition-colors duration-300 mb-6 text-center">
+                        {currentFact.fact}
+                      </p>
+
+                      {/* Click indicator */}
+                      <div className="flex items-center justify-center gap-4 text-sm text-muted">
+                        <span className="flex items-center gap-2">
+                          <motion.span
+                            animate={{ x: [0, 5, 0] }}
+                            transition={{ duration: 1.5, repeat: Infinity }}
+                          >
+                            👆
+                          </motion.span>
+                          Tap to explore more
+                        </span>
+                        {viewedFacts.has(currentFact.id) && (
+                          <motion.span
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="flex items-center gap-1 text-green"
+                          >
+                            <span className="w-2 h-2 bg-green rounded-full" />
+                            Viewed
+                          </motion.span>
+                        )}
+                      </div>
+
+                      {/* Corner accent */}
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-yellow/10 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    </div>
                   </div>
                 </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
-                {/* Fact text */}
-                <p className="text-sm leading-relaxed text-foreground/90 group-hover:text-foreground transition-colors duration-300 mb-4">
-                  {fact.fact}
-                </p>
-
-                {/* Click indicator */}
-                <div className="flex items-center justify-between text-xs text-muted">
-                  <span className="flex items-center gap-1">
-                    <motion.span
-                      animate={{ x: [0, 3, 0] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                    >
-                      →
-                    </motion.span>
-                    Click to explore
-                  </span>
-                  {viewedFacts.has(fact.id) && (
-                    <motion.span
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="flex items-center gap-1 text-green"
-                    >
-                      <span className="w-2 h-2 bg-green rounded-full" />
-                      Viewed
-                    </motion.span>
+          {/* Navigation dots */}
+          {coffeeFacts.length > 1 && (
+            <div className="flex justify-center gap-2 mt-8">
+              {coffeeFacts.map((fact, index) => (
+                <button
+                  key={fact.id}
+                  onClick={() => goToSlide(index)}
+                  className={cn(
+                    "w-3 h-3 rounded-full transition-all duration-300",
+                    index === currentIndex
+                      ? "bg-gradient-to-r from-yellow to-blue w-8"
+                      : viewedFacts.has(fact.id)
+                      ? "bg-green/50 hover:bg-green"
+                      : "bg-muted hover:bg-muted/80"
                   )}
-                </div>
+                  aria-label={`Go to fact ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
 
-                {/* Corner accent */}
-                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-yellow/10 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              </div>
-            </motion.div>
-          ))}
+          {/* Swipe hint for mobile */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+            className="md:hidden text-center mt-6 text-sm text-muted"
+          >
+            <motion.span
+              animate={{ x: [-10, 10, -10] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              ← Swipe to explore →
+            </motion.span>
+          </motion.div>
         </div>
 
         {/* Fun fact callout */}
