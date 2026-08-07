@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAdminData } from "@/lib/admin-data-context";
 import { SectionHeading } from "@/components/shared/section-heading";
 import Image from "next/image";
@@ -85,6 +85,8 @@ export function SponsorsSection() {
 export function CoffeeFactsSection() {
   const [coffeeFacts, setCoffeeFacts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedFact, setSelectedFact] = useState<any | null>(null);
+  const [viewedFacts, setViewedFacts] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchCoffeeFacts();
@@ -104,6 +106,11 @@ export function CoffeeFactsSection() {
     }
   }
 
+  const handleFactClick = (fact: any) => {
+    setSelectedFact(fact);
+    setViewedFacts((prev) => new Set([...prev, fact.id]));
+  };
+
   if (loading) {
     return (
       <section className="section-padding bg-muted-bg/30">
@@ -122,29 +129,305 @@ export function CoffeeFactsSection() {
   }
 
   return (
-    <section className="section-padding bg-muted-bg/30">
-      <div className="mx-auto max-w-7xl">
-        <SectionHeading
-          eyebrow="Did You Know?"
-          title="Coffee Facts"
-          description="Expand your coffee knowledge with these fascinating facts."
+    <section className="section-padding bg-gradient-to-b from-muted-bg/30 via-background to-muted-bg/30 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.1, 0.2, 0.1],
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-20 left-10 w-64 h-64 bg-yellow/10 rounded-full blur-3xl"
         />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <motion.div
+          animate={{
+            scale: [1.2, 1, 1.2],
+            opacity: [0.1, 0.15, 0.1],
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-20 right-10 w-80 h-80 bg-blue/10 rounded-full blur-3xl"
+        />
+      </div>
+
+      <div className="mx-auto max-w-7xl relative">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <SectionHeading
+            eyebrow="Did You Know?"
+            title="Coffee Facts"
+            description="Click on any fact card to discover more fascinating details about your favorite beverage."
+          />
+        </motion.div>
+
+        {/* Progress indicator */}
+        {coffeeFacts.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+            className="flex items-center justify-center gap-3 mb-8"
+          >
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow/10 to-blue/10 border border-white/10">
+              <span className="text-sm text-muted">Explored:</span>
+              <span className="font-bold text-foreground">
+                {viewedFacts.size}/{coffeeFacts.length}
+              </span>
+              <div className="w-24 h-2 bg-muted-bg rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-yellow to-blue"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(viewedFacts.size / coffeeFacts.length) * 100}%` }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {coffeeFacts.map((fact, i) => (
             <motion.div
               key={fact.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="glass-card rounded-2xl p-6 text-center"
+              initial={{ opacity: 0, y: 40, scale: 0.9 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ 
+                delay: i * 0.15,
+                duration: 0.6,
+                type: "spring",
+                stiffness: 100,
+              }}
+              whileHover={{ 
+                y: -8,
+                scale: 1.02,
+                transition: { duration: 0.3 }
+              }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleFactClick(fact)}
+              className="group cursor-pointer relative"
             >
-              <span className="text-4xl mb-4 block">{fact.icon}</span>
-              <p className="text-sm leading-relaxed">{fact.fact}</p>
+              {/* Animated gradient border */}
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow via-blue to-yellow rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm" />
+              
+              <div className="relative glass-card rounded-2xl p-6 h-full overflow-hidden">
+                {/* Shimmer effect on hover */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
+                  initial={{ x: "-100%" }}
+                  whileHover={{ x: "100%" }}
+                  transition={{ duration: 0.8, ease: "easeInOut" }}
+                />
+
+                {/* Floating icon with animation */}
+                <motion.div
+                  className="relative mb-4"
+                  animate={{
+                    y: [0, -5, 0],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: i * 0.2,
+                  }}
+                >
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow/20 to-blue/20 group-hover:from-yellow/30 group-hover:to-blue/30 transition-all duration-300">
+                    <motion.span 
+                      className="text-4xl"
+                      whileHover={{ 
+                        rotate: [0, -10, 10, -10, 0],
+                        scale: 1.2,
+                      }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      {fact.icon}
+                    </motion.span>
+                  </div>
+                </motion.div>
+
+                {/* Fact text */}
+                <p className="text-sm leading-relaxed text-foreground/90 group-hover:text-foreground transition-colors duration-300 mb-4">
+                  {fact.fact}
+                </p>
+
+                {/* Click indicator */}
+                <div className="flex items-center justify-between text-xs text-muted">
+                  <span className="flex items-center gap-1">
+                    <motion.span
+                      animate={{ x: [0, 3, 0] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                      →
+                    </motion.span>
+                    Click to explore
+                  </span>
+                  {viewedFacts.has(fact.id) && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="flex items-center gap-1 text-green"
+                    >
+                      <span className="w-2 h-2 bg-green rounded-full" />
+                      Viewed
+                    </motion.span>
+                  )}
+                </div>
+
+                {/* Corner accent */}
+                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-yellow/10 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              </div>
             </motion.div>
           ))}
         </div>
+
+        {/* Fun fact callout */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.5, duration: 0.6 }}
+          className="mt-12 text-center"
+        >
+          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-yellow/10 via-blue/10 to-yellow/10 border border-white/10">
+            <motion.span
+              animate={{ rotate: [0, 10, -10, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="text-2xl"
+            >
+              ☕
+            </motion.span>
+            <span className="text-sm text-muted">
+              <span className="font-semibold text-foreground">{coffeeFacts.length}</span> fascinating facts to discover
+            </span>
+          </div>
+        </motion.div>
       </div>
+
+      {/* Expanded fact modal */}
+      <AnimatePresence>
+        {selectedFact && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedFact(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-2xl w-full"
+            >
+              {/* Animated gradient border */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-yellow via-blue to-yellow rounded-3xl opacity-75 blur animate-gradient-rotate" />
+              
+              <div className="relative glass-card rounded-3xl p-8 overflow-hidden">
+                {/* Close button */}
+                <button
+                  onClick={() => setSelectedFact(null)}
+                  className="absolute top-4 right-4 w-10 h-10 rounded-full bg-muted-bg/50 hover:bg-muted-bg flex items-center justify-center transition-colors z-10"
+                >
+                  <span className="text-xl">×</span>
+                </button>
+
+                {/* Icon with animation */}
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
+                  className="flex justify-center mb-6"
+                >
+                  <div className="relative">
+                    <motion.div
+                      animate={{
+                        scale: [1, 1.1, 1],
+                        rotate: [0, 5, -5, 0],
+                      }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                      className="w-24 h-24 rounded-3xl bg-gradient-to-br from-yellow/30 to-blue/30 flex items-center justify-center"
+                    >
+                      <span className="text-6xl">{selectedFact.icon}</span>
+                    </motion.div>
+                    
+                    {/* Sparkles */}
+                    {[...Array(6)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className="absolute w-2 h-2 bg-yellow rounded-full"
+                        style={{
+                          top: `${Math.random() * 100}%`,
+                          left: `${Math.random() * 100}%`,
+                        }}
+                        animate={{
+                          scale: [0, 1, 0],
+                          opacity: [0, 1, 0],
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          delay: i * 0.3,
+                        }}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+
+                {/* Content */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-center"
+                >
+                  <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-yellow to-blue bg-clip-text text-transparent">
+                    Did You Know?
+                  </h3>
+                  <p className="text-lg leading-relaxed text-foreground/90 mb-6">
+                    {selectedFact.fact}
+                  </p>
+
+                  {/* Fun stats */}
+                  <div className="flex items-center justify-center gap-6 text-sm text-muted">
+                    <div className="flex items-center gap-2">
+                      <span className="text-yellow">★</span>
+                      <span>Coffee Fact</span>
+                    </div>
+                    <div className="w-px h-4 bg-white/10" />
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue">ℹ</span>
+                      <span>Expand your knowledge</span>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Action button */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="mt-8 flex justify-center"
+                >
+                  <button
+                    onClick={() => setSelectedFact(null)}
+                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-yellow to-blue text-white font-semibold hover:shadow-lg hover:shadow-yellow/25 transition-all duration-300 hover:scale-105"
+                  >
+                    Explore More Facts
+                  </button>
+                </motion.div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
