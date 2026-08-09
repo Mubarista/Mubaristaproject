@@ -239,7 +239,7 @@ export function CoffeeFactsSection() {
   const currentFact = coffeeFacts[currentIndex];
 
   return (
-    <section className="section-padding bg-gradient-to-b from-muted-bg/30 via-background to-muted-bg/30 relative overflow-hidden">
+    <section id="facts" className="section-padding bg-gradient-to-b from-muted-bg/30 via-background to-muted-bg/30 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 pointer-events-none">
         <motion.div

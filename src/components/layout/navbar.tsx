@@ -265,6 +265,14 @@ export function Navbar() {
                     {link.label}
                   </Link>
                 ))}
+                {!user && (
+                  <Link
+                    href="/#facts"
+                    className="block px-3 py-2 text-sm rounded-lg hover:bg-white/5 transition-colors"
+                  >
+                    Coffee Facts
+                  </Link>
+                )}
               </div>
             </div>
 
@@ -297,6 +305,15 @@ export function Navbar() {
                     {link.label}
                   </Link>
                 ))}
+                {!user && (
+                  <Link
+                    href="/#facts"
+                    onClick={() => setIsOpen(false)}
+                    className="block px-4 py-3 rounded-xl hover:bg-white/5 transition-colors"
+                  >
+                    Coffee Facts
+                  </Link>
+                )}
                 <div className="pt-4 flex flex-col gap-2 border-t border-white/10">
                   {!user ? (
                     <>
