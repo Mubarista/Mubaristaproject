@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Play, Trophy, Users, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LoadingDots } from "@/components/ui/loading-dots";
@@ -48,6 +49,7 @@ export function HeroSection() {
   const [imageError, setImageError] = useState(false);
 
   const { user, isLoading: isAuthLoading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     fetchHeroData();
@@ -223,6 +225,8 @@ export function HeroSection() {
                 whileTap={{ scale: 0.95 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 className="rounded-2xl p-6 text-center text-white bg-black/50 border border-white/10 backdrop-blur-2xl hover:bg-white/10 transition-colors cursor-pointer"
+                onClick={() => stat.label === "Live Competitions" && router.push("/competitions")}
+                role={stat.label === "Live Competitions" ? "button" : undefined}
               >
                 <stat.icon className={`h-6 w-6 mx-auto mb-2 ${stat.color}`} />
                 <div className="text-3xl font-bold mb-1 text-white">
