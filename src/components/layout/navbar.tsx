@@ -136,6 +136,14 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
+            {!user && (
+              <Link
+                href="/#facts"
+                className="px-3 py-2 text-sm text-muted hover:text-foreground transition-colors rounded-lg hover:bg-white/5"
+              >
+                Coffee Facts
+              </Link>
+            )}
           </div>
 
           <div className="flex items-center gap-1">
@@ -265,14 +273,6 @@ export function Navbar() {
                     {link.label}
                   </Link>
                 ))}
-                {!user && (
-                  <Link
-                    href="/#facts"
-                    className="block px-3 py-2 text-sm rounded-lg hover:bg-white/5 transition-colors"
-                  >
-                    Coffee Facts
-                  </Link>
-                )}
               </div>
             </div>
 
