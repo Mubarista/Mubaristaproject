@@ -252,8 +252,8 @@ export function Navbar() {
             )}
 
             <div className="hidden lg:block relative group">
-              <button className="flex items-center gap-1 px-3 py-2 text-sm text-muted hover:text-foreground transition-colors rounded-lg hover:bg-white/5">
-                More <ChevronDown className="h-3 w-3" />
+              <button className="p-2 rounded-xl text-muted hover:text-foreground hover:bg-white/5 transition-colors" aria-label="More">
+                <Menu className="h-5 w-5" />
               </button>
               <div className="absolute top-full right-0 mt-2 w-48 glass-card rounded-xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                 {navLinks.slice(6).map((link) => (
