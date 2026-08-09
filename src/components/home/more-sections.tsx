@@ -16,6 +16,7 @@ interface Sponsor {
   id: string;
   name: string;
   logo: string;
+  logoImage?: string;
   active: boolean;
   order: number;
   createdAt: string;
@@ -72,9 +73,13 @@ export function SponsorsSection() {
               transition={{ delay: i * 0.08 }}
               className="flex items-center gap-2 px-5 py-3 rounded-xl glass-card hover:border-blue/30 transition-all cursor-default"
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue/10 text-blue text-xs font-bold">
-                {sponsor.logo}
-              </span>
+              {sponsor.logoImage ? (
+                <img src={sponsor.logoImage} alt={sponsor.name} className="h-8 w-8 rounded-lg object-cover" />
+              ) : (
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue/10 text-blue text-xs font-bold">
+                  {sponsor.logo}
+                </span>
+              )}
               <span className="text-sm font-semibold text-muted">{sponsor.name}</span>
             </motion.div>
           ))}

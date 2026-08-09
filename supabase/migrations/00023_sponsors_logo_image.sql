@@ -1,0 +1,1 @@
+ALTER TABLE sponsors ADD COLUMN IF NOT EXISTS logo_image TEXT;

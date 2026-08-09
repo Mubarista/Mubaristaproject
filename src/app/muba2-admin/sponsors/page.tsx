@@ -13,13 +13,14 @@ interface Sponsor {
   id: string;
   name: string;
   logo: string;
+  logoImage?: string;
   active: boolean;
   order: number;
   createdAt: string;
   updatedAt: string;
 }
 
-const blank: Sponsor = { id: "", name: "", logo: "", active: true, order: 0, createdAt: "", updatedAt: "" };
+const blank: Sponsor = { id: "", name: "", logo: "", logoImage: "", active: true, order: 0, createdAt: "", updatedAt: "" };
 
 export default function AdminSponsorsPage() {
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
@@ -29,6 +30,8 @@ export default function AdminSponsorsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; sponsor: Sponsor | null }>({ show: false, sponsor: null });
   const [notification, setNotification] = useState<{ show: boolean; message: string; type: "success" | "error" }>({ show: false, message: "", type: "success" });
   const [search, setSearch] = useState("");
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSponsors();
@@ -52,6 +55,41 @@ export default function AdminSponsorsPage() {
   function openEdit(s: Sponsor) { setDraft({ ...s }); setEditing(s); }
   function closeModal() { setEditing(null); }
 
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLogoError(null);
+
+    if (!file.type.startsWith("image/")) {
+      setLogoError("Only image files are allowed");
+      return;
+    }
+
+    const MAX_SIZE = 500 * 1024;
+    if (file.size > MAX_SIZE) {
+      setLogoError(`Logo must not exceed 500KB (yours is ${(file.size / 1024).toFixed(1)}KB)`);
+      return;
+    }
+
+    setLogoUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/sponsors/upload-logo", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Logo upload failed");
+      setDraft((d) => ({ ...d, logoImage: data.url }));
+    } catch (error: any) {
+      setLogoError(error.message || "Failed to upload logo");
+    } finally {
+      setLogoUploading(false);
+    }
+  }
+
   async function save() {
     try {
       if (editing!.id) {
@@ -59,7 +97,7 @@ export default function AdminSponsorsPage() {
         const response = await fetch(`/api/sponsors/${editing!.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: draft.name, logo: draft.logo }),
+          body: JSON.stringify({ name: draft.name, logo: draft.logo, logoImage: draft.logoImage }),
         });
         if (response.ok) {
           setNotification({ show: true, message: "Sponsor updated successfully", type: "success" });
@@ -70,7 +108,7 @@ export default function AdminSponsorsPage() {
         const response = await fetch("/api/sponsors", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: draft.name, logo: draft.logo }),
+          body: JSON.stringify({ name: draft.name, logo: draft.logo, logoImage: draft.logoImage }),
         });
         if (response.ok) {
           setNotification({ show: true, message: "Sponsor added successfully", type: "success" });
@@ -203,12 +241,15 @@ export default function AdminSponsorsPage() {
           onDelete={del}
           columns={[
             {
-              label: "Logo Badge",
-              render: (s) => (
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue/10 text-blue text-xs font-bold">
-                  {s.logo}
-                </span>
-              ),
+              label: "Logo",
+              render: (s) =>
+                s.logoImage ? (
+                  <img src={s.logoImage} alt={s.name} className="h-8 w-8 rounded-lg object-cover" />
+                ) : (
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue/10 text-blue text-xs font-bold">
+                    {s.logo}
+                  </span>
+                ),
             },
             { label: "Brand Name", render: (s) => <span className="font-medium">{s.name}</span> },
           ]}
@@ -224,7 +265,26 @@ export default function AdminSponsorsPage() {
           <Field label="Brand Name" required>
             <Input value={draft.name} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} />
           </Field>
-          <Field label="Logo Abbreviation (2–3 chars)">
+          <Field label="Logo Image">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleLogoUpload}
+              className="w-full rounded-xl bg-muted-bg border border-white/10 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue file:mr-4 file:rounded file:border-0 file:bg-blue file:px-3 file:py-1 file:text-xs file:text-white"
+            />
+            {logoUploading && (
+              <div className="mt-2">
+                <LoadingDots />
+              </div>
+            )}
+            {logoError && (
+              <p className="text-xs text-red mt-1">{logoError}</p>
+            )}
+            {draft.logoImage && (
+              <img src={draft.logoImage} alt="Logo preview" className="mt-2 w-16 h-16 rounded-lg object-cover" />
+            )}
+          </Field>
+          <Field label="Logo Abbreviation (2–3 chars) fallback">
             <Input value={draft.logo} onChange={(e) => setDraft((d) => ({ ...d, logo: e.target.value }))} maxLength={3} placeholder="LM" />
           </Field>
         </AdminModal>
