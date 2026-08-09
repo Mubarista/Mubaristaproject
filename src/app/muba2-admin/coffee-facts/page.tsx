@@ -16,6 +16,8 @@ export default function AdminCoffeeFactsPage() {
   const [deleting, setDeleting] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -37,6 +39,41 @@ export default function AdminCoffeeFactsPage() {
   function openAdd() { const d = { ...blank, id: "new" }; setDraft(d); setEditing(d); }
   function openEdit(f: any) { setDraft({ ...f }); setEditing(f); }
   function closeModal() { setEditing(null); }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImageError(null);
+
+    if (!file.type.startsWith("image/")) {
+      setImageError("Only image files are allowed");
+      return;
+    }
+
+    const MAX_SIZE = 200 * 1024;
+    if (file.size > MAX_SIZE) {
+      setImageError(`Image must not exceed 200KB (yours is ${(file.size / 1024).toFixed(1)}KB)`);
+      return;
+    }
+
+    setImageUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/coffee-facts/upload-image", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Image upload failed");
+      setDraft((d: any) => ({ ...d, image: data.url }));
+    } catch (error: any) {
+      setImageError(error.message || "Failed to upload image");
+    } finally {
+      setImageUploading(false);
+    }
+  }
 
   async function save() {
     setSaving(true);
@@ -135,8 +172,21 @@ export default function AdminCoffeeFactsPage() {
           onClose={closeModal}
           onSave={save}
         >
-          <Field label="Image URL">
-            <Input value={draft.image} onChange={(e) => setDraft((d: any) => ({ ...d, image: e.target.value }))} placeholder="https://example.com/coffee.jpg" />
+          <Field label="Image">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="w-full rounded-xl bg-muted-bg border border-white/10 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue file:mr-4 file:rounded file:border-0 file:bg-blue file:px-3 file:py-1 file:text-xs file:text-white"
+            />
+            {imageUploading && (
+              <div className="mt-2">
+                <LoadingDots />
+              </div>
+            )}
+            {imageError && (
+              <p className="text-xs text-red mt-1">{imageError}</p>
+            )}
             {draft.image && (
               <img src={draft.image} alt="Preview" className="mt-2 w-16 h-16 rounded-lg object-cover" />
             )}
