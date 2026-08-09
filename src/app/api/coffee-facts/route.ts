@@ -17,14 +17,26 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { id, ...rest } = body;
-    let insertData: any = { ...keysToSnakeCase(rest), created_at: new Date().toISOString() };
-    let { data, error } = await supabaseAdmin.from("coffee_facts").insert(insertData).select().single();
+    let fields = rest;
+    let { data, error } = { data: null as any, error: null as any };
 
-    // Fallback if the icon column doesn't exist yet (migration pending)
-    if (error && (error as any).code === "PGRST204" && (error as any).message?.includes("'icon'")) {
-      const { icon, ...restNoIcon } = rest;
-      insertData = { ...keysToSnakeCase(restNoIcon), created_at: new Date().toISOString() };
+    for (let i = 0; i < 5; i++) {
+      const insertData: any = { ...keysToSnakeCase(fields), created_at: new Date().toISOString() };
       ({ data, error } = await supabaseAdmin.from("coffee_facts").insert(insertData).select().single());
+
+      if (!error) break;
+
+      if (error && (error as any).code === "PGRST204") {
+        const match = (error as any).message?.match(/Could not find the '([^']+)' column of 'coffee_facts' in the schema cache/);
+        const missingColumn = match ? match[1] : null;
+        if (missingColumn && (fields as any)[missingColumn] !== undefined) {
+          const { [missingColumn]: _, ...restWithout } = fields;
+          fields = restWithout;
+          continue;
+        }
+      }
+
+      break;
     }
 
     if (error) throw error;
@@ -39,13 +51,26 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json();
     const { id, ...updateData } = body;
-    let updatePayload: any = { ...keysToSnakeCase(updateData), updated_at: new Date().toISOString() };
-    let { data, error } = await supabaseAdmin.from("coffee_facts").update(updatePayload).eq("id", id).select().single();
+    let fields = updateData;
+    let { data, error } = { data: null as any, error: null as any };
 
-    if (error && (error as any).code === "PGRST204" && (error as any).message?.includes("'icon'")) {
-      const { icon, ...updateNoIcon } = updateData;
-      updatePayload = { ...keysToSnakeCase(updateNoIcon), updated_at: new Date().toISOString() };
+    for (let i = 0; i < 5; i++) {
+      const updatePayload: any = { ...keysToSnakeCase(fields), updated_at: new Date().toISOString() };
       ({ data, error } = await supabaseAdmin.from("coffee_facts").update(updatePayload).eq("id", id).select().single());
+
+      if (!error) break;
+
+      if (error && (error as any).code === "PGRST204") {
+        const match = (error as any).message?.match(/Could not find the '([^']+)' column of 'coffee_facts' in the schema cache/);
+        const missingColumn = match ? match[1] : null;
+        if (missingColumn && (fields as any)[missingColumn] !== undefined) {
+          const { [missingColumn]: _, ...restWithout } = fields;
+          fields = restWithout;
+          continue;
+        }
+      }
+
+      break;
     }
 
     if (error) throw error;

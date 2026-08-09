@@ -7,7 +7,7 @@ import { AdminModal, Field, Input, Textarea } from "@/components/admin/admin-mod
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { LoadingDots } from "@/components/ui/loading-dots";
 
-const blank = { fact: "", icon: "☕" };
+const blank = { fact: "", icon: "☕", image: "" };
 
 export default function AdminCoffeeFactsPage() {
   const [coffeeFacts, setCoffeeFacts] = useState<any[]>([]);
@@ -43,7 +43,7 @@ export default function AdminCoffeeFactsPage() {
     try {
       const exists = coffeeFacts.find((f) => f.id === draft.id);
       const method = exists ? "PUT" : "POST";
-      const body = exists ? draft : { fact: draft.fact, icon: draft.icon };
+      const body = exists ? draft : { fact: draft.fact, icon: draft.icon, image: draft.image };
       const res = await fetch("/api/coffee-facts", {
         method,
         headers: { "Content-Type": "application/json" },
@@ -117,7 +117,13 @@ export default function AdminCoffeeFactsPage() {
           onEdit={openEdit}
           onDelete={del}
           columns={[
-            { label: "Icon", render: (f) => <span className="text-2xl">{f.icon || "☕"}</span> },
+            { label: "Image / Icon", render: (f) =>
+              f.image ? (
+                <img src={f.image} alt="" className="w-10 h-10 rounded-lg object-cover" />
+              ) : (
+                <span className="text-2xl">{f.icon || "☕"}</span>
+              )
+            },
             { label: "Fact", render: (f) => <span className="text-sm line-clamp-2">{f.fact}</span> },
           ]}
         />
@@ -129,6 +135,12 @@ export default function AdminCoffeeFactsPage() {
           onClose={closeModal}
           onSave={save}
         >
+          <Field label="Image URL">
+            <Input value={draft.image} onChange={(e) => setDraft((d: any) => ({ ...d, image: e.target.value }))} placeholder="https://example.com/coffee.jpg" />
+            {draft.image && (
+              <img src={draft.image} alt="Preview" className="mt-2 w-16 h-16 rounded-lg object-cover" />
+            )}
+          </Field>
           <Field label="Emoji Icon">
             <Input value={draft.icon} onChange={(e) => setDraft((d: any) => ({ ...d, icon: e.target.value }))} placeholder="☕" />
           </Field>

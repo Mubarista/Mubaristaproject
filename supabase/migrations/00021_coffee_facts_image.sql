@@ -1,0 +1,1 @@
+ALTER TABLE coffee_facts ADD COLUMN IF NOT EXISTS image TEXT;

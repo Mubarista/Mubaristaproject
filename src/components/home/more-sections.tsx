@@ -320,16 +320,24 @@ export function CoffeeFactsSection() {
                         }}
                       >
                         <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-yellow/20 to-blue/20 group-hover:from-yellow/30 group-hover:to-blue/30 transition-all duration-300">
-                          <motion.span 
-                            className="text-6xl"
-                            whileHover={{ 
-                              rotate: [0, -10, 10, -10, 0],
-                              scale: 1.2,
-                            }}
-                            transition={{ duration: 0.5 }}
-                          >
-                            {currentFact.icon}
-                          </motion.span>
+                          {currentFact.image ? (
+                            <img
+                              src={currentFact.image}
+                              alt="Coffee fact"
+                              className="w-20 h-20 object-cover rounded-2xl"
+                            />
+                          ) : (
+                            <motion.span
+                              className="text-6xl"
+                              whileHover={{
+                                rotate: [0, -10, 10, -10, 0],
+                                scale: 1.2,
+                              }}
+                              transition={{ duration: 0.5 }}
+                            >
+                              {currentFact.icon}
+                            </motion.span>
+                          )}
                         </div>
                       </motion.div>
 
