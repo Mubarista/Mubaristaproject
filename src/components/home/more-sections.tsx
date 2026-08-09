@@ -9,6 +9,8 @@ import { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/lib/supabase";
 
 interface Sponsor {
   id: string;
@@ -91,10 +93,17 @@ export function CoffeeFactsSection() {
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [direction, setDirection] = useState(0); // -1 for left, 1 for right
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchCoffeeFacts();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchViewedFacts();
+    }
+  }, [user]);
 
   async function fetchCoffeeFacts() {
     try {
@@ -110,10 +119,49 @@ export function CoffeeFactsSection() {
     }
   }
 
-  const handleFactClick = (fact: any) => {
+  async function fetchViewedFacts() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) return;
+
+      const response = await fetch("/api/coffee-facts/views", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data.viewedFactIds)) {
+          setViewedFacts(new Set(data.viewedFactIds));
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching viewed coffee facts:", error);
+    }
+  }
+
+  const handleFactClick = async (fact: any) => {
     setSelectedFact(fact);
     setViewedFacts((prev) => new Set([...prev, fact.id]));
-    
+
+    if (user) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (token) {
+          await fetch("/api/coffee-facts/views", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ factId: fact.id }),
+          });
+        }
+      } catch (error) {
+        console.error("Error tracking coffee fact view:", error);
+      }
+    }
+
     // Auto-advance to next fact after viewing
     if (coffeeFacts.length > 0) {
       const nextIndex = (currentIndex + 1) % coffeeFacts.length;
