@@ -136,22 +136,6 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <div className="relative group lg:ml-auto">
-              <button className="flex items-center gap-1 px-3 py-2 text-sm text-muted hover:text-foreground transition-colors rounded-lg hover:bg-white/5">
-                More <ChevronDown className="h-3 w-3" />
-              </button>
-              <div className="absolute top-full right-0 mt-2 w-48 glass-card rounded-xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                {navLinks.slice(6).map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="block px-3 py-2 text-sm rounded-lg hover:bg-white/5 transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
           </div>
 
           <div className="flex items-center gap-1">
@@ -266,6 +250,23 @@ export function Navbar() {
                 </Link>
               </div>
             )}
+
+            <div className="hidden lg:block relative group">
+              <button className="flex items-center gap-1 px-3 py-2 text-sm text-muted hover:text-foreground transition-colors rounded-lg hover:bg-white/5">
+                More <ChevronDown className="h-3 w-3" />
+              </button>
+              <div className="absolute top-full right-0 mt-2 w-48 glass-card rounded-xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                {navLinks.slice(6).map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="block px-3 py-2 text-sm rounded-lg hover:bg-white/5 transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
 
             <button
               className="lg:hidden p-2 rounded-xl hover:bg-white/5"
