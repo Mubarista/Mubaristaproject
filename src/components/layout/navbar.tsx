@@ -251,7 +251,7 @@ export function Navbar() {
               </div>
             )}
 
-            <div className="hidden lg:block relative group">
+            <div className={cn("hidden lg:block relative group", !user && "lg:order-first")}>
               <button className="p-2 rounded-xl text-muted hover:text-foreground hover:bg-white/5 transition-colors" aria-label="More">
                 <Menu className="h-5 w-5" />
               </button>
