@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [logoLoading, setLogoLoading] = useState(true);
   const [showOtp, setShowOtp] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const { login, loginWithGoogle } = useAuth();
+  const { user, isLoading, login, loginWithGoogle } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -30,6 +30,12 @@ export default function LoginPage() {
       })
       .catch(() => setLogoLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (user && !isLoading) {
+      router.push("/dashboard");
+    }
+  }, [user, isLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

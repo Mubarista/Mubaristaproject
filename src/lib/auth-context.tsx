@@ -214,11 +214,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginWithGoogle = useCallback(async () => {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: `${siteUrl.replace(/\/$/, "")}/dashboard` },
     });
     if (error) throw error;
+    if (data?.url) {
+      window.location.assign(data.url);
+    } else {
+      throw new Error("Google sign-in URL not returned");
+    }
   }, []);
 
   const register = useCallback(async (email: string, password: string, name: string, phone: string, country: string) => {
