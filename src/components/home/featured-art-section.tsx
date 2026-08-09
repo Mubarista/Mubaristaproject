@@ -39,6 +39,7 @@ export function FeaturedArtSection() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentText, setCommentText] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
 
   const selectedArt = latteArt.find((a) => a.id === selectedArtId) || null;
 
@@ -72,12 +73,30 @@ export function FeaturedArtSection() {
       if (response.ok) {
         const data = await response.json();
         setLatteArt(data);
+        await fetchCommentCounts(data.map((art: LatteArt) => art.id));
       }
     } catch (error) {
       console.error("Error fetching latte art:", error);
     } finally {
       setLoading(false);
     }
+  }
+
+  async function fetchCommentCounts(artIds: string[]) {
+    if (artIds.length === 0) return;
+    const { data, error } = await supabase
+      .from("latte_art_comments")
+      .select("latte_art_id")
+      .in("latte_art_id", artIds);
+    if (error) {
+      console.error("Error fetching comment counts:", error);
+      return;
+    }
+    const counts: Record<string, number> = {};
+    (data || []).forEach((row: any) => {
+      counts[row.latte_art_id] = (counts[row.latte_art_id] || 0) + 1;
+    });
+    setCommentCounts(counts);
   }
 
   const handleLike = async (artId: string) => {
@@ -227,7 +246,7 @@ export function FeaturedArtSection() {
                       className="flex items-center gap-1 text-sm text-white/70 hover:text-white transition-colors"
                     >
                       <MessageCircle className="h-4 w-4" />
-                      Comment
+                      {commentCounts[art.id] || 0} comments
                     </button>
                   </div>
                 </div>
