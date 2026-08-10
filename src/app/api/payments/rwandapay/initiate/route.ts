@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
-const RWANDAPAY_BASE_URL = "https://pay.rwandapay.rw/api/v1";
+const RWANDAPAY_BASE_URL = process.env.RWANDAPAY_BASE_URL || "https://api.rwandapay.rw/api/v1";
 
 function getRwandaPayKeys() {
   const publicKey = process.env.RWANDAPAY_PUBLIC_KEY;
