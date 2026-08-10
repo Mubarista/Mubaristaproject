@@ -93,11 +93,14 @@ export async function POST(request: Request) {
     // body correctly instead of coercing it to a UTF-8 string.
     const bucketName = type === "pdf" ? "Documents" : type === "video" ? "Videos" : "Images";
 
-    if (type === "video") {
-      const { data: buckets } = await supabaseAdmin.storage.listBuckets();
-      const bucketExists = buckets?.some((b) => b.name === "Videos");
-      if (!bucketExists) {
-        await supabaseAdmin.storage.createBucket("Videos", { public: true });
+    // Ensure the target storage bucket exists
+    const { data: buckets } = await supabaseAdmin.storage.listBuckets();
+    const bucketExists = buckets?.some((b) => b.name === bucketName);
+    if (!bucketExists) {
+      const { error: createError } = await supabaseAdmin.storage.createBucket(bucketName, { public: true });
+      if (createError) {
+        console.error("Failed to create storage bucket:", createError);
+        return NextResponse.json({ error: "Failed to create storage bucket", details: createError.message }, { status: 500 });
       }
     }
 
