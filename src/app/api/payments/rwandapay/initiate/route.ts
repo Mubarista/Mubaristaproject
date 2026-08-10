@@ -7,16 +7,8 @@ const RWANDAPAY_BASE_URL = process.env.RWANDAPAY_BASE_URL || "https://api.rwanda
 function getRwandaPayKeys() {
   const publicKey = process.env.RWANDAPAY_PUBLIC_KEY;
   const secretKey = process.env.RWANDAPAY_SECRET_KEY;
-  if (publicKey && secretKey) {
-    return { publicKey, secretKey };
-  }
-
-  // Fallback test keys for local / unconfigured environments.
-  // Replace these with production keys in your hosting dashboard.
-  return {
-    publicKey: "pk_test_Y2jSD7Vt1F0JVzOLtTOgOoaM",
-    secretKey: "sk_test_dc0HaOl41ZqW1FJsFDroX7i3fgySXKSScGklumoscRtxNj7e",
-  };
+  if (!publicKey || !secretKey) return null;
+  return { publicKey, secretKey };
 }
 
 export async function POST(req: NextRequest) {
@@ -46,7 +38,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Customer name, email and phone are required" }, { status: 400 });
     }
 
-    const { publicKey, secretKey } = getRwandaPayKeys();
+    const keys = getRwandaPayKeys();
+    if (!keys) {
+      return NextResponse.json(
+        { error: "RwandaPay API keys are not configured" },
+        { status: 500 }
+      );
+    }
+    const { publicKey, secretKey } = keys;
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || req.nextUrl.origin;
     const redirectUrl = `${siteUrl}/payment/success?tx_ref=${encodeURIComponent(tx_ref)}`;
     const webhookUrl = `${siteUrl}/api/payments/rwandapay/webhook`;
