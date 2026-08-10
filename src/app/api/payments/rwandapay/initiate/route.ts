@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { randomUUID } from "crypto";
 
 const RWANDAPAY_BASE_URL = process.env.RWANDAPAY_BASE_URL || "https://api.rwandapay.rw/api/v1";
 
@@ -50,6 +49,8 @@ export async function POST(req: NextRequest) {
     const redirectUrl = `${siteUrl}/payment/success?tx_ref=${encodeURIComponent(tx_ref)}`;
     const webhookUrl = `${siteUrl}/api/payments/rwandapay/webhook`;
 
+    const idempotencyKey = `${tx_ref}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
     const payload = {
       amount,
       tx_ref,
@@ -67,7 +68,7 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
         "X-Public-Key": publicKey,
         "X-Secret-Key": secretKey,
-        "Idempotency-Key": randomUUID(),
+        "Idempotency-Key": idempotencyKey,
       },
       body: JSON.stringify(payload),
     });
