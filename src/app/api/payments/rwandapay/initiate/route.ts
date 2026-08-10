@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { randomUUID } from "crypto";
 
 const RWANDAPAY_BASE_URL = process.env.RWANDAPAY_BASE_URL || "https://api.rwandapay.rw/api/v1";
 
@@ -67,6 +68,7 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
         "X-Public-Key": publicKey,
         "X-Secret-Key": secretKey,
+        "Idempotency-Key": randomUUID(),
       },
       body: JSON.stringify(payload),
     });
@@ -78,10 +80,11 @@ export async function POST(req: NextRequest) {
 
     if (!rwandaPayRes.ok || !rwandaPayData.success || !rwandaPayData.data?.payment_url) {
       console.error("RwandaPay initiate error:", rwandaPayData);
-      return NextResponse.json(
-        { error: rwandaPayData.message || "Failed to initialize RwandaPay checkout" },
-        { status: 500 }
-      );
+      const errorMessage =
+        rwandaPayData.error?.message ||
+        rwandaPayData.message ||
+        "Failed to initialize RwandaPay checkout";
+      return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 
     const now = new Date().toISOString();
