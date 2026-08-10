@@ -124,10 +124,11 @@ export default function AdminSettingsPage() {
   async function saveProfile() {
     setSaving(true);
     try {
+      const { email, ...rest } = profileDraft;
       const res = await fetch("/api/user", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: userId, ...profileDraft }),
+        body: JSON.stringify({ id: userId, ...rest }),
       });
       if (res.ok) {
         await fetchUser();
@@ -675,8 +676,9 @@ export default function AdminSettingsPage() {
           <Field label="Email" required>
             <Input
               value={profileDraft.email}
-              onChange={(e) => setProfileDraft({ ...profileDraft, email: e.target.value })}
               type="email"
+              disabled
+              className="opacity-60 cursor-not-allowed"
             />
           </Field>
           <Field label="Profile Photo">

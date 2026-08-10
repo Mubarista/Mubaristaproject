@@ -42,6 +42,7 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json();
     const { id, ...updateData } = body;
+    delete updateData.email;
     
     if (!id) {
       // Get current authenticated user
