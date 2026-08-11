@@ -597,6 +597,16 @@ export default function ParticipantDashboardContent() {
                         </div>
                       )}
                       {uploadUrl && (
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-muted">Preview</p>
+                          <video
+                            src={uploadUrl}
+                            controls
+                            className="w-full max-h-48 rounded-xl bg-black"
+                          />
+                        </div>
+                      )}
+                      {uploadUrl && (
                         <Button
                           variant="premium"
                           size="lg"
