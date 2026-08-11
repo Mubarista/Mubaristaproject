@@ -181,6 +181,26 @@ export default function ApplyPage() {
     );
   }
 
+  if (competition.status !== "registration_open") {
+    return (
+      <div className="pt-24 pb-16 min-h-screen">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 text-center">
+          <h1 className="text-3xl font-bold mb-4">{competition.title}</h1>
+          <div className="glass-card rounded-2xl p-8 border border-blue/20 bg-blue/5">
+            <AlertTriangle className="h-12 w-12 text-blue mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Coming Soon</h2>
+            <p className="text-muted mb-6">
+              Applications are not open yet. Registration will unlock automatically on the timeline.
+            </p>
+            <Button variant="primary" onClick={() => router.push(`/competitions/${slug}`)}>
+              Back to Competition
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (competition.availableSlots <= 0) {
     return (
       <div className="pt-24 pb-16 min-h-screen">
