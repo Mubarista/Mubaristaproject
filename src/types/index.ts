@@ -143,7 +143,7 @@ export type ApplicationStatus = "pending" | "approved" | "nominated" | "declined
 export type PaymentStatus = "pending" | "completed" | "failed" | "expired";
 export type CompetitionStatus =
   | "upcoming"
-  | "registration_open"
+  | "Registration Open"
   | "in_progress"
   | "voting"
   | "judging"

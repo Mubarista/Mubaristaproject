@@ -70,7 +70,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Failed to verify competition status" }, { status: 500 });
     }
 
-    if (competition?.status !== "registration_open") {
+    if (competition?.status !== "Registration Open") {
       return NextResponse.json({
         error: competition?.status === "completed" || competition?.status === "ended"
           ? "This competition has already ended and no longer accepts applications"

@@ -182,7 +182,7 @@ export default function ApplyPage() {
     );
   }
 
-  if (competition.status !== "registration_open") {
+  if (competition.status !== "Registration Open") {
     return (
       <div className="pt-24 pb-16 min-h-screen">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 text-center">

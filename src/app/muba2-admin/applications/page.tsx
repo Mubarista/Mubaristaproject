@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Check, X, Mail, RefreshCw, Clock, Trash2, Archive, Ban, CheckCircle, AlertTriangle } from "lucide-react";
+import { Search, Check, X, Mail, LayoutDashboard, RefreshCw, Clock, Trash2, Archive, Ban, CheckCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +53,7 @@ export default function ApplicationsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [sendingCongratulation, setSendingCongratulation] = useState(false);
+  const [sendingDashboardLink, setSendingDashboardLink] = useState(false);
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
 
   function showError(msg: string) {
@@ -248,6 +249,36 @@ export default function ApplicationsPage() {
       showError("Failed to regenerate access link");
     } finally {
       setRegeneratingId(null);
+    }
+  }
+
+  async function sendDashboardLink(app: Application) {
+    if (!app.email?.trim()) {
+      showError("Applicant email is missing. Cannot send email.");
+      return;
+    }
+    if (app.paymentStatus !== "paid" && app.paymentStatus !== "completed") {
+      showError("Payment not completed. Cannot send dashboard link.");
+      return;
+    }
+
+    setSendingDashboardLink(true);
+    try {
+      const response = await fetch(`/api/competitions/applications/${app.id}/send-dashboard-link`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        showSuccess("Dashboard link sent successfully!");
+      } else {
+        showError(data.error || "Failed to send dashboard link");
+      }
+    } catch (error) {
+      console.error("Failed to send dashboard link:", error);
+      showError("Failed to send dashboard link");
+    } finally {
+      setSendingDashboardLink(false);
     }
   }
 
@@ -886,6 +917,18 @@ export default function ApplicationsPage() {
                 >
                   <Mail className="h-4 w-4 mr-2" />
                   {sendingCongratulation ? "Sending..." : "Send Congratulation Email"}
+                </Button>
+              )}
+
+              {!isEditing && (selectedApp.paymentStatus === "paid" || selectedApp.paymentStatus === "completed") && (
+                <Button
+                  variant="premium"
+                  onClick={() => sendDashboardLink(selectedApp)}
+                  disabled={sendingDashboardLink}
+                  className="w-full"
+                >
+                  <LayoutDashboard className="h-4 w-4 mr-2" />
+                  {sendingDashboardLink ? "Sending..." : "Send Dashboard Link"}
                 </Button>
               )}
             </Card>

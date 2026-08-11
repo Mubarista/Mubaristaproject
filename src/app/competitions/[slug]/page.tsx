@@ -225,7 +225,7 @@ export default function CompetitionDetailPage({ params }: Props) {
               </p>
               <Badge
                 variant={
-                  competition.status === "registration_open"
+                  competition.status === "Registration Open"
                     ? "green"
                     : competition.status === "voting" || competition.status === "winner_announcement"
                     ? "yellow"
@@ -238,7 +238,7 @@ export default function CompetitionDetailPage({ params }: Props) {
                 {competition.status.replace(/_/g, " ")}
               </Badge>
 
-              {competition.status === "registration_open" && competition.availableSlots > 0 ? (
+              {competition.status === "Registration Open" && competition.availableSlots > 0 ? (
                 <>
                   <Link href={`/competitions/${slug}/apply`}>
                     <Button variant="premium" className="w-full" size="lg">
@@ -250,7 +250,7 @@ export default function CompetitionDetailPage({ params }: Props) {
                     Apply first, then pay entry fee after nomination
                   </p>
                 </>
-              ) : competition.status === "registration_open" && competition.availableSlots <= 0 ? (
+              ) : competition.status === "Registration Open" && competition.availableSlots <= 0 ? (
                 <>
                   <Button variant="secondary" className="w-full" size="lg" disabled>
                     No slots remaining

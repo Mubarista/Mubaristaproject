@@ -9,7 +9,7 @@ interface TimelineEvent {
 
 const VALID_PHASES: CompetitionStatus[] = [
   "upcoming",
-  "registration_open",
+  "Registration Open",
   "in_progress",
   "voting",
   "judging",
@@ -69,7 +69,7 @@ function inferPhaseFromEvent(event = ""): CompetitionStatus | undefined {
   if (/\b(judging|judge)\b/.test(text)) return "judging";
   if (/\b(voting|vote|poll)\b/.test(text)) return "voting";
   if (/\b(in progress|submissions? open|upload|video)\b/.test(text)) return "in_progress";
-  if (/\b(registration.*open|open.*registration|register.*start|applications?.*open|start.*registration)\b/.test(text)) return "registration_open";
+  if (/\b(registration.*open|open.*registration|register.*start|applications?.*open|start.*registration)\b/.test(text)) return "Registration Open";
 
   return undefined;
 }

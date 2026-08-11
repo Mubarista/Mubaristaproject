@@ -222,7 +222,7 @@ export default function AdminCompetitionsPage() {
             render: (c) => (
               <Badge
                 variant={
-                  c.status === "registration_open"
+                  c.status === "Registration Open"
                     ? "green"
                     : c.status === "voting"
                     ? "blue"
@@ -328,7 +328,7 @@ export default function AdminCompetitionsPage() {
                       onChange={(e) => updateTimeline(index, "phase", e.target.value)}
                       options={[
                         { value: "upcoming", label: "Upcoming" },
-                        { value: "registration_open", label: "Open for registration" },
+                        { value: "Registration Open", label: "Open for registration" },
                         { value: "in_progress", label: "In progress" },
                         { value: "voting", label: "Voting" },
                         { value: "judging", label: "Judging" },

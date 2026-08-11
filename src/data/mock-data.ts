@@ -27,7 +27,7 @@ export const competitions: Competition[] = [
     countriesAllowed: ["All Countries"],
     registrationDeadline: "2026-08-15",
     eventTimeline: [
-      { date: "2026-08-15", event: "Registration Closes", phase: "registration_open" },
+      { date: "2026-08-15", event: "Registration Closes", phase: "Registration Open" },
       { date: "2026-08-20", event: "Submissions Open", phase: "in_progress" },
       { date: "2026-09-10", event: "Voting Day", phase: "voting" },
       { date: "2026-09-15", event: "Judging Period", phase: "judging" },
@@ -37,7 +37,7 @@ export const competitions: Competition[] = [
     entryFee: 75,
     availableSlots: 142,
     totalSlots: 200,
-    status: "registration_open",
+    status: "Registration Open",
     organizer: "MUBARISTA International",
     rules: [
       "Submit one video (max 3 minutes) showcasing your best latte art",
@@ -66,7 +66,7 @@ export const competitions: Competition[] = [
     countriesAllowed: ["All Countries"],
     registrationDeadline: "2026-07-30",
     eventTimeline: [
-      { date: "2026-07-30", event: "Registration Closes", phase: "registration_open" },
+      { date: "2026-07-30", event: "Registration Closes", phase: "Registration Open" },
       { date: "2026-08-05", event: "Submissions Open", phase: "in_progress" },
       { date: "2026-08-25", event: "Results", phase: "winner_announcement" },
     ],
@@ -74,7 +74,7 @@ export const competitions: Competition[] = [
     entryFee: 35,
     availableSlots: 89,
     totalSlots: 150,
-    status: "registration_open",
+    status: "Registration Open",
     organizer: "MUBARISTA Academy",
     rules: [
       "Open to baristas with 1-3 years experience",
