@@ -613,7 +613,7 @@ export default function ParticipantDashboardContent() {
                         accept="video/*"
                         onChange={handleFileUpload}
                         disabled={uploading || !termsAccepted}
-                        className="w-full text-sm"
+                        className="block w-full cursor-pointer text-sm text-foreground file:mr-4 file:rounded-xl file:border-0 file:bg-blue file:bg-gradient-to-r file:from-yellow file:via-green file:to-blue file:px-4 file:py-2.5 file:text-sm file:font-medium file:text-white hover:file:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                       />
                       {uploading && <p className="text-sm text-muted">Uploading...</p>}
                       {uploadUrl && (
