@@ -362,6 +362,11 @@ export default function ApplyPage() {
       return;
     }
 
+    if (!confirmedOriginal) {
+      setErrorMessage("Please confirm that your video is new and original, not a past recording.");
+      return;
+    }
+
     // No login required - anyone can apply
     setErrorMessage(null);
     setShowConfirmDialog(true);
@@ -479,7 +484,7 @@ export default function ApplyPage() {
                   </a>
                 </p>
               )}
-              <p>• Do not upload any previous/past video of your own — this is to prevent cheating</p>
+              <p>• Do not upload any old/past video of your self just for unfairness and cheating purposes</p>
               <p className="font-medium text-foreground mt-4">Profile Photo Requirements:</p>
               <p>• Professional headshot or clear photo of yourself</p>
               <p>• High resolution (minimum 300x300 pixels)</p>
@@ -528,19 +533,10 @@ export default function ApplyPage() {
                   </span>
                 </label>
               )}
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={confirmedOriginal}
-                  onChange={(e) => setConfirmedOriginal(e.target.checked)}
-                  className="h-4 w-4 rounded border-white/20"
-                />
-                <span className="text-sm">I confirm this video is new and original, not a past recording</span>
-              </label>
             </div>
             <Button
               variant="primary"
-              disabled={!acceptedTerms || !over18 || !confirmedOriginal || (competition.applicationKeyword ? !confirmedKeyword : false)}
+              disabled={!acceptedTerms || !over18 || (competition.applicationKeyword ? !confirmedKeyword : false)}
               onClick={() => setStep("application")}
             >
               Continue to Application
@@ -845,6 +841,17 @@ export default function ApplyPage() {
                     )}
                   </div>
                 )}
+                {formData.videoUrl && (
+                  <label className="flex items-center gap-3 mt-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={confirmedOriginal}
+                      onChange={(e) => setConfirmedOriginal(e.target.checked)}
+                      className="h-4 w-4 rounded border-white/20"
+                    />
+                    <span className="text-sm">I confirm this video is new and original, not a past recording</span>
+                  </label>
+                )}
               </div>
 
               <div>
@@ -882,7 +889,7 @@ export default function ApplyPage() {
               <Button
                 variant="primary"
                 onClick={handleSubmitApplication}
-                disabled={!formData.videoUrl}
+                disabled={!formData.videoUrl || !confirmedOriginal}
               >
                 Submit Application
                 <ArrowRight className="h-4 w-4" />
