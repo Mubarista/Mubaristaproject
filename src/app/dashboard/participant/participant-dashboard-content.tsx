@@ -405,47 +405,51 @@ export default function ParticipantDashboardContent() {
               <Trophy className="h-5 w-5 text-yellow" /> Live Competition Results
             </CardTitle>
 
-            <div className="mb-4 space-y-2">
-              <p className="text-sm font-medium text-muted">Your submitted video</p>
-              {application?.videoUrl ? (
-                <video
-                  src={application.videoUrl}
-                  controls
-                  className="w-1/2 h-40 rounded-xl bg-black object-contain"
-                />
-              ) : (
-                <div className="w-1/2 h-40 rounded-xl bg-black flex items-center justify-center">
-                  <span className="text-xs text-muted text-center px-2">No video submitted yet</span>
-                </div>
-              )}
-            </div>
-
-            {results.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                {results.slice(0, 10).map((result, index) => {
-                  const isCurrent = displayName && result.participantName?.toLowerCase() === displayName.toLowerCase();
-                  return (
-                    <div
-                      key={result.id}
-                      className={`flex items-center justify-between p-3 rounded-xl ${
-                        isCurrent ? "bg-blue/10 border border-blue/30" : "bg-muted-bg"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className={`font-bold ${index < 3 ? "text-yellow" : "text-muted"}`}>
-                          #{result.rank}
-                        </span>
-                        <span className="text-sm">{result.participantName}</span>
-                        {result.isWinner && <Badge variant="premium">Winner</Badge>}
-                      </div>
-                      <span className="font-mono text-sm">{result.score}/10</span>
-                    </div>
-                  );
-                })}
+                {results.length > 0 ? (
+                  <div className="space-y-2">
+                    {results.slice(0, 10).map((result, index) => {
+                      const isCurrent = displayName && result.participantName?.toLowerCase() === displayName.toLowerCase();
+                      return (
+                        <div
+                          key={result.id}
+                          className={`flex items-center justify-between p-3 rounded-xl ${
+                            isCurrent ? "bg-blue/10 border border-blue/30" : "bg-muted-bg"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className={`font-bold ${index < 3 ? "text-yellow" : "text-muted"}`}>
+                              #{result.rank}
+                            </span>
+                            <span className="text-sm">{result.participantName}</span>
+                            {result.isWinner && <Badge variant="premium">Winner</Badge>}
+                          </div>
+                          <span className="font-mono text-sm">{result.score}/10</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-muted text-sm">No results available yet</p>
+                )}
               </div>
-            ) : (
-              <p className="text-muted text-sm">No results available yet</p>
-            )}
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted">Your submitted video</p>
+                {application?.videoUrl ? (
+                  <video
+                    src={application.videoUrl}
+                    controls
+                    className="w-full h-40 rounded-xl bg-black object-contain"
+                  />
+                ) : (
+                  <div className="w-full h-40 rounded-xl bg-black flex items-center justify-center">
+                    <span className="text-xs text-muted text-center px-2">No video submitted yet</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </Card>
 
           <div className="space-y-6">
