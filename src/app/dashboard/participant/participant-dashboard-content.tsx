@@ -436,18 +436,21 @@ export default function ParticipantDashboardContent() {
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-medium text-muted">Your submitted video</p>
-                {application?.videoUrl ? (
-                  <video
-                    src={application.videoUrl}
-                    controls
-                    className="w-full h-40 rounded-xl bg-black object-contain"
-                  />
-                ) : (
-                  <div className="w-full h-40 rounded-xl bg-black flex items-center justify-center">
-                    <span className="text-xs text-muted text-center px-2">No video submitted yet</span>
-                  </div>
-                )}
+                <p className="text-sm font-medium text-muted">Video judges are scoring</p>
+                {(() => {
+                  const current = results.find((r) => r.rank === 1) || results[0];
+                  return current?.videoUrl ? (
+                    <video
+                      src={current.videoUrl}
+                      controls
+                      className="w-full h-40 rounded-xl bg-black object-contain"
+                    />
+                  ) : (
+                    <div className="w-full h-40 rounded-xl bg-black flex items-center justify-center">
+                      <span className="text-xs text-muted text-center px-2">No current video to display</span>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </Card>

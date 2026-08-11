@@ -252,6 +252,7 @@ export interface CompetitionResult {
   id?: string;
   competitionId?: string;
   participantName?: string;
+  videoUrl?: string;
   rank?: number;
   score?: number;
   isWinner?: boolean;

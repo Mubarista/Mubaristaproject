@@ -104,6 +104,7 @@ export async function GET(request: Request) {
         return {
           id: appId,
           participantName: String(app.fullName || app.userName || app.user_name || "Participant"),
+          videoUrl: app.videoUrl ? String(app.videoUrl) : undefined,
           userName: String(app.userName || app.user_name || ""),
           country: String(app.country || "Unknown"),
           flag: "",
