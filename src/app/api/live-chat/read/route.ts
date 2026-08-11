@@ -29,8 +29,11 @@ export async function POST(request: Request) {
 
     if (updateError) throw updateError;
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error marking live chat message as read:", error);
-    return NextResponse.json({ error: "Failed to mark as read" }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message || "Failed to mark as read" },
+      { status: 500 }
+    );
   }
 }
