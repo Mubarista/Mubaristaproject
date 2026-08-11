@@ -322,39 +322,20 @@ export async function sendPaymentFailedEmail(
 ): Promise<SendEmailResult> {
   const { to, name = "there", amount, currency, reference, provider } = input;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
-  const logoUrl = await getSiteLogo();
-
-  const body = `
-    <p style="margin: 0 0 16px; color: #374151;">Hi ${name},</p>
-    <p style="margin: 0 0 16px; color: #374151;">
-      We were unable to complete your payment of <strong style="color: #111827;">${amount} ${currency}</strong>
-      for reference <strong style="color: #111827;">${reference}</strong>.
-    </p>
-    ${provider ? `<p style="margin: 0 0 16px; color: #374151;">Payment provider: <strong style="color: #111827;">${provider}</strong></p>` : ""}
-    <p style="margin: 0 0 24px; color: #374151;">
-      This may have been due to an issue with your card, insufficient funds, or a network error.
-      No money has been deducted. You can try again using the same or a different payment method.
-    </p>
-    <p style="margin: 0 0 24px; color: #374151;">
-      If you keep seeing this, please contact our support team for help.
-    </p>
-    <p style="text-align: center; margin: 32px 0;">
-      <a
-        href="${siteUrl}/competitions"
-        style="display: inline-block; background: #111827; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;"
-      >
-        Try again
-      </a>
-    </p>
-  `;
-
-  const html = await buildEmailHtml({ title: "Payment failed", body, logoUrl });
 
   return sendEmail({
     to,
     subject: "Payment failed",
     fromName: "MUBARISTA HUB LTD",
     fromEmail: "team@mubarista.com",
-    html,
+    templateId: "payment-failed",
+    templateData: {
+      NAME: name,
+      AMOUNT: amount,
+      CURRENCY: currency,
+      REFERENCE: reference,
+      PROVIDER: provider || "",
+      SITE_URL: siteUrl,
+    },
   });
 }
