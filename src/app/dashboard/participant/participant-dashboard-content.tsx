@@ -411,11 +411,11 @@ export default function ParticipantDashboardContent() {
                 <video
                   src={application.videoUrl}
                   controls
-                  className="w-full max-h-40 rounded-xl bg-black"
+                  className="w-1/2 h-40 rounded-xl bg-black object-contain"
                 />
               ) : (
-                <div className="w-full h-40 rounded-xl bg-black flex items-center justify-center">
-                  <span className="text-sm text-muted">No video submitted yet</span>
+                <div className="w-1/2 h-40 rounded-xl bg-black flex items-center justify-center">
+                  <span className="text-xs text-muted text-center px-2">No video submitted yet</span>
                 </div>
               )}
             </div>
