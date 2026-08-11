@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import Link from "next/link";
+import { LiveChatContent } from "./live-chat-content";
 import {
   Trophy,
   Upload,
@@ -53,13 +53,6 @@ interface WalletData {
   totalEarnings: number;
 }
 
-interface MessageItem {
-  id: string;
-  subject: string;
-  status: string;
-  createdAt: string;
-}
-
 export default function ParticipantDashboardContent() {
   const { user, isPremium } = useAuth();
   const searchParams = useSearchParams();
@@ -69,7 +62,6 @@ export default function ParticipantDashboardContent() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [payments, setPayments] = useState<PaymentItem[]>([]);
   const [wallet, setWallet] = useState<WalletData | null>(null);
-  const [messages, setMessages] = useState<MessageItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isWinner, setIsWinner] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -166,25 +158,6 @@ export default function ParticipantDashboardContent() {
     }
   }
 
-  async function fetchMessages(app: CompetitionApplication) {
-    try {
-      const targetUserId = user?.id || app?.userId;
-      const targetEmail = app?.userEmail || app?.email;
-      const params = new URLSearchParams();
-      if (targetUserId) params.set("userId", targetUserId);
-      if (targetEmail) params.set("email", targetEmail);
-      const query = params.toString();
-      if (!query) return;
-      const response = await fetch(`/api/messages?${query}`);
-      if (response.ok) {
-        const data = await response.json();
-        setMessages(data as MessageItem[]);
-      }
-    } catch (error) {
-      console.error("Error fetching messages:", error);
-    }
-  }
-
   async function fetchParticipantData() {
     try {
       setError(null);
@@ -203,7 +176,6 @@ export default function ParticipantDashboardContent() {
           await fetchNotifications(data);
           await fetchPayments(data);
           await fetchWallet(data);
-          await fetchMessages(data);
           return;
         } else {
           const errorData = await response.json().catch(() => ({}));
@@ -233,7 +205,6 @@ export default function ParticipantDashboardContent() {
             await fetchNotifications(app);
             await fetchPayments(app);
             await fetchWallet(app);
-            await fetchMessages(app);
           }
         }
       }
@@ -282,8 +253,6 @@ export default function ParticipantDashboardContent() {
         }]
       : []),
   ];
-
-  const unreadMessages = messages.filter((m) => m.status === "unread").length;
 
   async function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -521,17 +490,14 @@ export default function ParticipantDashboardContent() {
             </p>
           </Card>
 
-          <Link
-            href={`/dashboard/participant/live-chat?competitionId=${encodeURIComponent(
-              competitionId || ""
-            )}&participantName=${encodeURIComponent(displayName)}`}
+          <Card
+            className="cursor-pointer hover:border-blue/50 transition-colors"
+            onClick={() => setActiveModal("liveChat")}
           >
-            <Card className="cursor-pointer hover:border-blue/50 transition-colors">
-              <MessageSquare className="h-6 w-6 text-blue mb-2" />
-              <CardTitle className="text-base">Live Chat</CardTitle>
-              <p className="text-sm text-muted">Feedback & comments</p>
-            </Card>
-          </Link>
+            <MessageSquare className="h-6 w-6 text-blue mb-2" />
+            <CardTitle className="text-base">Live Chat</CardTitle>
+            <p className="text-sm text-muted">Feedback & comments</p>
+          </Card>
 
           <Card
             className="cursor-pointer hover:border-blue/50 transition-colors"
@@ -548,13 +514,22 @@ export default function ParticipantDashboardContent() {
         {/* Modals */}
         {activeModal && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <Card className="max-w-lg w-full p-6 relative max-h-[80vh] overflow-y-auto">
+            <Card className={`${activeModal === "liveChat" ? "max-w-3xl" : "max-w-lg"} w-full p-6 relative max-h-[80vh] overflow-y-auto`}>
               <button
                 onClick={() => setActiveModal(null)}
                 className="absolute top-4 right-4 text-muted hover:text-white"
               >
                 <X className="h-5 w-5" />
               </button>
+
+              {activeModal === "liveChat" && (
+                <LiveChatContent
+                  competitionId={competitionId || ""}
+                  participantName={displayName}
+                  userId={user?.id || displayName}
+                  className="h-[70vh]"
+                />
+              )}
 
               {activeModal === "upload" && (
                 <div className="space-y-4">
