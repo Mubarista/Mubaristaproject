@@ -404,6 +404,18 @@ export default function ParticipantDashboardContent() {
             <CardTitle className="mb-4 flex items-center gap-2">
               <Trophy className="h-5 w-5 text-yellow" /> Live Competition Results
             </CardTitle>
+
+            {application?.videoUrl && (
+              <div className="mb-4 space-y-2">
+                <p className="text-sm font-medium text-muted">Your submitted video</p>
+                <video
+                  src={application.videoUrl}
+                  controls
+                  className="w-full max-h-40 rounded-xl bg-black"
+                />
+              </div>
+            )}
+
             {results.length > 0 ? (
               <div className="space-y-2">
                 {results.slice(0, 10).map((result, index) => {
