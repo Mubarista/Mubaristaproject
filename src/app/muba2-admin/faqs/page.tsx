@@ -11,13 +11,11 @@ interface FAQ {
   id: string;
   question: string;
   answer: string;
-  active: boolean;
-  order: number;
   createdAt: string;
   updatedAt: string;
 }
 
-const blank: Omit<FAQ, 'id' | 'createdAt' | 'updatedAt'> = { question: "", answer: "", active: true, order: 0 };
+const blank: Omit<FAQ, 'id' | 'createdAt' | 'updatedAt'> = { question: "", answer: "" };
 
 export default function AdminFAQsPage() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
@@ -47,7 +45,7 @@ export default function AdminFAQsPage() {
   }
 
   function openAdd() { setDraft({ ...blank }); setEditing({ ...blank, id: "new", createdAt: "", updatedAt: "" }); }
-  function openEdit(f: FAQ) { setDraft({ question: f.question, answer: f.answer, active: f.active, order: f.order }); setEditing(f); }
+  function openEdit(f: FAQ) { setDraft({ question: f.question, answer: f.answer }); setEditing(f); }
   function closeModal() { setEditing(null); }
   function del(f: FAQ) { setDeleting(f); }
 
