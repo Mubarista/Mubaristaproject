@@ -194,6 +194,8 @@ export interface Competition {
   description: string;
   maxVideoDuration?: number;
   maxVideoSize?: number;
+  applicationKeyword?: string;
+  guideVideoUrl?: string;
 }
 
 export interface Application {

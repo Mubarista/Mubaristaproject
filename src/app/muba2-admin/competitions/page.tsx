@@ -17,6 +17,7 @@ const blank: Competition = {
   eventTimeline: [], requiredSkills: [], entryFee: 0, availableSlots: 0,
   totalSlots: 0, status: "upcoming", organizer: "", rules: [],
   judgingCriteria: [], description: "", maxVideoDuration: 300, maxVideoSize: 100,
+  applicationKeyword: "", guideVideoUrl: "",
 };
 
 const diffColors: Record<string, "green" | "blue" | "yellow" | "red"> = {
@@ -264,6 +265,24 @@ export default function AdminCompetitionsPage() {
             </Field>
             <Field label="Max Video Size (MB)">
               <Input type="number" min={1} value={draft.maxVideoSize} onChange={set("maxVideoSize")} />
+            </Field>
+          </div>
+          <div className="grid grid-cols-1 gap-4">
+            <Field label="Application Video Start Keyword">
+              <Input
+                placeholder="e.g. MUBARISTA 2026"
+                value={draft.applicationKeyword}
+                onChange={set("applicationKeyword")}
+              />
+            </Field>
+            <Field label="Guide / Reference Video URL">
+              <Input
+                type="url"
+                placeholder="https://..."
+                value={draft.guideVideoUrl}
+                onChange={set("guideVideoUrl")}
+              />
+              <p className="text-xs text-muted mt-1">Upload this guide to Storage and paste the public URL here.</p>
             </Field>
           </div>
           <div className="grid grid-cols-2 gap-4">

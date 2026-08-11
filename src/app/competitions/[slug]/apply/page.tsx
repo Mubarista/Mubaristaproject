@@ -30,6 +30,8 @@ export default function ApplyPage() {
   const [step, setStep] = useState<Step>("terms");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [over18, setOver18] = useState(false);
+  const [confirmedKeyword, setConfirmedKeyword] = useState(false);
+  const [confirmedOriginal, setConfirmedOriginal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -451,15 +453,33 @@ export default function ApplyPage() {
                 <p key={i}>• {rule}</p>
               ))}
               <p className="font-medium text-foreground mt-4">Video Requirements:</p>
-              <p>• Upload a clear, high-quality, unedited video demonstrating your barista skills</p>
-              <p>• Video must be between 2-5 minutes in duration</p>
-              <p>• Minimum resolution: 720p (1280x720)</p>
-              <p>• Recommended resolution: 1080p (1920x1080)</p>
+              <p>• Upload a video showing your own experience and work (any latte art you are performing)</p>
+              <p>• This is an experience video, not the final competition latte art reference image</p>
+              <p>• The video must be recent, original and unedited</p>
+              <p>• Maximum duration: {maxVideoDuration} seconds ({Math.floor(maxVideoDuration / 60)} minutes)</p>
+              <p>• Maximum file size: {maxVideoSize} MB</p>
               <p>• Good lighting and clear audio are required</p>
-              <p>• Video must show your face and hands clearly while performing techniques</p>
+              <p>• Your face and hands must be clearly visible while performing techniques</p>
               <p>• No filters, effects, or post-production editing allowed</p>
-              <p>• Demonstrate understanding of competition rules and requirements</p>
-              <p>• Include latte art, espresso preparation, or relevant skills based on competition type</p>
+              {competition.applicationKeyword && (
+                <p className="font-semibold text-foreground">
+                  • Your video must start with this keyword: &quot;{competition.applicationKeyword}&quot;
+                </p>
+              )}
+              {competition.guideVideoUrl && (
+                <p>
+                  • Watch the admin guide/reference video before recording:{" "}
+                  <a
+                    href={competition.guideVideoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue hover:underline"
+                  >
+                    Watch guide
+                  </a>
+                </p>
+              )}
+              <p>• Do not upload any previous/past video of your own — this is to prevent cheating</p>
               <p className="font-medium text-foreground mt-4">Profile Photo Requirements:</p>
               <p>• Professional headshot or clear photo of yourself</p>
               <p>• High resolution (minimum 300x300 pixels)</p>
@@ -476,27 +496,51 @@ export default function ApplyPage() {
               <p>• Winners will retain access to their wallet for prize withdrawal.</p>
               <p>• Non-winners&apos; accounts will be permanently closed after the competition.</p>
             </div>
-            <label className="flex items-center gap-3 mb-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={acceptedTerms}
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={acceptedTerms}
                 onChange={(e) => setAcceptedTerms(e.target.checked)}
-                className="h-4 w-4 rounded border-white/20"
-              />
-              <span className="text-sm">I have read, understood, and accept the terms and conditions</span>
-            </label>
-            <label className="flex items-center gap-3 mb-6 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={over18}
-                onChange={(e) => setOver18(e.target.checked)}
-                className="h-4 w-4 rounded border-white/20"
-              />
-              <span className="text-sm">I confirm that I am 18 years of age or older</span>
-            </label>
+                  className="h-4 w-4 rounded border-white/20"
+                />
+                <span className="text-sm">I have read, understood, and accept the terms and conditions</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={over18}
+                  onChange={(e) => setOver18(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/20"
+                />
+                <span className="text-sm">I confirm that I am 18 years of age or older</span>
+              </label>
+              {competition.applicationKeyword && (
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={confirmedKeyword}
+                    onChange={(e) => setConfirmedKeyword(e.target.checked)}
+                    className="h-4 w-4 rounded border-white/20"
+                  />
+                  <span className="text-sm">
+                    I confirm my video starts with the keyword &quot;{competition.applicationKeyword}&quot;
+                  </span>
+                </label>
+              )}
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={confirmedOriginal}
+                  onChange={(e) => setConfirmedOriginal(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/20"
+                />
+                <span className="text-sm">I confirm this video is new and original, not a past recording</span>
+              </label>
+            </div>
             <Button
               variant="primary"
-              disabled={!acceptedTerms || !over18}
+              disabled={!acceptedTerms || !over18 || !confirmedOriginal || (competition.applicationKeyword ? !confirmedKeyword : false)}
               onClick={() => setStep("application")}
             >
               Continue to Application
