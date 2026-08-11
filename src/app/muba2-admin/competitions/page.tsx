@@ -86,7 +86,14 @@ export default function AdminCompetitionsPage() {
   }
 
   function openAdd() { setDraft({ ...blank, id: "" }); setEditing(draft); }
-  function openEdit(c: Competition) { setDraft({ ...c }); setEditing(c); }
+  function openEdit(c: Competition) {
+    setDraft({
+      ...c,
+      applicationKeyword: c.applicationKeyword || "",
+      guideVideoUrl: c.guideVideoUrl || "",
+    });
+    setEditing(c);
+  }
   function closeModal() { setEditing(null); }
 
   async function save() {
