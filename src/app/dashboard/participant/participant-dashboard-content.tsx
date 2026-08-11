@@ -105,9 +105,7 @@ export default function ParticipantDashboardContent() {
         if (!displayName) return false;
         return r.participantName?.toLowerCase() === displayName.toLowerCase();
       });
-      if (userResult && userResult.isWinner) {
-        setIsWinner(true);
-      }
+      setIsWinner(userResult?.isWinner || false);
     } catch (error) {
       console.error("Error fetching results:", error);
     }
@@ -116,6 +114,7 @@ export default function ParticipantDashboardContent() {
   useLiveScores(competitionId, () => {
     if (application) {
       fetchResults(application);
+      fetchNotifications(application);
     }
   });
 
@@ -261,7 +260,7 @@ export default function ParticipantDashboardContent() {
   const userScore = userResult ? userResult.score : null;
   const awards = results.filter((r) => {
     if (!displayName) return false;
-    return r.participantName?.toLowerCase() === displayName.toLowerCase() && r.isWinner;
+    return r.participantName?.toLowerCase() === displayName.toLowerCase() && !!r.medal;
   });
 
   const stats = [
@@ -436,8 +435,8 @@ export default function ParticipantDashboardContent() {
                 <Button variant="secondary" className="w-full" size="sm" onClick={() => setActiveModal("certificates")}>
                   <FileText className="h-4 w-4" /> View Certificates
                 </Button>
-                <Button variant="ghost" className="w-full" size="sm" onClick={() => setActiveModal("payments")}>
-                  <CreditCard className="h-4 w-4" /> Payment History
+                <Button variant="secondary" className="w-full" size="sm" onClick={() => setActiveModal("upload")}>
+                  <Upload className="h-4 w-4" /> Submit Competition Video
                 </Button>
               </div>
             </Card>
@@ -575,14 +574,35 @@ export default function ParticipantDashboardContent() {
                   {awards.length > 0 ? (
                     <div className="space-y-2">
                       {awards.map((a) => (
-                        <div key={a.id} className="p-3 rounded-lg bg-yellow/10 border border-yellow/30">
-                          <p className="font-medium text-yellow">Winner - {application?.competition?.title}</p>
+                        <div
+                          key={a.id}
+                          className={`p-3 rounded-lg border ${
+                            a.medal === "gold"
+                              ? "bg-yellow/10 border-yellow/30"
+                              : a.medal === "diamond"
+                              ? "bg-blue/10 border-blue/30"
+                              : "bg-white/5 border-white/10"
+                          }`}
+                        >
+                          <p
+                            className={`font-medium ${
+                              a.medal === "gold"
+                                ? "text-yellow"
+                                : a.medal === "diamond"
+                                ? "text-blue"
+                                : "text-white"
+                            }`}
+                          >
+                            {a.medal === "gold" && "🥇 Gold - Winner"}
+                            {a.medal === "diamond" && "💎 Diamond"}
+                            {a.medal === "silver" && "🥈 Silver"} - {application?.competition?.title}
+                          </p>
                           <p className="text-sm text-muted">Score: {a.score}/10 • Rank: #{a.rank}</p>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-muted">No awards yet. Keep competing!</p>
+                    <p className="text-muted">No awards yet. Judging is still in progress.</p>
                   )}
                 </div>
               )}
@@ -593,11 +613,28 @@ export default function ParticipantDashboardContent() {
                     <BarChart3 className="h-5 w-5" /> Results
                   </CardTitle>
                   {userResult ? (
-                    <div className="p-4 rounded-lg bg-muted-bg">
-                      <p className="text-sm">Rank: <span className="font-bold">#{userResult.rank}</span></p>
-                      <p className="text-sm">Score: <span className="font-bold">{userResult.score}/10</span></p>
-                      {userResult.feedback && (
-                        <p className="text-sm mt-2 text-muted">{userResult.feedback}</p>
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-lg bg-muted-bg">
+                        <p className="text-sm">Rank: <span className="font-bold">#{userResult.rank}</span></p>
+                        <p className="text-sm">Score: <span className="font-bold">{userResult.score}/10</span></p>
+                        {userResult.feedback && (
+                          <p className="text-sm mt-2 text-muted">{userResult.feedback}</p>
+                        )}
+                      </div>
+
+                      {userResult.criteriaScores && Object.keys(userResult.criteriaScores).length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium">Criteria breakdown</p>
+                          {Object.entries(userResult.criteriaScores).map(([key, value]) => (
+                            <div
+                              key={key}
+                              className="flex items-center justify-between p-3 rounded-lg bg-muted-bg"
+                            >
+                              <span className="text-sm capitalize">{key.replace(/_/g, " ")}</span>
+                              <span className="font-mono text-sm font-bold">{value}/10</span>
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
                   ) : (

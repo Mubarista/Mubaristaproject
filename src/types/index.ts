@@ -241,7 +241,9 @@ export interface CompetitionResult {
   rank?: number;
   score?: number;
   isWinner?: boolean;
+  medal?: "gold" | "diamond" | "silver";
   feedback?: string;
+  criteriaScores?: Record<string, number>;
   createdAt?: string;
 }
 

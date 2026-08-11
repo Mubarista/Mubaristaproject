@@ -2,6 +2,38 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase } from "@/lib/supabase-utils";
 
+function averageCriteriaScores(scores: Record<string, unknown>[]): Record<string, number> {
+  if (scores.length === 0) return {};
+
+  const sums: Record<string, number> = {};
+  const counts: Record<string, number> = {};
+
+  for (const score of scores) {
+    const criteria = (score.criteria_scores as Record<string, number>) || {};
+    for (const [key, value] of Object.entries(criteria)) {
+      if (typeof value === "number" && !Number.isNaN(value)) {
+        sums[key] = (sums[key] || 0) + value;
+        counts[key] = (counts[key] || 0) + 1;
+      }
+    }
+  }
+
+  const averages: Record<string, number> = {};
+  for (const key of Object.keys(sums)) {
+    averages[key] = Math.round((sums[key] / counts[key]) * 10) / 10;
+  }
+
+  return averages;
+}
+
+function medalForRank(rank: number, isFinal: boolean): "gold" | "diamond" | "silver" | undefined {
+  if (!isFinal) return undefined;
+  if (rank === 1) return "gold";
+  if (rank === 2) return "diamond";
+  if (rank === 3) return "silver";
+  return undefined;
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -10,6 +42,17 @@ export async function GET(request: Request) {
     if (!competitionId) {
       return NextResponse.json({ error: "Missing competitionId" }, { status: 400 });
     }
+
+    const { data: competition, error: compError } = await supabaseAdmin
+      .from("competitions")
+      .select("status")
+      .eq("id", competitionId)
+      .maybeSingle();
+
+    if (compError) throw compError;
+
+    const isFinal =
+      competition?.status === "winner_announcement" || competition?.status === "ended";
 
     const { data: applications, error: appsError } = await supabaseAdmin
       .from("competition_applications")
@@ -55,6 +98,9 @@ export async function GET(request: Request) {
           else status = "eliminated";
         }
 
+        const criteriaScores = averageCriteriaScores(appScores);
+        const firstFeedback = appScores.length > 0 ? (appScores[0].feedback as string) || "" : "";
+
         return {
           id: appId,
           participantName: String(app.fullName || app.userName || app.user_name || "Participant"),
@@ -65,13 +111,16 @@ export async function GET(request: Request) {
           rank: 0,
           status,
           isWinner: false,
-          feedback: appScores.length > 0 ? (appScores[0].feedback as string) || "" : "",
+          medal: undefined as "gold" | "diamond" | "silver" | undefined,
+          feedback: firstFeedback,
+          criteriaScores,
         };
       })
       .sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
       .map((e, i) => {
         e.rank = i + 1;
-        e.isWinner = e.rank === 1;
+        e.isWinner = isFinal && e.rank === 1;
+        e.medal = medalForRank(e.rank, isFinal);
         return e;
       });
 

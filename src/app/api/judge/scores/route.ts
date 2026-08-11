@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { createNotification } from "@/lib/notifications";
 
 export async function GET(request: Request) {
   try {
@@ -136,6 +137,27 @@ export async function POST(request: Request) {
 
     if (resultError) {
       console.error("Error updating competition results from judge score:", resultError);
+    }
+
+    // Notify the participant that a judge has scored their application
+    try {
+      const { data: app } = await supabaseAdmin
+        .from("competition_applications")
+        .select("user_id")
+        .eq("id", applicationId)
+        .maybeSingle();
+
+      if (app?.user_id) {
+        await createNotification({
+          userId: app.user_id,
+          title: "Your application was scored",
+          description: `A judge gave your submission a score of ${score}/10.`,
+          type: "competition",
+          metadata: { applicationId, competitionId: resolvedCompetitionId, score },
+        });
+      }
+    } catch (notifyError) {
+      console.error("Failed to notify participant about judge score:", notifyError);
     }
 
     return NextResponse.json({ success: true, score: result });
