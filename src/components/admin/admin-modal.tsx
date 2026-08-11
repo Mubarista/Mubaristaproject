@@ -213,6 +213,7 @@ export function FileUpload({ value, onChange, label = "File", accept = ".pdf", t
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [fileName, setFileName] = useState("");
+  const [progress, setProgress] = useState(0);
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -220,6 +221,7 @@ export function FileUpload({ value, onChange, label = "File", accept = ".pdf", t
 
     setUploading(true);
     setFileName(file.name);
+    setProgress(0);
     try {
       const bucket = type === "pdf" ? "Documents" : "Images";
 
@@ -242,18 +244,26 @@ export function FileUpload({ value, onChange, label = "File", accept = ".pdf", t
 
       const { signedUrl, publicUrl } = await presignedRes.json();
 
-      const uploadRes = await fetch(signedUrl, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type },
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            onChange(publicUrl);
+            resolve();
+          } else {
+            reject(new Error(`Upload failed with status ${xhr.status}`));
+          }
+        };
+        xhr.onerror = () => reject(new Error("Upload failed"));
+        xhr.open("PUT", signedUrl);
+        xhr.setRequestHeader("Content-Type", file.type);
+        xhr.send(file);
       });
-
-      if (uploadRes.ok) {
-        onChange(publicUrl);
-      } else {
-        console.error("Upload failed:", await uploadRes.text());
-        alert(`Failed to upload ${type === "pdf" ? "PDF" : "file"}`);
-      }
     } catch (error) {
       console.error("Upload error:", error);
       alert(`Failed to upload ${type === "pdf" ? "PDF" : "file"}`);
@@ -286,10 +296,15 @@ export function FileUpload({ value, onChange, label = "File", accept = ".pdf", t
           className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-white/15 bg-muted-bg hover:border-blue/50 hover:bg-blue/5 transition-all cursor-pointer h-32 ${uploading ? "opacity-50 cursor-not-allowed" : ""}`}
         >
           {uploading ? (
-            <>
-              <div className="animate-spin h-8 w-8 border-2 border-blue border-t-transparent rounded-full" />
-              <p className="text-xs text-muted">Uploading...</p>
-            </>
+            <div className="w-full px-6 space-y-2">
+              <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-blue transition-all duration-200"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted text-center">Uploading... {progress}%</p>
+            </div>
           ) : (
             <>
               <FileText className="h-8 w-8 text-muted" />

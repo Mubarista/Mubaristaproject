@@ -67,6 +67,7 @@ export default function ParticipantDashboardContent() {
   const [error, setError] = useState<string | null>(null);
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadUrl, setUploadUrl] = useState<string | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [competitionId, setCompetitionId] = useState<string | null>(null);
@@ -310,18 +311,33 @@ export default function ParticipantDashboardContent() {
     }
 
     setUploading(true);
+    setUploadProgress(0);
     setUploadUrl(null);
     try {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("type", "video");
-      const response = await fetch("/api/upload", { method: "POST", body: formData });
-      if (response.ok) {
-        const data = await response.json();
-        setUploadUrl(data.url);
-      } else {
-        alert("Failed to upload file.");
-      }
+
+      const data = await new Promise<{ url: string }>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setUploadProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(JSON.parse(xhr.responseText));
+          } else {
+            reject(new Error(`Upload failed with status ${xhr.status}`));
+          }
+        };
+        xhr.onerror = () => reject(new Error("Upload failed"));
+        xhr.open("POST", "/api/upload");
+        xhr.send(formData);
+      });
+
+      setUploadUrl(data.url);
     } catch (error) {
       console.error("Upload error:", error);
       alert("Failed to upload file.");
@@ -613,7 +629,17 @@ export default function ParticipantDashboardContent() {
                         disabled={uploading || !termsAccepted}
                         className="block w-full cursor-pointer text-sm text-foreground file:mr-4 file:rounded-xl file:border-0 file:bg-blue file:bg-gradient-to-r file:from-yellow file:via-green file:to-blue file:px-4 file:py-2.5 file:text-sm file:font-medium file:text-white hover:file:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                       />
-                      {uploading && <p className="text-sm text-muted">Uploading...</p>}
+                      {uploading && (
+                        <div className="space-y-2 w-full">
+                          <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-blue transition-all duration-200"
+                              style={{ width: `${uploadProgress}%` }}
+                            />
+                          </div>
+                          <p className="text-sm text-muted text-center">Uploading... {uploadProgress}%</p>
+                        </div>
+                      )}
                       {uploadUrl && (
                         <div className="text-sm text-green flex items-center gap-2">
                           <CheckCircle className="h-4 w-4" /> Uploaded successfully
