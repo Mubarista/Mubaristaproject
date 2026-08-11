@@ -8,8 +8,7 @@ export async function GET() {
     const { data, error } = await supabase.from("competition_results").select("*").order("created_at", { ascending: false });
     if (error) throw error;
     const mapped = mapKeysToCamelCase(data) || [];
-    // Treat rank 1 as a winner; this can be updated when a dedicated is_winner column is added
-    return NextResponse.json(mapped.map((r: CompetitionResult) => ({ ...r, isWinner: r.rank === 1 })));
+    return NextResponse.json(mapped);
   } catch (error) {
     console.error("Error fetching competition results:", error);
     return NextResponse.json([]);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase } from "@/lib/supabase-utils";
+import { recalculateRanks } from "@/lib/ranking";
 
 const POINTS_PER_VOTE = 3;
 
@@ -94,6 +95,8 @@ export async function POST(req: NextRequest) {
 
     if (resultError) {
       console.error("Error updating competition results:", resultError);
+    } else {
+      await recalculateRanks(app.competitionId);
     }
 
     return NextResponse.json({

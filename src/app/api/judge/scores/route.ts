@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { createNotification } from "@/lib/notifications";
+import { recalculateRanks } from "@/lib/ranking";
 
 export async function GET(request: Request) {
   try {
@@ -137,6 +138,8 @@ export async function POST(request: Request) {
 
     if (resultError) {
       console.error("Error updating competition results from judge score:", resultError);
+    } else {
+      await recalculateRanks(resolvedCompetitionId);
     }
 
     // Notify the participant that a judge has scored their application
