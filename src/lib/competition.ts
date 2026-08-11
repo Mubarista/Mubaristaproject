@@ -17,6 +17,19 @@ const VALID_PHASES: CompetitionStatus[] = [
   "ended",
 ];
 
+function inferPhaseFromEvent(event = ""): CompetitionStatus | undefined {
+  const text = event.toLowerCase();
+
+  if (/\b(end|closed|close)\b/.test(text)) return "ended";
+  if (/\b(winner|announce|announced|results?)\b/.test(text)) return "winner_announcement";
+  if (/\b(judging|judge)\b/.test(text)) return "judging";
+  if (/\b(voting|vote|poll)\b/.test(text)) return "voting";
+  if (/\b(in progress|submissions? open|upload|video)\b/.test(text)) return "in_progress";
+  if (/\b(registration.*open|open.*registration|register.*start|applications?.*open|start.*registration)\b/.test(text)) return "registration_open";
+
+  return undefined;
+}
+
 export function computeStatusFromTimeline(
   timeline: TimelineEvent[] | null | undefined,
   now = new Date()
@@ -27,10 +40,12 @@ export function computeStatusFromTimeline(
 
   const sorted = timeline
     .filter((t) => t && typeof t.date === "string" && t.date.length > 0)
-    .map((t) => ({
-      ...t,
-      dateTime: new Date(t.date).getTime(),
-    }))
+    .map((t) => {
+      const phase = t.phase && VALID_PHASES.includes(t.phase)
+        ? t.phase
+        : inferPhaseFromEvent(t.event);
+      return { ...t, phase, dateTime: new Date(t.date).getTime() };
+    })
     .filter((t) => !isNaN(t.dateTime))
     .sort((a, b) => a.dateTime - b.dateTime);
 
