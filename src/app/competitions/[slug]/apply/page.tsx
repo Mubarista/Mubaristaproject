@@ -52,7 +52,6 @@ export default function ApplyPage() {
     videoPath: "",
     profilePhotoUrl: "",
   });
-  const [videoInputMethod, setVideoInputMethod] = useState<"url" | "upload">("url");
   const [siteSettings, setSiteSettings] = useState<any>({});
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
@@ -741,48 +740,7 @@ export default function ApplyPage() {
 
               <div>
                 <label className="text-sm text-muted mb-1 block">Video Rules Upload *</label>
-                <div className="flex gap-2 mb-2">
-                  <button
-                    type="button"
-                    onClick={() => setVideoInputMethod("url")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      videoInputMethod === "url"
-                        ? "bg-blue text-white"
-                        : "bg-muted-bg text-muted hover:text-foreground"
-                    }`}
-                  >
-                    URL
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setVideoInputMethod("upload")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      videoInputMethod === "upload"
-                        ? "bg-blue text-white"
-                        : "bg-muted-bg text-muted hover:text-foreground"
-                    }`}
-                  >
-                    Upload File
-                  </button>
-                </div>
-
-                {videoInputMethod === "url" ? (
-                  <div className="relative">
-                    <Video className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-                    <input
-                      type="url"
-                      value={formData.videoUrl}
-                      onChange={(e) => {
-                        setFormData({ ...formData, videoUrl: e.target.value, videoPath: "" });
-                        setFieldErrors({ ...fieldErrors, videoUrl: false });
-                      }}
-                      className={`w-full rounded-xl bg-muted-bg border pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 ${fieldErrors.videoUrl ? 'border-red focus:ring-red' : 'border-white/10 focus:ring-blue'}`}
-                      placeholder="Paste video URL (YouTube, Vimeo, etc.)"
-                      required
-                    />
-                  </div>
-                ) : (
-                  <div className="space-y-3">
+                <div className="space-y-3">
                     {!videoPreviewUrl && !formData.videoUrl ? (
                       <div className="relative">
                         <Video className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
@@ -839,8 +797,7 @@ export default function ApplyPage() {
                     {formData.videoUrl && !videoPreviewUrl && (
                       <p className="text-xs text-green mt-1">Video uploaded successfully</p>
                     )}
-                  </div>
-                )}
+                </div>
                 {formData.videoUrl && (
                   <label className="flex items-center gap-3 mt-3 cursor-pointer">
                     <input
