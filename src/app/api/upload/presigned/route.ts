@@ -3,7 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(request: Request) {
   try {
-    const { filename, contentType } = await request.json();
+    const { filename, contentType, bucket, folder } = await request.json();
 
     if (!filename) {
       return NextResponse.json({ error: "Filename is required" }, { status: 400 });
@@ -13,21 +13,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Server misconfiguration" }, { status: 500 });
     }
 
-    // Ensure Videos bucket exists
+    const targetBucket = bucket || "Videos";
+    const targetFolder = folder !== undefined && folder !== null ? folder : "learning";
+
     const { data: buckets } = await supabaseAdmin.storage.listBuckets();
-    const bucketExists = buckets?.some((b) => b.name === "Videos");
+    const bucketExists = buckets?.some((b) => b.name === targetBucket);
     if (!bucketExists) {
-      await supabaseAdmin.storage.createBucket("Videos", { public: true });
+      await supabaseAdmin.storage.createBucket(targetBucket, { public: true });
     }
 
     const fileExt = filename.split('.').pop() || "mp4";
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const path = `learning/${fileName}`;
+    const path = targetFolder ? `${targetFolder}/${fileName}` : fileName;
 
-    const { data, error } = await supabaseAdmin.storage.from("Videos").createSignedUploadUrl(path);
+    const { data, error } = await supabaseAdmin.storage.from(targetBucket).createSignedUploadUrl(path);
     if (error) throw error;
 
-    const { data: { publicUrl } } = supabaseAdmin.storage.from("Videos").getPublicUrl(path);
+    const { data: { publicUrl } } = supabaseAdmin.storage.from(targetBucket).getPublicUrl(path);
 
     return NextResponse.json({
       path,

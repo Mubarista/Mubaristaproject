@@ -221,20 +221,37 @@ export function FileUpload({ value, onChange, label = "File", accept = ".pdf", t
     setUploading(true);
     setFileName(file.name);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("type", type);
+      const bucket = type === "pdf" ? "Documents" : "Images";
 
-      const res = await fetch("/api/upload", {
+      const presignedRes = await fetch("/api/upload/presigned", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type,
+          bucket,
+          folder: "",
+        }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        onChange(data.url);
+      if (!presignedRes.ok) {
+        console.error("Presigned URL failed:", await presignedRes.text());
+        alert(`Failed to upload ${type === "pdf" ? "PDF" : "file"}`);
+        return;
+      }
+
+      const { signedUrl, publicUrl } = await presignedRes.json();
+
+      const uploadRes = await fetch(signedUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+
+      if (uploadRes.ok) {
+        onChange(publicUrl);
       } else {
-        console.error("Upload failed:", await res.text());
+        console.error("Upload failed:", await uploadRes.text());
         alert(`Failed to upload ${type === "pdf" ? "PDF" : "file"}`);
       }
     } catch (error) {
