@@ -238,6 +238,16 @@ export interface CompetitionApplication {
   };
 }
 
+export interface LiveChatMessage {
+  id?: string;
+  competitionId?: string;
+  userId?: string;
+  participantName?: string;
+  message?: string;
+  readBy?: string[];
+  createdAt?: string;
+}
+
 export interface CompetitionResult {
   id?: string;
   competitionId?: string;

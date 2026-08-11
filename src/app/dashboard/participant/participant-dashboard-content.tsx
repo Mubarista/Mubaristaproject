@@ -521,13 +521,15 @@ export default function ParticipantDashboardContent() {
             </p>
           </Card>
 
-          <Link href="/dashboard/user/messages">
+          <Link
+            href={`/dashboard/participant/live-chat?competitionId=${encodeURIComponent(
+              competitionId || ""
+            )}&participantName=${encodeURIComponent(displayName)}`}
+          >
             <Card className="cursor-pointer hover:border-blue/50 transition-colors">
               <MessageSquare className="h-6 w-6 text-blue mb-2" />
-              <CardTitle className="text-base">Messages</CardTitle>
-              <p className="text-sm text-muted">
-                {unreadMessages > 0 ? `${unreadMessages} unread` : "View your messages"}
-              </p>
+              <CardTitle className="text-base">Live Chat</CardTitle>
+              <p className="text-sm text-muted">Feedback & comments</p>
             </Card>
           </Link>
 
