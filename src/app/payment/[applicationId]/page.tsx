@@ -10,7 +10,7 @@ import { MtnMomoIcon } from "@/components/icons/mtn-momo";
 import { VisaIcon } from "@/components/icons/visa";
 import { MastercardIcon } from "@/components/icons/mastercard";
 import { formatCurrency } from "@/lib/utils";
-import { initiateRwandaPay, generateReference } from "@/lib/payment";
+import { initiateRwandaPay, initiatePesapal, generateReference } from "@/lib/payment";
 import type { CompetitionApplication } from "@/types";
 
 export default function PaymentPage() {
@@ -58,27 +58,60 @@ export default function PaymentPage() {
     setProcessing(true);
     setPaymentError(null);
     try {
-      const tx_ref = generateReference(`APP-${applicationId}`);
-      const { payment_url } = await initiateRwandaPay({
-        amount: application.competition?.entryFee ?? 0,
-        tx_ref,
-        customer: {
-          name: application.fullName || application.userName || "Participant",
-          email: application.email || application.userEmail || "",
-          phone: application.mobileNumber || "",
-        },
-        currency: "RWF",
-        description: `Entry fee for ${application.competition?.title || "competition"}`,
-        meta: {
-          type: "competition_entry",
-          applicationId,
-          competitionId: application.competitionId,
-          competitionTitle: application.competition?.title || "",
-          userCountry: application.country,
-        },
-      });
+      const reference = generateReference(`APP-${applicationId}`);
+      const amount = application.competition?.entryFee ?? 0;
+      const customerName = application.fullName || application.userName || "Participant";
+      const customerEmail = application.email || application.userEmail || "";
+      const customerPhone = application.mobileNumber || "";
 
-      window.location.href = payment_url;
+      if (selectedMethod === "Momo Pay") {
+        const { payment_url } = await initiateRwandaPay({
+          amount,
+          tx_ref: reference,
+          customer: {
+            name: customerName,
+            email: customerEmail,
+            phone: customerPhone,
+          },
+          currency: "RWF",
+          description: `Entry fee for ${application.competition?.title || "competition"}`,
+          meta: {
+            type: "competition_entry",
+            applicationId,
+            competitionId: application.competitionId,
+            competitionTitle: application.competition?.title || "",
+            userCountry: application.country,
+          },
+        });
+
+        window.location.href = payment_url;
+      } else {
+        const { payment_url } = await initiatePesapal({
+          amount,
+          reference,
+          customer: {
+            name: customerName,
+            email: customerEmail,
+            phone: customerPhone,
+            country: application.country || "RW",
+            address: "",
+            city: "",
+            state: "",
+            zipCode: "",
+          },
+          currency: "RWF",
+          description: `Entry fee for ${application.competition?.title || "competition"}`,
+          meta: {
+            type: "competition_entry",
+            applicationId,
+            competitionId: application.competitionId,
+            competitionTitle: application.competition?.title || "",
+            userCountry: application.country,
+          },
+        });
+
+        window.location.href = payment_url;
+      }
     } catch (error: any) {
       console.error("Payment error:", error);
       setPaymentError(error.message || "Payment failed. Please try again.");
