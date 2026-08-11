@@ -405,16 +405,20 @@ export default function ParticipantDashboardContent() {
               <Trophy className="h-5 w-5 text-yellow" /> Live Competition Results
             </CardTitle>
 
-            {application?.videoUrl && (
-              <div className="mb-4 space-y-2">
-                <p className="text-sm font-medium text-muted">Your submitted video</p>
+            <div className="mb-4 space-y-2">
+              <p className="text-sm font-medium text-muted">Your submitted video</p>
+              {application?.videoUrl ? (
                 <video
                   src={application.videoUrl}
                   controls
                   className="w-full max-h-40 rounded-xl bg-black"
                 />
-              </div>
-            )}
+              ) : (
+                <div className="w-full h-40 rounded-xl bg-black flex items-center justify-center">
+                  <span className="text-sm text-muted">No video submitted yet</span>
+                </div>
+              )}
+            </div>
 
             {results.length > 0 ? (
               <div className="space-y-2">
