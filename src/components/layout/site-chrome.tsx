@@ -12,7 +12,14 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const isAdmin = pathname?.startsWith("/mbhubteam") || pathname?.startsWith("/muba2-admin");
   const isJudge = pathname?.startsWith("/judge");
+  const isParticipant = pathname?.startsWith("/dashboard/participant");
   const isClean = pathname ? cleanPaths.includes(pathname) : false;
+
+  if (isParticipant) {
+    return (
+      <main className="flex-1 pt-8">{children}</main>
+    );
+  }
 
   if (isClean) {
     return (

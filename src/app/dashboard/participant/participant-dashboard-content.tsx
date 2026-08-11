@@ -327,7 +327,7 @@ export default function ParticipantDashboardContent() {
 
   if (loading) {
     return (
-      <div className="pt-24 pb-16 min-h-screen flex items-center justify-center">
+      <div className="pb-16 min-h-screen flex items-center justify-center">
         <p className="text-muted">Loading dashboard...</p>
       </div>
     );
@@ -336,7 +336,7 @@ export default function ParticipantDashboardContent() {
   if (error) {
     const isRevoked = error.toLowerCase().includes("revoked");
     return (
-      <div className="pt-24 pb-16 min-h-screen flex items-center justify-center px-4">
+      <div className="pb-16 min-h-screen flex items-center justify-center px-4">
         <Card className="max-w-md w-full text-center p-8">
           <AlertCircle className="h-16 w-16 text-red mx-auto mb-4" />
           <CardTitle className="mb-2">{isRevoked ? "Access Revoked" : "Access Error"}</CardTitle>
@@ -350,26 +350,8 @@ export default function ParticipantDashboardContent() {
   }
 
   return (
-    <div className="pt-24 pb-16 min-h-screen">
+    <div className="pb-16 min-h-screen">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">
-              Welcome, {displayName}
-            </h1>
-            <p className="text-muted">Participant Dashboard</p>
-          </div>
-          <div className="flex gap-3">
-            {isWinner && (
-              <Link href="/wallet">
-                <Button variant="premium">
-                  <Wallet className="h-4 w-4" /> View Wallet
-                </Button>
-              </Link>
-            )}
-            {isPremium && <Badge variant="premium">Premium Member</Badge>}
-          </div>
-        </div>
 
         <div className={`grid grid-cols-2 ${stats.length > 4 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4 mb-8`}>
           {stats.map((stat, i) => (
