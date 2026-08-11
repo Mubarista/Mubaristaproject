@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { sendPaymentFailedEmail } from "@/lib/email";
 import { completePayment } from "@/lib/rwandapay";
 import {
   getPesapalBaseUrl,
@@ -54,11 +55,23 @@ export async function POST(request: Request) {
     const failed =
       (transactionStatus.payment_status_description || "").toUpperCase() === "FAILED";
 
-    if (failed && payment.status !== "completed") {
+    if (failed && payment.status !== "completed" && payment.status !== "failed") {
       await supabaseAdmin
         .from("payments")
         .update({ status: "failed", paid_at: null })
         .eq("id", payment.id);
+
+      if (payment.user_email) {
+        await sendPaymentFailedEmail({
+          to: payment.user_email,
+          name: payment.user_name || "there",
+          amount: payment.amount,
+          currency: payment.currency || "RWF",
+          reference: payment.reference,
+          provider: "Pesapal",
+        });
+      }
+
       return NextResponse.json({ success: true, status: "failed" });
     }
 

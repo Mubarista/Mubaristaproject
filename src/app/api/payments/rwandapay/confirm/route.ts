@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { sendPaymentFailedEmail } from "@/lib/email";
 import { completePayment } from "@/lib/rwandapay";
 
 export async function POST(request: Request) {
@@ -32,10 +33,24 @@ export async function POST(request: Request) {
     const origin = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
     if (!isSuccess) {
-      await supabaseAdmin
-        .from("payments")
-        .update({ status: "failed", paid_at: null })
-        .eq("id", payment.id);
+      if (payment.status !== "failed") {
+        await supabaseAdmin
+          .from("payments")
+          .update({ status: "failed", paid_at: null })
+          .eq("id", payment.id);
+
+        if (payment.user_email) {
+          await sendPaymentFailedEmail({
+            to: payment.user_email,
+            name: payment.user_name || "there",
+            amount: payment.amount,
+            currency: payment.currency || "RWF",
+            reference: payment.reference,
+            provider: "RwandaPay",
+          });
+        }
+      }
+
       return NextResponse.json({ success: true, status: "failed" });
     }
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { sendPaymentFailedEmail } from "@/lib/email";
 import { completePayment } from "@/lib/rwandapay";
 import { createNotification } from "@/lib/notifications";
 import { formatCurrency } from "@/lib/utils";
@@ -33,19 +34,32 @@ export async function POST(req: NextRequest) {
     const now = new Date().toISOString();
 
     if (!isSuccess) {
-      await supabaseAdmin
-        .from("payments")
-        .update({ status: "failed", paid_at: null })
-        .eq("id", payment.id);
+      if (payment.status !== "failed") {
+        await supabaseAdmin
+          .from("payments")
+          .update({ status: "failed", paid_at: null })
+          .eq("id", payment.id);
 
-      if (payment.user_id) {
-        await createNotification({
-          userId: payment.user_id,
-          title: "Payment failed",
-          description: `Your payment of ${formatCurrency(payment.amount, payment.currency || "RWF")} could not be completed. Reference: ${reference}. Please try again.`,
-          type: "warning",
-          metadata: { reference, transactionId },
-        });
+        if (payment.user_id) {
+          await createNotification({
+            userId: payment.user_id,
+            title: "Payment failed",
+            description: `Your payment of ${formatCurrency(payment.amount, payment.currency || "RWF")} could not be completed. Reference: ${reference}. Please try again.`,
+            type: "warning",
+            metadata: { reference, transactionId },
+          });
+        }
+
+        if (payment.user_email) {
+          await sendPaymentFailedEmail({
+            to: payment.user_email,
+            name: payment.user_name || "there",
+            amount: payment.amount,
+            currency: payment.currency || "RWF",
+            reference,
+            provider: "RwandaPay",
+          });
+        }
       }
 
       return NextResponse.json({ success: true, status: "failed" });

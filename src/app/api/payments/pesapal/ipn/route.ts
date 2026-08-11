@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { sendPaymentFailedEmail } from "@/lib/email";
 import { completePayment } from "@/lib/rwandapay";
 import {
   getPesapalBaseUrl,
@@ -59,12 +60,24 @@ async function handleIpn(req: NextRequest, body: any = {}) {
       await completePayment(payment, orderTrackingId, req.nextUrl.origin, transactionStatus);
     } else if (
       (transactionStatus.payment_status_description || "").toUpperCase() === "FAILED" &&
-      payment.status !== "completed"
+      payment.status !== "completed" &&
+      payment.status !== "failed"
     ) {
       await supabaseAdmin
         .from("payments")
         .update({ status: "failed", paid_at: null })
         .eq("id", payment.id);
+
+      if (payment.user_email) {
+        await sendPaymentFailedEmail({
+          to: payment.user_email,
+          name: payment.user_name || "there",
+          amount: payment.amount,
+          currency: payment.currency || "RWF",
+          reference: payment.reference,
+          provider: "Pesapal",
+        });
+      }
     }
 
     return NextResponse.json(response);
