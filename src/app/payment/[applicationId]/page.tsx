@@ -2,15 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { CheckCircle, AlertCircle, ArrowRight } from "lucide-react";
+import { CheckCircle, AlertCircle, ArrowRight, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MtnMomoIcon } from "@/components/icons/mtn-momo";
 import { VisaIcon } from "@/components/icons/visa";
 import { MastercardIcon } from "@/components/icons/mastercard";
 import { formatCurrency } from "@/lib/utils";
-import { initiateRwandaPay, initiatePesapal, generateReference } from "@/lib/payment";
+import { initiateDemoPayment, initiatePesapal, generateReference } from "@/lib/payment";
 import type { CompetitionApplication } from "@/types";
 
 export default function PaymentPage() {
@@ -64,14 +63,15 @@ export default function PaymentPage() {
       const customerEmail = application.email || application.userEmail || "";
       const customerPhone = application.mobileNumber || "";
 
-      if (selectedMethod === "Momo Pay") {
-        const { payment_url } = await initiateRwandaPay({
+      if (selectedMethod === "Demo Pay") {
+        const { payment_url } = await initiateDemoPayment({
           amount,
-          tx_ref: reference,
+          reference,
           customer: {
             name: customerName,
             email: customerEmail,
             phone: customerPhone,
+            country: application.country || "RW",
           },
           currency: "RWF",
           description: `Entry fee for ${application.competition?.title || "competition"}`,
@@ -213,7 +213,7 @@ export default function PaymentPage() {
             <h3 className="text-sm font-medium mb-3">Select Payment Method</h3>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { name: "Momo Pay", icon: <MtnMomoIcon className="h-8 w-12 mx-auto" /> },
+                { name: "Demo Pay", icon: <CreditCard className="h-8 w-8 mx-auto" /> },
                 { name: "Visa", icon: <VisaIcon className="h-8 w-12 mx-auto" /> },
                 { name: "Mastercard", icon: <MastercardIcon className="h-8 w-12 mx-auto" /> },
               ].map((method) => (
