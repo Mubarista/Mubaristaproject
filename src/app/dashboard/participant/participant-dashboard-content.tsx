@@ -252,6 +252,10 @@ export default function ParticipantDashboardContent() {
   }, [user, accessToken]);
 
   const displayName = user?.name || application?.fullName || "Barista";
+  const maxVideoDuration = application?.competition?.maxVideoDuration;
+  const maxVideoSize = application?.competition?.maxVideoSize;
+  const durationText = maxVideoDuration ? `${maxVideoDuration} seconds` : "the administrator's limit";
+  const sizeText = maxVideoSize ? `${maxVideoSize} MB` : "the administrator's limit";
 
   const userResult = results.find((r) => {
     if (!displayName) return false;
@@ -284,12 +288,64 @@ export default function ParticipantDashboardContent() {
   async function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    const maxDuration = application?.competition?.maxVideoDuration;
+    const maxSize = application?.competition?.maxVideoSize;
+
+    if (!file.type.startsWith("video/")) {
+      alert("Only video files are accepted for competition submissions.");
+      return;
+    }
+
+    if (maxSize && file.size > maxSize * 1024 * 1024) {
+      alert(`Video file size must not exceed ${maxSize} MB.`);
+      return;
+    }
+
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.muted = true;
+    const objectUrl = URL.createObjectURL(file);
+    video.src = objectUrl;
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        video.onloadedmetadata = () => resolve();
+        video.onerror = () => reject(new Error("Could not load video metadata"));
+      });
+
+      if (maxDuration && video.duration > maxDuration) {
+        URL.revokeObjectURL(objectUrl);
+        alert(`Video duration must not exceed ${maxDuration} seconds.`);
+        return;
+      }
+
+      if (video.videoWidth <= video.videoHeight) {
+        URL.revokeObjectURL(objectUrl);
+        alert("Video must be in landscape (horizontal) orientation.");
+        return;
+      }
+
+      if (video.videoHeight < 1040) {
+        URL.revokeObjectURL(objectUrl);
+        alert("Video resolution must be at least 1040p in landscape orientation (height >= 1040).");
+        return;
+      }
+
+      URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+      URL.revokeObjectURL(objectUrl);
+      console.error("Video validation error:", error);
+      alert("Could not validate the video. Please try a different file.");
+      return;
+    }
+
     setUploading(true);
     setUploadUrl(null);
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("type", file.type.startsWith("video/") ? "video" : "photo");
+      formData.append("type", "video");
       const response = await fetch("/api/upload", { method: "POST", body: formData });
       if (response.ok) {
         const data = await response.json();
@@ -531,6 +587,10 @@ export default function ParticipantDashboardContent() {
                           <li>You have not copied, edited, or re-used previous recordings.</li>
                           <li>Once submitted, the video cannot be re-uploaded or modified.</li>
                           <li>You have reviewed the video carefully before submitting.</li>
+                          <li>The video has good lighting and clear audio/visual quality.</li>
+                          <li>The video is in landscape (horizontal) orientation with a minimum 1040p resolution.</li>
+                          <li>The video length does not exceed {durationText}.</li>
+                          <li>The video file size does not exceed {sizeText}.</li>
                         </ul>
                       </div>
 

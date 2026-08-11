@@ -233,6 +233,8 @@ export interface CompetitionApplication {
     id?: string;
     title?: string;
     entryFee?: number;
+    maxVideoDuration?: number;
+    maxVideoSize?: number;
   };
 }
 

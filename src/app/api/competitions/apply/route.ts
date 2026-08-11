@@ -31,7 +31,7 @@ export async function GET(request: Request) {
     if (competitionIds.length > 0) {
       const { data: comps } = await supabaseAdmin
         .from("competitions")
-        .select("id, title, entry_fee")
+        .select("id, title, entry_fee, max_video_duration, max_video_size")
         .in("id", competitionIds);
       if (comps) {
         competitionsMap = Object.fromEntries(
@@ -44,6 +44,7 @@ export async function GET(request: Request) {
       ...a,
       email: a.email || a.userEmail,
       fullName: a.fullName || a.userName,
+      competition: (a.competitionId && competitionsMap[a.competitionId]) || null,
       competitions: (a.competitionId && competitionsMap[a.competitionId]) || null,
     }));
 
