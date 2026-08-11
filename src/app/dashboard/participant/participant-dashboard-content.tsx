@@ -497,9 +497,9 @@ export default function ParticipantDashboardContent() {
                   <FileText className="h-4 w-4" /> View Certificates
                 </Button>
                 <Button
-                  variant={application?.videoUrl ? "ghost" : "secondary"}
+                  variant={application?.videoUrl ? "ghost" : "premium"}
                   className="w-full"
-                  size="sm"
+                  size={application?.videoUrl ? "sm" : "lg"}
                   onClick={() => setActiveModal("upload")}
                 >
                   <Upload className="h-4 w-4" /> {application?.videoUrl ? "View Submitted Video" : "Submit Competition Video"}
@@ -621,6 +621,8 @@ export default function ParticipantDashboardContent() {
                       )}
                       {uploadUrl && (
                         <Button
+                          variant="premium"
+                          size="lg"
                           className="w-full"
                           onClick={saveSubmissionUrl}
                           disabled={!termsAccepted}
