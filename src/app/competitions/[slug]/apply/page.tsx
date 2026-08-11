@@ -140,7 +140,7 @@ export default function ApplyPage() {
     return <div className="pt-32 text-center">Competition not found</div>;
   }
 
-  if (competition.status === "completed") {
+  if (competition.status === "ended") {
     return (
       <div className="pt-24 pb-16 min-h-screen">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 text-center">

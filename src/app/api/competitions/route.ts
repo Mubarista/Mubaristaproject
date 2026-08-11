@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase, keysToSnakeCase } from "@/lib/supabase-utils";
+import { syncCompetitionStatuses } from "@/lib/competition";
 
 export async function GET(request: Request) {
   try {
+    await syncCompetitionStatuses();
+
     const { searchParams } = new URL(request.url);
     const slug = searchParams.get('slug');
 

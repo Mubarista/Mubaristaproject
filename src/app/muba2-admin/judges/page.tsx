@@ -204,7 +204,7 @@ function CredentialModal({
             >
               <option value="" style={{ color: "#000" }}>Select a competition...</option>
               {competitions
-                .filter(c => c.status !== "completed")
+                .filter(c => c.status !== "ended")
                 .sort((a, b) => a.title.localeCompare(b.title))
                 .map(c => (
                   <option key={c.id} value={c.id} style={{ color: "#000" }}>
@@ -212,7 +212,7 @@ function CredentialModal({
                   </option>
                 ))}
             </select>
-            {competitions.filter(c => c.status !== "completed").length === 0 && (
+            {competitions.filter(c => c.status !== "ended").length === 0 && (
               <p className="text-xs mt-1" style={{ color: "#ef4444" }}>No currently available competitions.</p>
             )}
           </div>

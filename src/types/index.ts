@@ -139,9 +139,16 @@ export type UserRole =
   | "admin"
   | "judge";
 
-export type ApplicationStatus = "pending" | "approved" | "declined" | "expired";
+export type ApplicationStatus = "pending" | "approved" | "nominated" | "declined" | "expired";
 export type PaymentStatus = "pending" | "completed" | "failed" | "expired";
-export type CompetitionStatus = "upcoming" | "open" | "judging" | "completed";
+export type CompetitionStatus =
+  | "upcoming"
+  | "registration_open"
+  | "in_progress"
+  | "voting"
+  | "judging"
+  | "winner_announcement"
+  | "ended";
 
 export interface User {
   id: string;
@@ -175,7 +182,7 @@ export interface Competition {
   prizePool: number;
   countriesAllowed: string[];
   registrationDeadline: string;
-  eventTimeline: { date: string; event: string }[];
+  eventTimeline: { date: string; event: string; phase?: CompetitionStatus }[];
   requiredSkills: string[];
   entryFee: number;
   availableSlots: number;

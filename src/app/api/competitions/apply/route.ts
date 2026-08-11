@@ -70,12 +70,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Failed to verify competition status" }, { status: 500 });
     }
 
-    if (competition?.status === "completed") {
-      return NextResponse.json({ error: "This competition has already ended and no longer accepts applications" }, { status: 403 });
-    }
-
-    if (competition?.status === "judging") {
-      return NextResponse.json({ error: "Applications are closed. Judging is in progress." }, { status: 403 });
+    if (competition?.status !== "registration_open") {
+      return NextResponse.json({
+        error: competition?.status === "completed" || competition?.status === "ended"
+          ? "This competition has already ended and no longer accepts applications"
+          : "Applications are not open at the moment",
+      }, { status: 403 });
     }
 
     const totalSlots = competition?.total_slots ?? 0;
@@ -214,16 +214,14 @@ export async function POST(request: Request) {
     }).select().single();
     if (error) throw error;
 
-    // Update available slots and status after successful application
+    // Update available slots after successful application
     const newApplicationsCount = currentApplications + 1;
     const newAvailableSlots = Math.max(0, totalSlots - newApplicationsCount);
-    const newStatus = newAvailableSlots === 0 ? "judging" : competition?.status;
 
     const { error: updateError } = await supabaseAdmin
       .from("competitions")
       .update({
         available_slots: newAvailableSlots,
-        status: newStatus,
         updated_at: new Date().toISOString(),
       })
       .eq("id", body.competitionId);

@@ -18,6 +18,7 @@ import { Countdown } from "@/components/shared/countdown";
 import { formatCurrency } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-context";
 import type { Competition } from "@/types";
 
 interface Props {
@@ -33,6 +34,7 @@ export default function CompetitionDetailPage({ params }: Props) {
   const [slug, setSlug] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [competition, setCompetition] = useState<Competition | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     async function fetchSlug() {
@@ -221,39 +223,22 @@ export default function CompetitionDetailPage({ params }: Props) {
               <p className="text-xs text-muted mb-6">
                 Organizer: {competition.organizer}
               </p>
-              {registrationClosed && (
-                <Badge variant="red" className="mb-4">
-                  Registration Closed
-                </Badge>
-              )}
-              {competition.status === "judging" && (
-                <Badge variant="yellow" className="mb-4">
-                  Judging
-                </Badge>
-              )}
-              {registrationClosed || competition.status === "completed" || competition.status === "judging" ? (
-                <>
-                  <Button variant="secondary" className="w-full" size="lg" disabled>
-                    {registrationClosed ? "Registration Closed" : "Applications Closed"}
-                  </Button>
-                  <p className="text-xs text-muted text-center mt-3">
-                    {registrationClosed
-                      ? "Registration has closed for this competition"
-                      : competition.status === "judging"
-                      ? "Judging is in progress"
-                      : "This competition has already ended"}
-                  </p>
-                </>
-              ) : competition.availableSlots <= 0 ? (
-                <>
-                  <Button variant="secondary" className="w-full" size="lg" disabled>
-                    No slots remaining
-                  </Button>
-                  <p className="text-xs text-muted text-center mt-3">
-                    All slots have been filled
-                  </p>
-                </>
-              ) : (
+              <Badge
+                variant={
+                  competition.status === "registration_open"
+                    ? "green"
+                    : competition.status === "voting" || competition.status === "winner_announcement"
+                    ? "yellow"
+                    : competition.status === "ended"
+                    ? "red"
+                    : "default"
+                }
+                className="mb-4"
+              >
+                {competition.status.replace(/_/g, " ")}
+              </Badge>
+
+              {competition.status === "registration_open" && competition.availableSlots > 0 ? (
                 <>
                   <Link href={`/competitions/${slug}/apply`}>
                     <Button variant="premium" className="w-full" size="lg">
@@ -263,6 +248,69 @@ export default function CompetitionDetailPage({ params }: Props) {
                   </Link>
                   <p className="text-xs text-muted text-center mt-3">
                     Apply first, then pay entry fee after nomination
+                  </p>
+                </>
+              ) : competition.status === "registration_open" && competition.availableSlots <= 0 ? (
+                <>
+                  <Button variant="secondary" className="w-full" size="lg" disabled>
+                    No slots remaining
+                  </Button>
+                  <p className="text-xs text-muted text-center mt-3">
+                    All slots have been filled
+                  </p>
+                </>
+              ) : competition.status === "in_progress" ? (
+                <>
+                  <Link href={`/competitions/${slug}/upload`}>
+                    <Button variant="premium" className="w-full" size="lg">
+                      Upload Competition Video
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </Link>
+                  <p className="text-xs text-muted text-center mt-3">
+                    Nominated applicants can upload their performance video
+                  </p>
+                </>
+              ) : competition.status === "voting" ? (
+                <>
+                  <Link href={`/competitions/${slug}/leaderboard`}>
+                    <Button variant="premium" className="w-full" size="lg">
+                      Vote & View Leaderboard
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </Link>
+                  <p className="text-xs text-muted text-center mt-3">
+                    1 vote = 3 points. Register or log in to vote.
+                  </p>
+                </>
+              ) : competition.status === "judging" ? (
+                <>
+                  <Button variant="secondary" className="w-full" size="lg" disabled>
+                    Judging in Progress
+                  </Button>
+                  <p className="text-xs text-muted text-center mt-3">
+                    Judges are scoring the submissions
+                  </p>
+                </>
+              ) : competition.status === "winner_announcement" || competition.status === "ended" ? (
+                <>
+                  <Link href={`/competitions/${slug}/leaderboard`}>
+                    <Button variant="premium" className="w-full" size="lg">
+                      View Winners
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </Link>
+                  <p className="text-xs text-muted text-center mt-3">
+                    {competition.status === "winner_announcement" ? "Winners have been announced" : "This competition has ended"}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Button variant="secondary" className="w-full" size="lg" disabled>
+                    Coming Soon
+                  </Button>
+                  <p className="text-xs text-muted text-center mt-3">
+                    Registration has not opened yet
                   </p>
                 </>
               )}

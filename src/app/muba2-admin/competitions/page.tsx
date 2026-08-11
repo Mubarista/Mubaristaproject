@@ -70,10 +70,10 @@ export default function AdminCompetitionsPage() {
   }
 
   function addTimeline() {
-    setDraft(d => ({ ...d, eventTimeline: [...d.eventTimeline, { date: "", event: "" }] }));
+    setDraft(d => ({ ...d, eventTimeline: [...d.eventTimeline, { date: "", event: "", phase: "upcoming" }] }));
   }
 
-  function updateTimeline(index: number, key: "date" | "event", value: string) {
+  function updateTimeline(index: number, key: "date" | "event" | "phase", value: string) {
     setDraft(d => ({
       ...d,
       eventTimeline: d.eventTimeline.map((t, i) => i === index ? { ...t, [key]: value } : t),
@@ -93,13 +93,16 @@ export default function AdminCompetitionsPage() {
     try {
       const exists = competitions.find((c) => c.id === draft.id);
       const method = exists ? "PUT" : "POST";
-      
-      console.log("Saving competition:", draft);
-      
+
+      // Status is 100% timeline-driven, so we never save a manual status.
+      const { status, ...payload } = draft;
+
+      console.log("Saving competition:", payload);
+
       const res = await fetch("/api/competitions", {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draft),
+        body: JSON.stringify(payload),
       });
       
       const result = await res.json();
@@ -218,16 +221,20 @@ export default function AdminCompetitionsPage() {
             render: (c) => (
               <Badge
                 variant={
-                  c.status === "open"
+                  c.status === "registration_open"
                     ? "green"
+                    : c.status === "voting"
+                    ? "blue"
                     : c.status === "upcoming"
                     ? "blue"
                     : c.status === "judging"
                     ? "yellow"
+                    : c.status === "winner_announcement"
+                    ? "yellow"
                     : "default"
                 }
               >
-                {c.status}
+                {c.status.replace(/_/g, " ")}
               </Badge>
             ),
           },
@@ -274,21 +281,9 @@ export default function AdminCompetitionsPage() {
               />
             </Field>
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <Field label="Prize Pool (RWF)"><Input type="number" value={draft.prizePool} onChange={(e) => setDraft(d => ({ ...d, prizePool: Number(e.target.value) }))} /></Field>
             <Field label="Entry Fee (RWF)"><Input type="number" value={draft.entryFee} onChange={(e) => setDraft(d => ({ ...d, entryFee: Number(e.target.value) }))} /></Field>
-            <Field label="Status">
-              <Select
-                value={draft.status}
-                onChange={set("status")}
-                options={[
-                  { value: "upcoming", label: "Upcoming" },
-                  { value: "open", label: "Open" },
-                  { value: "judging", label: "Judging" },
-                  { value: "completed", label: "Completed" },
-                ]}
-              />
-            </Field>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Available Slots"><Input type="number" value={draft.availableSlots} onChange={(e) => setDraft(d => ({ ...d, availableSlots: Number(e.target.value) }))} /></Field>
@@ -308,6 +303,20 @@ export default function AdminCompetitionsPage() {
                       value={item.date}
                       onChange={(e) => updateTimeline(index, "date", e.target.value)}
                       className="w-40"
+                    />
+                    <Select
+                      value={item.phase || "upcoming"}
+                      onChange={(e) => updateTimeline(index, "phase", e.target.value)}
+                      options={[
+                        { value: "upcoming", label: "Upcoming" },
+                        { value: "registration_open", label: "Open for registration" },
+                        { value: "in_progress", label: "In progress" },
+                        { value: "voting", label: "Voting" },
+                        { value: "judging", label: "Judging" },
+                        { value: "winner_announcement", label: "Winner announcement" },
+                        { value: "ended", label: "Ended" },
+                      ]}
+                      className="flex-1"
                     />
                     <Button
                       type="button"

@@ -35,6 +35,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    const resolvedCompetitionId = competitionId || (
+      await supabaseAdmin
+        .from("competition_applications")
+        .select("competition_id")
+        .eq("id", applicationId)
+        .maybeSingle()
+    ).data?.competition_id;
+
+    if (!resolvedCompetitionId) {
+      return NextResponse.json({ error: "Competition not found for this application" }, { status: 404 });
+    }
+
+    const { data: competition, error: compError } = await supabaseAdmin
+      .from("competitions")
+      .select("status")
+      .eq("id", resolvedCompetitionId)
+      .single();
+
+    if (compError || !competition) {
+      return NextResponse.json({ error: "Competition not found" }, { status: 404 });
+    }
+
+    if (competition.status !== "judging") {
+      return NextResponse.json({ error: "Judging is not open for this competition" }, { status: 403 });
+    }
+
     const { data: existing, error: existingError } = await supabaseAdmin
       .from("judge_scores")
       .select("id")
@@ -47,7 +73,7 @@ export async function POST(request: Request) {
     const payload = {
       judge_id: judgeId,
       application_id: applicationId,
-      competition_id: competitionId || null,
+      competition_id: resolvedCompetitionId,
       participant_name: participantName || null,
       score,
       feedback: comments || null,
@@ -73,6 +99,43 @@ export async function POST(request: Request) {
         .single();
       if (error) throw error;
       result = data;
+    }
+
+    // Recalculate the average judge score for this application
+    const { data: allScores } = await supabaseAdmin
+      .from("judge_scores")
+      .select("score")
+      .eq("application_id", applicationId);
+
+    const judgeScores = (allScores || []).map((s: any) => Number(s.score || 0));
+    const averageJudgeScore = judgeScores.length > 0
+      ? judgeScores.reduce((sum, s) => sum + s, 0) / judgeScores.length
+      : 0;
+
+    const { data: resultRow } = await supabaseAdmin
+      .from("competition_results")
+      .select("vote_points")
+      .eq("application_id", applicationId)
+      .maybeSingle();
+
+    const votePoints = (resultRow?.vote_points as number) || 0;
+    const finalScore = votePoints + averageJudgeScore;
+
+    const { error: resultError } = await supabaseAdmin
+      .from("competition_results")
+      .upsert({
+        competition_id: resolvedCompetitionId,
+        application_id: applicationId,
+        participant_name: participantName || "Participant",
+        judge_score: averageJudgeScore,
+        vote_points: votePoints,
+        score: finalScore,
+        rank: 0,
+        feedback: comments || "",
+      }, { onConflict: "application_id" });
+
+    if (resultError) {
+      console.error("Error updating competition results from judge score:", resultError);
     }
 
     return NextResponse.json({ success: true, score: result });

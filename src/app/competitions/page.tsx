@@ -112,8 +112,10 @@ export default function CompetitionsPage() {
                     variant={
                       isRegistrationClosed(comp.registrationDeadline)
                         ? "red"
-                        : comp.status === "open"
+                        : comp.status === "registration_open"
                         ? "green"
+                        : comp.status === "voting"
+                        ? "blue"
                         : comp.status === "judging"
                         ? "yellow"
                         : "default"
