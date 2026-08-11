@@ -39,7 +39,7 @@ export default function AdminCompetitionsPage() {
 
   async function fetchCompetitions() {
     try {
-      const res = await fetch("/api/competitions");
+      const res = await fetch("/api/competitions", { cache: "no-store" });
       const data = await res.json();
       console.log("Fetched competitions:", data);
       setCompetitions(data);

@@ -345,7 +345,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     async function fetchAll() {
       const fetches: Promise<void>[] = [
-        fetch("/api/competitions").then(r => r.ok ? r.json() : []).then(d => setCompetitions(d)).catch(() => {}),
+        fetch("/api/competitions", { cache: "no-store" }).then(r => r.ok ? r.json() : []).then(d => setCompetitions(d)).catch(() => {}),
         fetch("/api/winners").then(r => r.ok ? r.json() : []).then(d => setWinners(d)).catch(() => {}),
         fetch("/api/latte-art").then(r => r.ok ? r.json() : []).then(d => setLatteArt(d)).catch(() => {}),
         fetch("/api/testimonials").then(r => r.ok ? r.json() : []).then(d => setTestimonials(d)).catch(() => {}),

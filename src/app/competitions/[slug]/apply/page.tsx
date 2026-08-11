@@ -68,7 +68,7 @@ export default function ApplyPage() {
     // Fallback: fetch directly from API
     async function fetchCompetition() {
       try {
-        const res = await fetch(`/api/competitions?slug=${encodeURIComponent(slug)}`);
+        const res = await fetch(`/api/competitions?slug=${encodeURIComponent(slug)}`, { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           setCompetition(data);
@@ -90,7 +90,7 @@ export default function ApplyPage() {
     if (!slug) return;
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/competitions?slug=${encodeURIComponent(slug)}`);
+        const res = await fetch(`/api/competitions?slug=${encodeURIComponent(slug)}`, { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           setCompetition(data);

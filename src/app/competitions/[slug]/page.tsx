@@ -47,7 +47,7 @@ export default function CompetitionDetailPage({ params }: Props) {
   async function fetchCompetition() {
     if (!slug) return;
     try {
-      const res = await fetch(`/api/competitions?slug=${encodeURIComponent(slug)}`);
+      const res = await fetch(`/api/competitions?slug=${encodeURIComponent(slug)}`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         setCompetition(data);

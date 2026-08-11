@@ -24,7 +24,7 @@ export default function UploadVideoPage() {
 
   async function fetchCompetition() {
     try {
-      const res = await fetch(`/api/competitions?slug=${encodeURIComponent(slug)}`);
+      const res = await fetch(`/api/competitions?slug=${encodeURIComponent(slug)}`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         setCompetition(data);

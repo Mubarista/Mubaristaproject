@@ -57,7 +57,7 @@ export default function CompetitionsPage() {
 
   async function fetchCompetitions() {
     try {
-      const res = await fetch("/api/competitions");
+      const res = await fetch("/api/competitions", { cache: "no-store" });
       const data = await res.json();
       setCompetitions(data);
     } catch (error) {

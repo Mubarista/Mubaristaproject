@@ -35,7 +35,7 @@ export default function LeaderboardPage() {
 
   async function fetchLeaderboard() {
     try {
-      const res = await fetch(`/api/competitions/leaderboard?slug=${encodeURIComponent(slug)}`);
+      const res = await fetch(`/api/competitions/leaderboard?slug=${encodeURIComponent(slug)}`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         setCompetition(data.competition);

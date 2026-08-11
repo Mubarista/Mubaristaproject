@@ -57,14 +57,22 @@ export async function POST(request: Request) {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }).select().single();
-    
+
     if (error) {
       console.error("Insert error:", error);
       throw error;
     }
-    
-    console.log("Created competition:", data);
-    return NextResponse.json(mapKeysToCamelCase(data));
+
+    // Sync the status from the event timeline before returning
+    await syncCompetitionStatuses();
+    const { data: synced } = await supabaseAdmin
+      .from("competitions")
+      .select("*")
+      .eq("id", data.id)
+      .single();
+
+    console.log("Created competition:", synced);
+    return NextResponse.json(mapKeysToCamelCase(synced));
   } catch (error) {
     console.error("Error creating competition:", error);
     return NextResponse.json({ error: "Failed to create competition", details: error instanceof Error ? error.message : String(error) }, { status: 500 });
@@ -89,14 +97,22 @@ export async function PUT(request: Request) {
       ...snakeCaseData,
       updated_at: new Date().toISOString(),
     }).eq("id", id).select().single();
-    
+
     if (error) {
       console.error("Update error:", error);
       throw error;
     }
-    
-    console.log("Updated competition:", data);
-    return NextResponse.json(mapKeysToCamelCase(data));
+
+    // Sync the status from the event timeline before returning
+    await syncCompetitionStatuses();
+    const { data: synced } = await supabaseAdmin
+      .from("competitions")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    console.log("Updated competition:", synced);
+    return NextResponse.json(mapKeysToCamelCase(synced));
   } catch (error) {
     console.error("Error updating competition:", error);
     return NextResponse.json({ error: "Failed to update competition", details: error instanceof Error ? error.message : String(error) }, { status: 500 });
