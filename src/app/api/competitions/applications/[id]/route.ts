@@ -57,6 +57,23 @@ export async function PUT(
 
     // Map API-level fields to actual table columns and drop enriched/non-column fields
     const { email, fullName, competitions, competition, ...rest } = body;
+
+    // Prevent video re-uploads or modifications after the first submission
+    if (rest.videoUrl !== undefined) {
+      const { data: existing } = await supabaseAdmin
+        .from("competition_applications")
+        .select("video_url")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (existing?.video_url) {
+        return NextResponse.json(
+          { error: "A video has already been submitted and cannot be modified or re-uploaded." },
+          { status: 409 }
+        );
+      }
+    }
+
     const updatePayload: Record<string, unknown> = keysToSnakeCase(rest);
     if (email !== undefined) updatePayload.user_email = email;
     if (fullName !== undefined) {

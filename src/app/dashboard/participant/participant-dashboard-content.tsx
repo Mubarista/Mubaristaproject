@@ -76,6 +76,7 @@ export default function ParticipantDashboardContent() {
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadUrl, setUploadUrl] = useState<string | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [competitionId, setCompetitionId] = useState<string | null>(null);
 
   async function fetchResults(app: CompetitionApplication) {
@@ -306,6 +307,10 @@ export default function ParticipantDashboardContent() {
 
   async function saveSubmissionUrl() {
     if (!uploadUrl || !application?.id) return;
+    if (!termsAccepted) {
+      alert("You must read and accept the terms and conditions before submitting.");
+      return;
+    }
     try {
       const response = await fetch(`/api/competitions/applications/${application.id}`, {
         method: "PUT",
@@ -435,8 +440,13 @@ export default function ParticipantDashboardContent() {
                 <Button variant="secondary" className="w-full" size="sm" onClick={() => setActiveModal("certificates")}>
                   <FileText className="h-4 w-4" /> View Certificates
                 </Button>
-                <Button variant="secondary" className="w-full" size="sm" onClick={() => setActiveModal("upload")}>
-                  <Upload className="h-4 w-4" /> Submit Competition Video
+                <Button
+                  variant={application?.videoUrl ? "ghost" : "secondary"}
+                  className="w-full"
+                  size="sm"
+                  onClick={() => setActiveModal("upload")}
+                >
+                  <Upload className="h-4 w-4" /> {application?.videoUrl ? "View Submitted Video" : "Submit Competition Video"}
                 </Button>
               </div>
             </Card>
@@ -491,28 +501,74 @@ export default function ParticipantDashboardContent() {
               {activeModal === "upload" && (
                 <div className="space-y-4">
                   <CardTitle className="flex items-center gap-2">
-                    <Upload className="h-5 w-5" /> Upload Submission
+                    <Upload className="h-5 w-5" /> {application?.videoUrl ? "Submitted Video" : "Competition Video Submission"}
                   </CardTitle>
-                  <p className="text-sm text-muted">
-                    Upload your competition video or profile photo. Supported files: images, videos.
-                  </p>
-                  <input
-                    type="file"
-                    accept="image/*,video/*"
-                    onChange={handleFileUpload}
-                    disabled={uploading}
-                    className="w-full text-sm"
-                  />
-                  {uploading && <p className="text-sm text-muted">Uploading...</p>}
-                  {uploadUrl && (
-                    <div className="text-sm text-green flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4" /> Uploaded successfully
+
+                  {application?.videoUrl ? (
+                    <div className="space-y-3">
+                      <p className="text-sm text-green flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4" /> Your competition video has been submitted.
+                      </p>
+                      <p className="text-sm text-muted">
+                        Submissions are final. You cannot re-upload or modify your video.
+                      </p>
+                      <a
+                        href={application.videoUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm text-blue break-all block"
+                      >
+                        {application.videoUrl}
+                      </a>
                     </div>
-                  )}
-                  {uploadUrl && (
-                    <Button className="w-full" onClick={saveSubmissionUrl}>
-                      Save to Application
-                    </Button>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-lg bg-muted-bg text-sm space-y-2 text-muted max-h-48 overflow-y-auto">
+                        <p className="font-medium text-foreground">Terms & Conditions</p>
+                        <p>By submitting your competition video, you confirm that:</p>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>The video is your own original work created for this competition.</li>
+                          <li>You have not copied, edited, or re-used previous recordings.</li>
+                          <li>Once submitted, the video cannot be re-uploaded or modified.</li>
+                          <li>You have reviewed the video carefully before submitting.</li>
+                        </ul>
+                      </div>
+
+                      <label className="flex items-start gap-2 text-sm cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={termsAccepted}
+                          onChange={(e) => setTermsAccepted(e.target.checked)}
+                          className="mt-1"
+                        />
+                        <span>
+                          I have read and accept the terms. I understand my submission is final and cannot be changed.
+                        </span>
+                      </label>
+
+                      <input
+                        type="file"
+                        accept="video/*"
+                        onChange={handleFileUpload}
+                        disabled={uploading || !termsAccepted}
+                        className="w-full text-sm"
+                      />
+                      {uploading && <p className="text-sm text-muted">Uploading...</p>}
+                      {uploadUrl && (
+                        <div className="text-sm text-green flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4" /> Uploaded successfully
+                        </div>
+                      )}
+                      {uploadUrl && (
+                        <Button
+                          className="w-full"
+                          onClick={saveSubmissionUrl}
+                          disabled={!termsAccepted}
+                        >
+                          Save to Application
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
               )}

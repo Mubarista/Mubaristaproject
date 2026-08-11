@@ -227,6 +227,8 @@ export interface CompetitionApplication {
   accessLinkExpiresAt?: string;
   nominatedAt?: string;
   paidAt?: string;
+  videoUrl?: string;
+  videoPath?: string;
   competition?: {
     id?: string;
     title?: string;
