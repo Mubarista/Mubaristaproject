@@ -707,6 +707,18 @@ export default function ParticipantDashboardContent() {
                   <CardTitle className="flex items-center gap-2">
                     <BarChart3 className="h-5 w-5" /> Results
                   </CardTitle>
+
+                  {application?.videoUrl && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-muted">Your submitted video</p>
+                      <video
+                        src={application.videoUrl}
+                        controls
+                        className="w-full max-h-48 rounded-xl bg-black"
+                      />
+                    </div>
+                  )}
+
                   {userResult ? (
                     <div className="space-y-4">
                       <div className="p-4 rounded-lg bg-muted-bg">
