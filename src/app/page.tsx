@@ -8,7 +8,6 @@ import {
   SponsorsSection,
   CoffeeFactsSection,
   ArticlesSection,
-  FAQSection,
 } from "@/components/home/more-sections";
 
 export default function HomePage() {
@@ -22,7 +21,6 @@ export default function HomePage() {
       <TestimonialsSection />
       <CoffeeFactsSection />
       <ArticlesSection />
-      <FAQSection />
       <CTASection />
     </>
   );
