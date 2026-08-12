@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 interface SectionHeadingProps {
   eyebrow?: string;
-  title?: string;
+  title?: React.ReactNode;
   description?: string;
   align?: "left" | "center";
   className?: string;

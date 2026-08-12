@@ -741,4 +741,5 @@ export const navLinks = [
   { href: "/tips", label: "Tips & Skills" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
+  { href: "/coffee-facts", label: "Coffee Fact" },
 ];

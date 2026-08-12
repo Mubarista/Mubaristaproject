@@ -6,7 +6,7 @@ import { SectionHeading } from "@/components/shared/section-heading";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Lightbulb } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -225,7 +225,17 @@ export function CoffeeFactsSection() {
         <div className="mx-auto max-w-7xl">
           <SectionHeading
             eyebrow="Did You Know?"
-            title="Coffee Facts"
+            title={
+            <span className="inline-flex items-center justify-center gap-3">
+              Coffee Facts
+              <motion.span
+                animate={{ opacity: [1, 0.5, 1], scale: [1, 1.1, 1], rotate: [0, 8, -8, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <Lightbulb className="h-8 w-8 text-yellow" />
+              </motion.span>
+            </span>
+          }
             description="Expand your coffee knowledge with these fascinating facts."
           />
           <div className="flex items-center justify-center py-12">
@@ -269,7 +279,17 @@ export function CoffeeFactsSection() {
         >
           <SectionHeading
             eyebrow="Did You Know?"
-            title="Coffee Facts"
+            title={
+            <span className="inline-flex items-center justify-center gap-3">
+              Coffee Facts
+              <motion.span
+                animate={{ opacity: [1, 0.5, 1], scale: [1, 1.1, 1], rotate: [0, 8, -8, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <Lightbulb className="h-8 w-8 text-yellow" />
+              </motion.span>
+            </span>
+          }
             description="Swipe or click to explore fascinating coffee facts. Each fact reveals more when you interact with it."
           />
         </motion.div>

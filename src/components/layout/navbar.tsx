@@ -15,6 +15,7 @@ import {
   Settings,
   Bell,
   Heart,
+  Lightbulb,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
 import { navLinks } from "@/data/mock-data";
@@ -23,6 +24,23 @@ import { useAuth } from "@/lib/auth-context";
 import { useCart } from "@/lib/cart-context";
 import { safeLocalStorage } from "@/lib/safe-storage";
 import { cn } from "@/lib/utils";
+
+function LinkLabel({ href, label }: { href: string; label: string }) {
+  if (href === "/coffee-facts") {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-yellow">
+        {label}
+        <motion.span
+          animate={{ opacity: [1, 0.5, 1], scale: [1, 1.2, 1] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+        >
+          <Lightbulb className="h-4 w-4" />
+        </motion.span>
+      </span>
+    );
+  }
+  return <>{label}</>;
+}
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -133,17 +151,9 @@ export function Navbar() {
                 href={link.href}
                 className="px-3 py-2 text-sm text-muted hover:text-foreground transition-colors rounded-lg hover:bg-white/5"
               >
-                {link.label}
+                <LinkLabel href={link.href} label={link.label} />
               </Link>
             ))}
-            {!user && (
-              <Link
-                href="/#facts"
-                className="px-3 py-2 text-sm text-muted hover:text-foreground transition-colors rounded-lg hover:bg-white/5"
-              >
-                Coffee Facts
-              </Link>
-            )}
           </div>
 
           <div className="flex items-center gap-1">
@@ -270,7 +280,7 @@ export function Navbar() {
                     href={link.href}
                     className="block px-3 py-2 text-sm rounded-lg hover:bg-white/5 transition-colors"
                   >
-                    {link.label}
+                    <LinkLabel href={link.href} label={link.label} />
                   </Link>
                 ))}
               </div>
@@ -302,18 +312,9 @@ export function Navbar() {
                     onClick={() => setIsOpen(false)}
                     className="block px-4 py-3 rounded-xl hover:bg-white/5 transition-colors"
                   >
-                    {link.label}
+                    <LinkLabel href={link.href} label={link.label} />
                   </Link>
                 ))}
-                {!user && (
-                  <Link
-                    href="/#facts"
-                    onClick={() => setIsOpen(false)}
-                    className="block px-4 py-3 rounded-xl hover:bg-white/5 transition-colors"
-                  >
-                    Coffee Facts
-                  </Link>
-                )}
                 <div className="pt-4 flex flex-col gap-2 border-t border-white/10">
                   {!user ? (
                     <>
