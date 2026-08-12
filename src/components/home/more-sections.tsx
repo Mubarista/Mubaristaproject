@@ -853,3 +853,86 @@ export function ArticlesSection() {
     </section>
   );
 }
+
+export function FAQSection() {
+  const [faqs, setFaqs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  useEffect(() => {
+    fetchFAQs();
+  }, []);
+
+  async function fetchFAQs() {
+    try {
+      const response = await fetch("/api/faqs");
+      if (response.ok) {
+        const data = await response.json();
+        setFaqs(data);
+      }
+    } catch (error) {
+      console.error("Error fetching FAQs:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <section className="section-padding bg-muted-bg/30">
+        <div className="mx-auto max-w-3xl">
+          <SectionHeading
+            eyebrow="FAQ"
+            title="Frequently Asked Questions"
+            description="Everything you need to know about MUBARISTA."
+          />
+          <div className="flex items-center justify-center py-12">
+            <LoadingDots />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="section-padding bg-muted-bg/30">
+      <div className="mx-auto max-w-3xl">
+        <SectionHeading
+          eyebrow="FAQ"
+          title="Frequently Asked Questions"
+          description="Everything you need to know about MUBARISTA."
+        />
+        <div className="space-y-3">
+          {faqs.map((faq, i) => (
+            <motion.div
+              key={faq.id}
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.05 }}
+              className="glass-card rounded-2xl overflow-hidden"
+            >
+              <button
+                onClick={() => setOpenIndex(openIndex === i ? null : i)}
+                className="w-full flex items-center justify-between p-5 text-left"
+              >
+                <span className="font-medium pr-4">{faq.question}</span>
+                <ChevronDown
+                  className={cn(
+                    "h-5 w-5 text-blue shrink-0 transition-transform",
+                    openIndex === i && "rotate-180"
+                  )}
+                />
+              </button>
+              {openIndex === i && (
+                <div className="px-5 pb-5 text-muted text-sm leading-relaxed">
+                  {faq.answer}
+                </div>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
