@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Heart, Lock, MessageCircle, Send, X } from "lucide-react";
@@ -40,6 +40,10 @@ export function FeaturedArtSection() {
   const [commentText, setCommentText] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
+  const [copies, setCopies] = useState(3);
+  const [setWidth, setSetWidth] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const railRef = useRef<HTMLDivElement>(null);
 
   const selectedArt = latteArt.find((a) => a.id === selectedArtId) || null;
 
@@ -170,6 +174,22 @@ export function FeaturedArtSection() {
     setCommentLoading(false);
   }
 
+  const allArt = Array.from({ length: copies }, () =>
+    latteArt.filter((art) => art.image && art.image.trim() !== "")
+  ).flat();
+
+  useEffect(() => {
+    if (!containerRef.current || !railRef.current || allArt.length === 0) return;
+    const totalWidth = railRef.current.scrollWidth;
+    const singleSet = totalWidth / copies;
+    const containerWidth = containerRef.current.offsetWidth;
+    const needed = Math.max(copies, Math.ceil((containerWidth + singleSet) / singleSet));
+    if (needed !== copies) {
+      setCopies(needed);
+    }
+    setSetWidth(singleSet);
+  }, [allArt, copies]);
+
   return (
     <section className="section-padding bg-muted-bg/30">
       {/* Notification Toast */}
@@ -198,60 +218,68 @@ export function FeaturedArtSection() {
           </div>
         ) : (
           <div
-            className="overflow-x-auto flex gap-6 pb-4 -mx-4 px-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            ref={containerRef}
+            className="overflow-hidden -mx-4 px-4"
+            style={{
+              maskImage: "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
+              WebkitMaskImage: "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
+            }}
           >
-            {latteArt.filter((art) => art.image && art.image.trim() !== "").map((art, i) => (
-              <motion.div
-                key={art.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: Math.min(i * 0.1, 0.8) }}
-                className="group relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer shrink-0 w-[85%] sm:w-[45%] lg:w-[23%] snap-start"
-                onClick={() => setSelectedArtId(art.id)}
-              >
-                <Image
-                  src={art.image}
-                  alt={art.title}
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  className="object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute bottom-0 left-0 right-0 p-5">
-                  <h3 className="font-semibold text-white mb-1">{art.title}</h3>
-                  <p className="text-sm text-white/70 mb-2">Artist Barista: {art.artist}</p>
-                  <div className="flex items-center gap-4">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleLike(art.id);
-                      }}
-                      className={`flex items-center gap-1 text-sm transition-colors ${
-                        likedArt.has(art.id) ? "text-red-light" : "text-white/70"
-                      }`}
-                    >
-                      <Heart
-                        className={`h-4 w-4 transition-all ${
-                          likedArt.has(art.id) ? "fill-current scale-110" : ""
+            <motion.div
+              ref={railRef}
+              className="flex gap-6 min-w-max pb-4"
+              animate={setWidth ? { x: [0, -setWidth] } : undefined}
+              transition={{ repeat: Infinity, duration: 40, ease: "linear" }}
+            >
+              {allArt.map((art, i) => (
+                <div
+                  key={i}
+                  className="group relative w-72 h-96 rounded-2xl overflow-hidden cursor-pointer shrink-0"
+                  onClick={() => setSelectedArtId(art.id)}
+                >
+                  <Image
+                    src={art.image}
+                    alt={art.title}
+                    fill
+                    sizes="280px"
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute bottom-0 left-0 right-0 p-5">
+                    <h3 className="font-semibold text-white mb-1">{art.title}</h3>
+                    <p className="text-sm text-white/70 mb-2">Artist Barista: {art.artist}</p>
+                    <div className="flex items-center gap-4">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLike(art.id);
+                        }}
+                        className={`flex items-center gap-1 text-sm transition-colors ${
+                          likedArt.has(art.id) ? "text-red-light" : "text-white/70"
                         }`}
-                      />
-                      {formatNumber(art.likes)}
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedArtId(art.id);
-                      }}
-                      className="flex items-center gap-1 text-sm text-white/70 hover:text-white transition-colors"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                      {commentCounts[art.id] || 0} comments
-                    </button>
+                      >
+                        <Heart
+                          className={`h-4 w-4 transition-all ${
+                            likedArt.has(art.id) ? "fill-current scale-110" : ""
+                          }`}
+                        />
+                        {formatNumber(art.likes)}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedArtId(art.id);
+                        }}
+                        className="flex items-center gap-1 text-sm text-white/70 hover:text-white transition-colors"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        {commentCounts[art.id] || 0} comments
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </motion.div>
-            ))}
+              ))}
+            </motion.div>
           </div>
         )}
       </div>
