@@ -154,6 +154,34 @@ export function Navbar() {
                 <Lightbulb className="h-5 w-5 text-yellow" />
               </motion.span>
             </Link>
+
+            {user && (
+              <div className="relative group">
+                <button className="px-3 py-2 text-sm text-muted hover:text-foreground transition-colors rounded-lg hover:bg-white/5 inline-flex items-center gap-1">
+                  Barista Market <ChevronDown className="h-4 w-4" />
+                </button>
+                <div className="absolute top-full right-0 mt-2 w-40 glass-card rounded-xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <Link
+                    href="/books"
+                    className="block px-3 py-2 text-sm rounded-lg hover:bg-white/5 transition-colors"
+                  >
+                    E-Books
+                  </Link>
+                  <Link
+                    href="/tools"
+                    className="block px-3 py-2 text-sm rounded-lg hover:bg-white/5 transition-colors"
+                  >
+                    Tools
+                  </Link>
+                  <Link
+                    href="/jobs"
+                    className="block px-3 py-2 text-sm rounded-lg hover:bg-white/5 transition-colors"
+                  >
+                    Barista Jobs
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-1">
