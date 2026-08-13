@@ -255,6 +255,20 @@ export function Navbar() {
               </button>
             )}
 
+            <Link
+              href="/coffee-facts"
+              className="lg:hidden p-2 rounded-xl hover:bg-white/5 transition-colors"
+              aria-label="Coffee Facts"
+              title="Coffee Facts"
+            >
+              <motion.span
+                animate={{ opacity: [1, 0.5, 1], scale: [1, 1.2, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              >
+                <Lightbulb className="h-5 w-5 text-yellow" />
+              </motion.span>
+            </Link>
+
             {user ? (
               <div className="hidden sm:flex items-center gap-1">
                 <Link href="/dashboard">
