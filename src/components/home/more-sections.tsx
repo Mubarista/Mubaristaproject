@@ -5,7 +5,7 @@ import { useAdminData } from "@/lib/admin-data-context";
 import { SectionHeading } from "@/components/shared/section-heading";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChevronDown, Lightbulb } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
 import { cn } from "@/lib/utils";
@@ -98,7 +98,17 @@ export function CoffeeFactsSection() {
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [direction, setDirection] = useState(0); // -1 for left, 1 for right
+  const [isSwiping, setIsSwiping] = useState(false);
+  const [dragX, setDragX] = useState(0); // drag preview offset in px
+  const modalRef = useRef<HTMLDivElement | null>(null);
+  const prevActiveElement = useRef<HTMLElement | null>(null);
   const { user } = useAuth();
+
+  // Swipe sensitivity: higher = more sensitive (smaller movement required)
+  // Make this easy to tweak
+  const swipeSensitivity = 1.0; // default 1.0
+  const minSwipeDistance = 50; // base px
+  const effectiveThreshold = Math.max(12, minSwipeDistance / Math.max(0.2, swipeSensitivity));
 
   useEffect(() => {
     fetchCoffeeFacts();
@@ -116,6 +126,75 @@ export function CoffeeFactsSection() {
       setSelectedFact(coffeeFacts[currentIndex]);
     }
   }, [currentIndex]);
+
+  // Lock background scroll and implement focus-trap for modal
+  useEffect(() => {
+    if (!selectedFact) return;
+
+    // lock scroll
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    // save previously focused element
+    prevActiveElement.current = document.activeElement as HTMLElement | null;
+
+    // focus modal container after mount
+    const timer = setTimeout(() => {
+      if (modalRef.current) {
+        // focus first focusable or the modal itself
+        const focusable = modalRef.current.querySelector<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        (focusable || modalRef.current).focus();
+      }
+    }, 50);
+
+    function onKey(e: KeyboardEvent) {
+      if (!modalRef.current) return;
+      if (e.key === "Escape") {
+        setSelectedFact(null);
+      }
+
+      if (e.key === "Tab") {
+        // focus trap
+        const nodes = modalRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const focusable = Array.from(nodes).filter((n) => !n.hasAttribute("disabled"));
+        if (focusable.length === 0) {
+          e.preventDefault();
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    }
+
+    document.addEventListener("keydown", onKey);
+
+    return () => {
+      clearTimeout(timer);
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener("keydown", onKey);
+      // restore focus
+      try {
+        prevActiveElement.current?.focus();
+      } catch (e) {
+        // ignore
+      }
+    };
+  }, [selectedFact]);
 
   async function fetchCoffeeFacts() {
     try {
@@ -207,28 +286,40 @@ export function CoffeeFactsSection() {
   };
 
   // Touch handlers for mobile swipe (carousel & modal can reuse)
-  const minSwipeDistance = 50;
-
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
+    setDragX(0);
+    setIsSwiping(false);
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
+    const clientX = e.targetTouches[0].clientX;
+    setTouchEnd(clientX);
+    if (touchStart !== null) {
+      const delta = clientX - touchStart;
+      // update drag preview offset (mild damping)
+      setDragX(delta * 0.9);
+      if (Math.abs(delta) > 8) setIsSwiping(true);
+    }
   };
 
   const onTouchEnd = () => {
-    if (touchStart === null || touchEnd === null) return;
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-
-    if (isLeftSwipe) {
+    if (touchStart === null) return;
+    const end = touchEnd ?? touchStart;
+    const delta = end - touchStart;
+    // use effectiveThreshold which accounts for sensitivity
+    if (delta < -effectiveThreshold) {
       goToNext();
-    } else if (isRightSwipe) {
+    } else if (delta > effectiveThreshold) {
       goToPrev();
     }
+
+    // reset drag preview with a short delay to allow a smooth snap animation
+    setTimeout(() => setDragX(0), 50);
+    setTouchStart(null);
+    setTouchEnd(null);
+    setTimeout(() => setIsSwiping(false), 100);
   };
 
   if (loading) {
@@ -376,88 +467,91 @@ export function CoffeeFactsSection() {
                   }}
                   className="w-full max-w-2xl"
                 >
-                  <div
-                    onClick={() => handleFactClick(currentFact)}
-                    className="group cursor-pointer relative"
-                  >
-                    {/* Animated gradient border */}
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow via-blue to-yellow rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm" />
-                    
-                    <div className="relative glass-card rounded-2xl p-8 md:p-12 overflow-hidden">
-                      {/* Shimmer effect on hover */}
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
-                        initial={{ x: "-100%" }}
-                        whileHover={{ x: "100%" }}
-                        transition={{ duration: 0.8, ease: "easeInOut" }}
-                      />
+                  {/* Inner wrapper to apply drag preview x offset without interfering with entrance animation */}
+                  <motion.div style={{ x: dragX }} transition={{ type: "spring", stiffness: 300, damping: 35 }}>
+                    <div
+                      onClick={() => handleFactClick(currentFact)}
+                      className="group cursor-pointer relative"
+                    >
+                      {/* Animated gradient border */}
+                      <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow via-blue to-yellow rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm" />
+                      
+                      <div className="relative glass-card rounded-2xl p-8 md:p-12 overflow-hidden">
+                        {/* Shimmer effect on hover */}
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
+                          initial={{ x: "-100%" }}
+                          whileHover={{ x: "100%" }}
+                          transition={{ duration: 0.8, ease: "easeInOut" }}
+                        />
 
-                      {/* Floating icon with animation */}
-                      <motion.div
-                        className="relative mb-6 flex justify-center"
-                        animate={{
-                          y: [0, -8, 0],
-                        }}
-                        transition={{
-                          duration: 3,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                        }}
-                      >
-                        <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-yellow/20 to-blue/20">
-                          {currentFact.image ? (
-                            <img
-                              src={currentFact.image}
-                              alt="Coffee fact"
-                              className="w-20 h-20 object-cover rounded-2xl"
-                            />
-                          ) : (
+                        {/* Floating icon with animation */}
+                        <motion.div
+                          className="relative mb-6 flex justify-center"
+                          animate={{
+                            y: [0, -8, 0],
+                          }}
+                          transition={{
+                            duration: 3,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                          }}
+                        >
+                          <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-yellow/20 to-blue/20">
+                            {currentFact.image ? (
+                              <img
+                                src={currentFact.image}
+                                alt="Coffee fact"
+                                className="w-20 h-20 object-cover rounded-2xl"
+                              />
+                            ) : (
+                              <motion.span
+                                className="text-6xl"
+                                whileHover={{
+                                  rotate: [0, -10, 10, -10, 0],
+                                  scale: 1.2,
+                                }}
+                                transition={{ duration: 0.5 }}
+                              >
+                                {currentFact.icon}
+                              </motion.span>
+                            )}
+                          </div>
+                        </motion.div>
+
+                        {/* Fact text */}
+                        <p className="text-lg md:text-xl leading-relaxed text-foreground/90 group-hover:text-foreground transition-colors duration-300 mb-6 text-center">
+                          {currentFact.fact}
+                        </p>
+
+                        {/* Click indicator */}
+                        <div className="flex items-center justify-center gap-4 text-sm text-muted">
+                          <span className="flex items-center gap-2">
                             <motion.span
-                              className="text-6xl"
-                              whileHover={{
-                                rotate: [0, -10, 10, -10, 0],
-                                scale: 1.2,
-                              }}
-                              transition={{ duration: 0.5 }}
+                              animate={{ x: [0, 5, 0] }}
+                              transition={{ duration: 1.5, repeat: Infinity }}
                             >
-                              {currentFact.icon}
+                              👆
+                            </motion.span>
+                            Tap to explore more
+                          </span>
+                          {viewedFacts.has(currentFact.id) && (
+                            <motion.span
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="flex items-center gap-1 text-green"
+                            >
+                              <span className="w-2 h-2 bg-green rounded-full" />
+                              Viewed
                             </motion.span>
                           )}
                         </div>
-                      </motion.div>
 
-                      {/* Fact text */}
-                      <p className="text-lg md:text-xl leading-relaxed text-foreground/90 group-hover:text-foreground transition-colors duration-300 mb-6 text-center">
-                        {currentFact.fact}
-                      </p>
-
-                      {/* Click indicator */}
-                      <div className="flex items-center justify-center gap-4 text-sm text-muted">
-                        <span className="flex items-center gap-2">
-                          <motion.span
-                            animate={{ x: [0, 5, 0] }}
-                            transition={{ duration: 1.5, repeat: Infinity }}
-                          >
-                            👆
-                          </motion.span>
-                          Tap to explore more
-                        </span>
-                        {viewedFacts.has(currentFact.id) && (
-                          <motion.span
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            className="flex items-center gap-1 text-green"
-                          >
-                            <span className="w-2 h-2 bg-green rounded-full" />
-                            Viewed
-                          </motion.span>
-                        )}
+                        {/* Corner accent */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-yellow/10 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       </div>
-
-                      {/* Corner accent */}
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-yellow/10 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
-                  </div>
+                  </motion.div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -530,10 +624,11 @@ export function CoffeeFactsSection() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setSelectedFact(null)}
+            onClick={() => !isSwiping && setSelectedFact(null)}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
           >
             <motion.div
+              ref={modalRef}
               initial={{ scale: 0.8, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.8, opacity: 0, y: 20 }}
@@ -543,19 +638,14 @@ export function CoffeeFactsSection() {
               onTouchStart={onTouchStart}
               onTouchMove={onTouchMove}
               onTouchEnd={onTouchEnd}
-              // Allow keyboard navigation
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "ArrowRight") goToNext();
-                if (e.key === "ArrowLeft") goToPrev();
-                if (e.key === "Escape") setSelectedFact(null);
-              }}
+              // Allow keyboard navigation via global listener; keep tabIndex for accessibility
+              tabIndex={-1}
               className="relative max-w-2xl w-full"
             >
               {/* Animated gradient border */}
               <div className="absolute -inset-1 bg-gradient-to-r from-yellow via-blue to-yellow rounded-3xl opacity-75 blur animate-gradient-rotate" />
               
-              <div className="relative glass-card rounded-3xl p-8 overflow-hidden">
+              <motion.div style={{ x: dragX }} transition={{ type: "spring", stiffness: 300, damping: 35 }} className="relative glass-card rounded-3xl p-8 overflow-hidden">
                 {/* Close button */}
                 <button
                   onClick={() => setSelectedFact(null)}
@@ -648,7 +738,7 @@ export function CoffeeFactsSection() {
                     Explore More Facts
                   </button>
                 </motion.div>
-              </div>
+              </motion.div>
             </motion.div>
           </motion.div>
         )}
