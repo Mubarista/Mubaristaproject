@@ -294,6 +294,7 @@ export function CoffeeFactsSection() {
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault();
     const clientX = e.targetTouches[0].clientX;
     setTouchEnd(clientX);
     if (touchStart !== null) {
@@ -304,7 +305,8 @@ export function CoffeeFactsSection() {
     }
   };
 
-  const onTouchEnd = () => {
+  const onTouchEnd = (e: React.TouchEvent) => {
+    e.preventDefault();
     if (touchStart === null) return;
     const end = touchEnd ?? touchStart;
     const delta = end - touchStart;
@@ -645,7 +647,14 @@ export function CoffeeFactsSection() {
               {/* Animated gradient border */}
               <div className="absolute -inset-1 bg-gradient-to-r from-yellow via-blue to-yellow rounded-3xl opacity-75 blur animate-gradient-rotate" />
               
-              <motion.div style={{ x: dragX }} transition={{ type: "spring", stiffness: 300, damping: 35 }} className="relative glass-card rounded-3xl p-8 overflow-hidden">
+              <motion.div
+                style={{ x: dragX, touchAction: "pan-y" }}
+                transition={{ type: "spring", stiffness: 300, damping: 35 }}
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+                className="relative glass-card rounded-3xl p-8 overflow-hidden"
+              >
                 {/* Close button */}
                 <button
                   onClick={() => setSelectedFact(null)}
