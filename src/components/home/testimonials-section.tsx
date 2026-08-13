@@ -17,8 +17,8 @@ export function TestimonialsSection() {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const [userReviews, setUserReviews] = useState<any[]>([]);
   const [showAll, setShowAll] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<{ show: boolean; message: string; type: "success" | "error" }>({ show: false, message: "", type: "success" });
 
   useEffect(() => {
@@ -29,7 +29,14 @@ export function TestimonialsSection() {
     try {
       const res = await fetch("/api/testimonials");
       const data = await res.json();
-      setTestimonials(data);
+      setTestimonials(
+        (data || []).map((t: any) => ({
+          ...t,
+          quote: t.content || t.quote,
+          avatar: t.image || t.avatar,
+          role: t.role || "Barista",
+        }))
+      );
     } catch (error) {
       console.error("Error fetching testimonials:", error);
     } finally {
@@ -37,32 +44,44 @@ export function TestimonialsSection() {
     }
   }
 
-  const allReviews = [...userReviews, ...testimonials];
-  const displayedReviews = showAll ? allReviews : allReviews.slice(0, 3);
+  const displayedReviews = showAll ? testimonials : testimonials.slice(0, 3);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    // Add user review to state
-    const newReview = {
-      id: `user-${Date.now()}`,
-      userId: user.id,
-      name: user.name,
-      role: "Barista",
-      country: user.country || "Rwanda",
-      avatar: user.avatar || "/images/default-avatar.png",
-      rating,
-      quote: comment,
-      isUserReview: true,
-    };
-    setUserReviews([newReview, ...userReviews]);
-    setSubmitted(true);
-    setComment("");
-    setRating(0);
-    setTimeout(() => {
-      setSubmitted(false);
-      setShowForm(false);
-    }, 3000);
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/testimonials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: user.name,
+          role: "Barista",
+          content: comment,
+          image: user.avatar || "/images/default-avatar.png",
+          rating,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to submit review");
+
+      setComment("");
+      setRating(0);
+      setSubmitted(true);
+      setTimeout(() => {
+        setSubmitted(false);
+        setShowForm(false);
+      }, 3000);
+
+      await fetchTestimonials();
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      setNotification({ show: true, message: "Failed to submit review. Please try again.", type: "error" });
+      setTimeout(() => setNotification({ show: false, message: "", type: "success" }), 3000);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -102,14 +121,9 @@ export function TestimonialsSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.15 }}
-              className={`glass-card rounded-2xl p-8 relative ${t.isUserReview && user?.id === t.userId ? "border-2 border-blue/30" : ""}`}
+              className="glass-card rounded-2xl p-8 relative"
             >
               <Quote className="h-8 w-8 text-blue/30 absolute top-6 right-6" />
-              {t.isUserReview && user?.id === t.userId && (
-                <div className="mb-4">
-                  <span className="text-xs bg-blue/10 text-blue px-2 py-1 rounded-full">Your Review</span>
-                </div>
-              )}
               <div className="flex gap-1 mb-4">
                 {Array.from({ length: t.rating }).map((_, j) => (
                   <Star key={j} className="h-4 w-4 fill-yellow text-yellow" />
@@ -131,7 +145,7 @@ export function TestimonialsSection() {
                 <div>
                   <p className="font-semibold">{t.name}</p>
                   <p className="text-sm text-muted">
-                    {t.role} · {t.country}
+                    {t.role}{t.country ? ` · ${t.country}` : ""}
                   </p>
                 </div>
               </div>
@@ -140,14 +154,14 @@ export function TestimonialsSection() {
         </div>
         )}
 
-        {allReviews.length > 3 && (
+        {testimonials.length > 3 && (
           <div className="text-center mb-12">
             <Button
               variant="secondary"
               onClick={() => setShowAll(!showAll)}
               className="mx-auto"
             >
-              {showAll ? "Show Less" : `View All Reviews (${allReviews.length})`}
+              {showAll ? "Show Less" : `View All Reviews (${testimonials.length})`}
             </Button>
           </div>
         )}
@@ -229,9 +243,9 @@ export function TestimonialsSection() {
                 >
                   Cancel
                 </Button>
-                <Button variant="primary" type="submit" className="flex-1" disabled={submitted}>
+                <Button variant="primary" type="submit" className="flex-1" disabled={isSubmitting || submitted}>
                   <Send className="h-4 w-4 mr-2" />
-                  {submitted ? "Submitted" : "Submit Review"}
+                  {isSubmitting ? "Submitting..." : submitted ? "Submitted" : "Submit Review"}
                 </Button>
               </div>
             </form>
