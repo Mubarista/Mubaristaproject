@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { LiveChatContent } from "./live-chat-content";
@@ -71,6 +71,11 @@ export default function ParticipantDashboardContent() {
   const [uploadUrl, setUploadUrl] = useState<string | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [competitionId, setCompetitionId] = useState<string | null>(null);
+
+  const isSubmissionOpen = useMemo(
+    () => application?.competition?.status === "in_progress",
+    [application?.competition?.status]
+  );
 
   async function fetchResults(app: CompetitionApplication) {
     try {
@@ -508,6 +513,14 @@ export default function ParticipantDashboardContent() {
                   variant={application?.videoUrl ? "ghost" : "premium"}
                   className="w-full"
                   size={application?.videoUrl ? "sm" : "lg"}
+                  disabled={!application?.videoUrl && !isSubmissionOpen}
+                  title={
+                    application?.videoUrl
+                      ? "View your submitted video"
+                      : isSubmissionOpen
+                      ? "Submit your competition video"
+                      : "Video submissions are not open right now"
+                  }
                   onClick={() => setActiveModal("upload")}
                 >
                   <Upload className="h-4 w-4" /> {application?.videoUrl ? "View Submitted Video" : "Submit Competition Video"}

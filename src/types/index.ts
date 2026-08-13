@@ -235,6 +235,8 @@ export interface CompetitionApplication {
     entryFee?: number;
     maxVideoDuration?: number;
     maxVideoSize?: number;
+    status?: string;
+    eventTimeline?: { date: string; event: string; phase?: string }[];
   };
 }
 

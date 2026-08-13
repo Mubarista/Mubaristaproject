@@ -37,7 +37,7 @@ export async function GET(request: Request) {
     if (app.competitionId) {
       const { data: comp } = await supabaseAdmin
         .from("competitions")
-        .select("id, title, entry_fee, max_video_duration, max_video_size")
+        .select("id, title, entry_fee, max_video_duration, max_video_size, status, event_timeline")
         .eq("id", app.competitionId)
         .single();
       app.competition = comp ? mapKeysToCamelCase(comp) : null;
