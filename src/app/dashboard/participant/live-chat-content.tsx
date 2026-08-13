@@ -67,24 +67,7 @@ export function LiveChatContent({
     }
 
     let isMounted = true;
-
-    async function load() {
-      try {
-        const res = await fetch(`/api/live-chat?competitionId=${encodeURIComponent(competitionId)}`);
-        if (!res.ok) throw new Error("Failed to load chat");
-        const data = (await res.json()) as LiveChatMessage[];
-        if (isMounted) {
-          setMessages(data);
-          data.forEach(scheduleDisappear);
-        }
-      } catch (err) {
-        console.error("Error loading live chat:", err);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    }
-
-    load();
+    setLoading(false);
 
     const channel = supabase.channel(`live-chat-${competitionId}`);
     channel
