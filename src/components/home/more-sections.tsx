@@ -26,6 +26,10 @@ interface Sponsor {
 export function SponsorsSection() {
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [copies, setCopies] = useState(3);
+  const [setWidth, setSetWidth] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const railRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchSponsors();
@@ -45,6 +49,18 @@ export function SponsorsSection() {
     }
   }
 
+  useEffect(() => {
+    if (!containerRef.current || !railRef.current || sponsors.length === 0) return;
+    const totalWidth = railRef.current.scrollWidth;
+    const singleSet = totalWidth / copies;
+    const containerWidth = containerRef.current.offsetWidth;
+    const needed = Math.max(copies, Math.ceil((containerWidth + singleSet) / singleSet));
+    if (needed !== copies) {
+      setCopies(needed);
+    }
+    setSetWidth(singleSet);
+  }, [sponsors, copies]);
+
   if (loading) {
     return (
       <section className="py-14 border-y border-white/5">
@@ -57,21 +73,31 @@ export function SponsorsSection() {
     );
   }
 
+  const allSponsors = Array.from({ length: copies }, () => sponsors).flat();
+
   return (
     <section className="py-14 border-y border-white/5">
       <div className="mx-auto max-w-7xl px-4">
         <p className="text-center text-muted text-xs font-semibold uppercase tracking-widest mb-10">
           Trusted Sponsors and Partnership
         </p>
-        <div className="overflow-hidden">
+        <div
+          ref={containerRef}
+          className="overflow-hidden"
+          style={{
+            maskImage: "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
+            WebkitMaskImage: "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
+          }}
+        >
           <motion.div
+            ref={railRef}
             className="flex items-center gap-6 min-w-max"
-            animate={{ x: ["0%", "-50%"] }}
+            animate={setWidth ? { x: [0, -setWidth] } : undefined}
             transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
           >
-            {[...sponsors, ...sponsors].map((sponsor, i) => (
+            {allSponsors.map((sponsor, i) => (
               <div
-                key={`${sponsor.id}-${i}`}
+                key={i}
                 className="flex items-center gap-2 px-5 py-3 rounded-xl glass-card hover:border-blue/30 transition-all cursor-default flex-none"
               >
                 {sponsor.logoImage ? (
