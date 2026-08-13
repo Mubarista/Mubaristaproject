@@ -228,7 +228,7 @@ export function FeaturedArtSection() {
             <motion.div
               ref={railRef}
               className="flex gap-6 min-w-max pb-4"
-              animate={setWidth ? { x: [0, -setWidth] } : undefined}
+              animate={setWidth ? { x: [-setWidth, 0] } : undefined}
               transition={{ repeat: Infinity, duration: 40, ease: "linear" }}
             >
               {allArt.map((art, i) => (
