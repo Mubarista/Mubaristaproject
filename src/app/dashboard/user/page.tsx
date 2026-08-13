@@ -56,7 +56,7 @@ export default function UserDashboard() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [applicationCount, setApplicationCount] = useState(0);
   const [orderCount, setOrderCount] = useState(0);
-  const [liveCompetitionCount, setLiveCompetitionCount] = useState(0);
+  const [joinedCompetitionsCount, setJoinedCompetitionsCount] = useState(0);
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingActivities, setLoadingActivities] = useState(true);
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
@@ -68,7 +68,7 @@ export default function UserDashboard() {
   const showActivitiesSkeleton = useDelayedLoading(!loadingActivities, 900);
   const showPlansSkeleton = useDelayedLoading(!loadingPlans, 600);
 
-  const competitionCount = applicationCount + liveCompetitionCount;
+
 
   useEffect(() => {
     async function fetchPlans() {
@@ -111,7 +111,7 @@ export default function UserDashboard() {
     async function fetchDashboardData() {
       setLoadingStats(true);
       try {
-        const [applicationsRes, ordersRes, competitionsRes] = await Promise.all([
+        const [applicationsRes, ordersRes, joinedRes] = await Promise.all([
           supabase
             .from("competition_applications")
             .select("*", { count: "exact", head: true })
@@ -121,18 +121,19 @@ export default function UserDashboard() {
             .select("*", { count: "exact", head: true })
             .eq("user_id", userId),
           supabase
-            .from("competitions")
-            .select("*", { count: "exact", head: true })
-            .in("status", ["open", "judging"]),
+            .from("competition_applications")
+            .select("competition_id")
+            .eq("user_id", userId),
         ]);
 
         setApplicationCount(applicationsRes.count || 0);
         setOrderCount(ordersRes.count || 0);
-        setLiveCompetitionCount(competitionsRes.count || 0);
+        const joinedCompetitions = new Set((joinedRes.data || []).map((row: any) => row.competition_id).filter(Boolean));
+        setJoinedCompetitionsCount(joinedCompetitions.size);
 
         if (applicationsRes.error) console.error("Applications fetch error:", applicationsRes.error);
         if (ordersRes.error) console.error("Orders fetch error:", ordersRes.error);
-        if (competitionsRes.error) console.error("Competitions fetch error:", competitionsRes.error);
+        if (joinedRes.error) console.error("Joined competitions fetch error:", joinedRes.error);
       } catch (error) {
         console.error("Failed to fetch dashboard stats:", error);
       } finally {
@@ -151,14 +152,12 @@ export default function UserDashboard() {
       value: loadingStats ? "..." : applicationCount,
       icon: FileText,
       color: "text-blue",
-      link: "/dashboard/user/applications",
     },
     {
       label: "Competitions",
-      value: loadingStats ? "..." : competitionCount,
+      value: loadingStats ? "..." : joinedCompetitionsCount,
       icon: Trophy,
       color: "text-yellow",
-      link: "/competitions",
     },
     {
       label: "Orders",
@@ -267,8 +266,14 @@ export default function UserDashboard() {
                       <p className="text-xs text-muted">{stat.label}</p>
                     </Card>
                   </Link>
-                ) : (
+                ) : stat.action ? (
                   <Card className="text-center cursor-pointer hover:border-blue/50 transition-colors" onClick={stat.action}>
+                    <stat.icon className={`h-6 w-6 mx-auto mb-2 ${stat.color}`} />
+                    <p className="text-2xl font-bold">{stat.value}</p>
+                    <p className="text-xs text-muted">{stat.label}</p>
+                  </Card>
+                ) : (
+                  <Card className="text-center cursor-default">
                     <stat.icon className={`h-6 w-6 mx-auto mb-2 ${stat.color}`} />
                     <p className="text-2xl font-bold">{stat.value}</p>
                     <p className="text-xs text-muted">{stat.label}</p>
