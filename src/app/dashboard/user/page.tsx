@@ -151,7 +151,7 @@ export default function UserDashboard() {
       value: loadingStats ? "..." : applicationCount,
       icon: FileText,
       color: "text-blue",
-      link: "/competitions",
+      link: "/dashboard/user/applications",
     },
     {
       label: "Competitions",
