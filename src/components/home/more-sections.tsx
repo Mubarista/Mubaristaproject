@@ -61,28 +61,30 @@ export function SponsorsSection() {
     <section className="py-14 border-y border-white/5">
       <div className="mx-auto max-w-7xl px-4">
         <p className="text-center text-muted text-xs font-semibold uppercase tracking-widest mb-10">
-          Trusted by Industry Leaders
+          Trusted Sponsors and Partnership
         </p>
-        <div className="flex flex-wrap justify-center items-center gap-4 md:gap-6">
-          {sponsors.map((sponsor, i) => (
-            <motion.div
-              key={sponsor.id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.08 }}
-              className="flex items-center gap-2 px-5 py-3 rounded-xl glass-card hover:border-blue/30 transition-all cursor-default"
-            >
-              {sponsor.logoImage ? (
-                <img src={sponsor.logoImage} alt={sponsor.name} className="h-8 w-8 rounded-lg object-cover" />
-              ) : (
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue/10 text-blue text-xs font-bold">
-                  {sponsor.logo}
-                </span>
-              )}
-              <span className="text-sm font-semibold text-muted">{sponsor.name}</span>
-            </motion.div>
-          ))}
+        <div className="overflow-hidden">
+          <motion.div
+            className="flex items-center gap-6 min-w-max"
+            animate={{ x: ["0%", "-50%"] }}
+            transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
+          >
+            {[...sponsors, ...sponsors].map((sponsor, i) => (
+              <div
+                key={`${sponsor.id}-${i}`}
+                className="flex items-center gap-2 px-5 py-3 rounded-xl glass-card hover:border-blue/30 transition-all cursor-default flex-none"
+              >
+                {sponsor.logoImage ? (
+                  <img src={sponsor.logoImage} alt={sponsor.name} className="h-8 w-8 rounded-lg object-cover" />
+                ) : (
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue/10 text-blue text-xs font-bold">
+                    {sponsor.logo}
+                  </span>
+                )}
+                <span className="text-sm font-semibold text-muted">{sponsor.name}</span>
+              </div>
+            ))}
+          </motion.div>
         </div>
       </div>
     </section>
