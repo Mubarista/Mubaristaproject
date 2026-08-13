@@ -150,55 +150,70 @@ export function Navbar() {
           </Link>
 
           <div className="hidden lg:flex items-center gap-1">
-            {visibleNavLinks.slice(0, 6).map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="px-3 py-2 text-sm text-muted hover:text-foreground transition-colors rounded-lg hover:bg-white/5"
-              >
-                <LinkLabel label={link.label} />
-              </Link>
-            ))}
-            <Link
-              href="/coffee-facts"
-              className="px-3 py-2 rounded-lg hover:bg-white/5 transition-colors"
-              aria-label="Coffee Facts"
-              title="Coffee Facts"
-            >
-              <motion.span
-                animate={{ opacity: [1, 0.5, 1], scale: [1, 1.2, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              >
-                <Lightbulb className="h-5 w-5 text-yellow" />
-              </motion.span>
-            </Link>
-
-            {user && (
-              <div className="relative group">
-                <button className="px-3 py-2 text-sm text-muted hover:text-foreground transition-colors rounded-lg hover:bg-white/5 inline-flex items-center gap-1">
-                  Barista Market <ChevronDown className="h-4 w-4" />
-                </button>
-                <div className="absolute top-full right-0 mt-2 w-40 glass-card rounded-xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                  <Link
-                    href="/books"
-                    className="block px-3 py-2 text-sm rounded-lg hover:bg-white/5 transition-colors"
-                  >
-                    E-Books
-                  </Link>
-                  <Link
-                    href="/tools"
-                    className="block px-3 py-2 text-sm rounded-lg hover:bg-white/5 transition-colors"
-                  >
-                    Tools
-                  </Link>
-                  <Link
-                    href="/jobs"
-                    className="block px-3 py-2 text-sm rounded-lg hover:bg-white/5 transition-colors"
-                  >
-                    Barista Jobs
-                  </Link>
+            {user ? (
+              <>
+                {visibleNavLinks
+                  .filter((l) => ["Home", "Competitions", "Learn"].includes(l.label))
+                  .map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="px-3 py-2 text-sm text-muted hover:text-foreground transition-colors rounded-lg hover:bg-white/5"
+                    >
+                      <LinkLabel label={link.label} />
+                    </Link>
+                  ))}
+                <div className="relative group">
+                  <button className="px-3 py-2 text-sm text-muted hover:text-foreground transition-colors rounded-lg hover:bg-white/5 inline-flex items-center gap-1">
+                    Barista Market <ChevronDown className="h-4 w-4" />
+                  </button>
+                  <div className="absolute top-full right-0 mt-2 w-40 glass-card rounded-xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <Link
+                      href="/books"
+                      className="block px-3 py-2 text-sm rounded-lg hover:bg-white/5 transition-colors"
+                    >
+                      E-Books
+                    </Link>
+                    <Link
+                      href="/tools"
+                      className="block px-3 py-2 text-sm rounded-lg hover:bg-white/5 transition-colors"
+                    >
+                      Tools
+                    </Link>
+                    <Link
+                      href="/jobs"
+                      className="block px-3 py-2 text-sm rounded-lg hover:bg-white/5 transition-colors"
+                    >
+                      Barista Jobs
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              </>
+            ) : (
+              <>
+                {visibleNavLinks.slice(0, 6).map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="px-3 py-2 text-sm text-muted hover:text-foreground transition-colors rounded-lg hover:bg-white/5"
+                  >
+                    <LinkLabel label={link.label} />
+                  </Link>
+                ))}
+                <Link
+                  href="/coffee-facts"
+                  className="px-3 py-2 rounded-lg hover:bg-white/5 transition-colors"
+                  aria-label="Coffee Facts"
+                  title="Coffee Facts"
+                >
+                  <motion.span
+                    animate={{ opacity: [1, 0.5, 1], scale: [1, 1.2, 1] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    <Lightbulb className="h-5 w-5 text-yellow" />
+                  </motion.span>
+                </Link>
+              </>
             )}
           </div>
 
@@ -315,22 +330,24 @@ export function Navbar() {
               </div>
             )}
 
-            <div className={cn("hidden lg:block relative group", !user && "lg:order-first")}>
-              <button className="p-2 rounded-xl text-muted hover:text-foreground hover:bg-white/5 transition-colors" aria-label="More">
-                <Menu className="h-5 w-5" />
-              </button>
-              <div className="absolute top-full right-0 mt-2 w-48 glass-card rounded-xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                {visibleNavLinks.slice(6).map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="block px-3 py-2 text-sm rounded-lg hover:bg-white/5 transition-colors"
-                  >
-                    <LinkLabel label={link.label} />
-                  </Link>
-                ))}
+            {!user && (
+              <div className="hidden lg:block relative group lg:order-first">
+                <button className="p-2 rounded-xl text-muted hover:text-foreground hover:bg-white/5 transition-colors" aria-label="More">
+                  <Menu className="h-5 w-5" />
+                </button>
+                <div className="absolute top-full right-0 mt-2 w-48 glass-card rounded-xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  {visibleNavLinks.slice(6).map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="block px-3 py-2 text-sm rounded-lg hover:bg-white/5 transition-colors"
+                    >
+                      <LinkLabel label={link.label} />
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             <button
               className="lg:hidden p-2 rounded-xl hover:bg-white/5"
