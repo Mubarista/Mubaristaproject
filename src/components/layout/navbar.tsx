@@ -41,6 +41,10 @@ export function Navbar() {
   const { cartCount } = useCart();
   const router = useRouter();
 
+  const visibleNavLinks = navLinks.filter(
+    (l) => !["Barista Jobs", "E-Books", "Tools"].includes(l.label)
+  );
+
   useEffect(() => {
     setMounted(true);
     const handleScroll = () => setScrollY(window.scrollY);
@@ -132,7 +136,7 @@ export function Navbar() {
           </Link>
 
           <div className="hidden lg:flex items-center gap-1">
-            {navLinks.slice(0, 6).map((link) => (
+            {visibleNavLinks.slice(0, 6).map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -302,7 +306,7 @@ export function Navbar() {
                 <Menu className="h-5 w-5" />
               </button>
               <div className="absolute top-full right-0 mt-2 w-48 glass-card rounded-xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                {navLinks.slice(6).map((link) => (
+                {visibleNavLinks.slice(6).map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
@@ -333,7 +337,7 @@ export function Navbar() {
               className="lg:hidden mt-4 glass-card rounded-2xl overflow-hidden"
             >
               <div className="p-4 space-y-1 max-h-[70vh] overflow-y-auto">
-                {navLinks.map((link) => (
+                {visibleNavLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
