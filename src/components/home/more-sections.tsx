@@ -127,6 +127,15 @@ export function CoffeeFactsSection() {
     }
   }, [currentIndex]);
 
+  // Auto-slide the carousel every 3s on the main page
+  useEffect(() => {
+    if (coffeeFacts.length === 0 || selectedFact) return;
+    const interval = setInterval(() => {
+      goToNext();
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [coffeeFacts.length, selectedFact]);
+
   // Lock background scroll and implement focus-trap for modal
   useEffect(() => {
     if (!selectedFact) return;
