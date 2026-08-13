@@ -110,6 +110,13 @@ export function CoffeeFactsSection() {
     }
   }, [user]);
 
+  // Keep selectedFact in sync with currentIndex when modal is open
+  useEffect(() => {
+    if (selectedFact && coffeeFacts.length > 0) {
+      setSelectedFact(coffeeFacts[currentIndex]);
+    }
+  }, [currentIndex]);
+
   async function fetchCoffeeFacts() {
     try {
       const response = await fetch("/api/coffee-facts");
@@ -145,7 +152,11 @@ export function CoffeeFactsSection() {
   }
 
   const handleFactClick = async (fact: any) => {
-    setSelectedFact(fact);
+    // open modal and focus on clicked fact (set currentIndex)
+    const idx = coffeeFacts.findIndex((f) => f.id === fact.id);
+    const indexToUse = idx >= 0 ? idx : 0;
+    setCurrentIndex(indexToUse);
+    setSelectedFact(coffeeFacts[indexToUse] || fact);
     setViewedFacts((prev) => new Set([...prev, fact.id]));
 
     if (user) {
@@ -167,9 +178,9 @@ export function CoffeeFactsSection() {
       }
     }
 
-    // Auto-advance to next fact after viewing
+    // Auto-advance behavior preserved for the carousel view (keeps UX unchanged)
     if (coffeeFacts.length > 0) {
-      const nextIndex = (currentIndex + 1) % coffeeFacts.length;
+      const nextIndex = (indexToUse + 1) % coffeeFacts.length;
       setTimeout(() => {
         setDirection(1);
         setCurrentIndex(nextIndex);
@@ -181,6 +192,7 @@ export function CoffeeFactsSection() {
     if (coffeeFacts.length === 0) return;
     setDirection(1);
     setCurrentIndex((prev) => (prev + 1) % coffeeFacts.length);
+    // when modal open, setSelectedFact will be synced via effect
   };
 
   const goToPrev = () => {
@@ -194,7 +206,7 @@ export function CoffeeFactsSection() {
     setCurrentIndex(index);
   };
 
-  // Touch handlers for mobile swipe
+  // Touch handlers for mobile swipe (carousel & modal can reuse)
   const minSwipeDistance = 50;
 
   const onTouchStart = (e: React.TouchEvent) => {
@@ -207,11 +219,11 @@ export function CoffeeFactsSection() {
   };
 
   const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
+    if (touchStart === null || touchEnd === null) return;
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
-    
+
     if (isLeftSwipe) {
       goToNext();
     } else if (isRightSwipe) {
@@ -226,16 +238,16 @@ export function CoffeeFactsSection() {
           <SectionHeading
             eyebrow="Did You Know?"
             title={
-            <span className="inline-flex items-center justify-center gap-3">
-              Coffee Facts
-              <motion.span
-                animate={{ opacity: [1, 0.5, 1], scale: [1, 1.1, 1], rotate: [0, 8, -8, 0] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <Lightbulb className="h-8 w-8 text-yellow" />
-              </motion.span>
-            </span>
-          }
+              <span className="inline-flex items-center justify-center gap-3">
+                Coffee Facts
+                <motion.span
+                  animate={{ opacity: [1, 0.5, 1], scale: [1, 1.1, 1], rotate: [0, 8, -8, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <Lightbulb className="h-8 w-8 text-yellow" />
+                </motion.span>
+              </span>
+            }
             description="Expand your coffee knowledge with these fascinating facts."
           />
           <div className="flex items-center justify-center py-12">
@@ -280,16 +292,16 @@ export function CoffeeFactsSection() {
           <SectionHeading
             eyebrow="Did You Know?"
             title={
-            <span className="inline-flex items-center justify-center gap-3">
-              Coffee Facts
-              <motion.span
-                animate={{ opacity: [1, 0.5, 1], scale: [1, 1.1, 1], rotate: [0, 8, -8, 0] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <Lightbulb className="h-8 w-8 text-yellow" />
-              </motion.span>
-            </span>
-          }
+              <span className="inline-flex items-center justify-center gap-3">
+                Coffee Facts
+                <motion.span
+                  animate={{ opacity: [1, 0.5, 1], scale: [1, 1.1, 1], rotate: [0, 8, -8, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <Lightbulb className="h-8 w-8 text-yellow" />
+                </motion.span>
+              </span>
+            }
             description="Swipe or click to explore fascinating coffee facts. Each fact reveals more when you interact with it."
           />
         </motion.div>
@@ -392,7 +404,7 @@ export function CoffeeFactsSection() {
                           ease: "easeInOut",
                         }}
                       >
-                        <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-yellow/20 to-blue/20 group-hover:from-yellow/30 group-hover:to-blue/30 transition-all duration-300">
+                        <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-yellow/20 to-blue/20">
                           {currentFact.image ? (
                             <img
                               src={currentFact.image}
@@ -443,7 +455,7 @@ export function CoffeeFactsSection() {
                       </div>
 
                       {/* Corner accent */}
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-yellow/10 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-yellow/10 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
                   </div>
                 </motion.div>
@@ -527,6 +539,17 @@ export function CoffeeFactsSection() {
               exit={{ scale: 0.8, opacity: 0, y: 20 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
               onClick={(e) => e.stopPropagation()}
+              // Attach touch handlers to the modal content so swipes navigate facts without closing modal
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
+              // Allow keyboard navigation
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowRight") goToNext();
+                if (e.key === "ArrowLeft") goToPrev();
+                if (e.key === "Escape") setSelectedFact(null);
+              }}
               className="relative max-w-2xl w-full"
             >
               {/* Animated gradient border */}
@@ -620,7 +643,7 @@ export function CoffeeFactsSection() {
                 >
                   <button
                     onClick={() => setSelectedFact(null)}
-                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-yellow to-blue text-white font-semibold hover:shadow-lg hover:shadow-yellow/25 transition-all duration-300 hover:scale-105"
+                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-yellow to-blue text-white font-semibold hover:shadow-lg hover:shadow-yellow/25 transition-all duration-300"
                   >
                     Explore More Facts
                   </button>
@@ -735,89 +758,6 @@ export function ArticlesSection() {
           <Link href="/articles" className="text-blue hover:underline font-medium">
             Read all articles →
           </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export function FAQSection() {
-  const [faqs, setFaqs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
-
-  useEffect(() => {
-    fetchFAQs();
-  }, []);
-
-  async function fetchFAQs() {
-    try {
-      const response = await fetch("/api/faqs");
-      if (response.ok) {
-        const data = await response.json();
-        setFaqs(data);
-      }
-    } catch (error) {
-      console.error("Error fetching FAQs:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  if (loading) {
-    return (
-      <section className="section-padding bg-muted-bg/30">
-        <div className="mx-auto max-w-3xl">
-          <SectionHeading
-            eyebrow="FAQ"
-            title="Frequently Asked Questions"
-            description="Everything you need to know about MUBARISTA."
-          />
-          <div className="flex items-center justify-center py-12">
-            <LoadingDots />
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="section-padding bg-muted-bg/30">
-      <div className="mx-auto max-w-3xl">
-        <SectionHeading
-          eyebrow="FAQ"
-          title="Frequently Asked Questions"
-          description="Everything you need to know about MUBARISTA."
-        />
-        <div className="space-y-3">
-          {faqs.map((faq, i) => (
-            <motion.div
-              key={faq.id}
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.05 }}
-              className="glass-card rounded-2xl overflow-hidden"
-            >
-              <button
-                onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                className="w-full flex items-center justify-between p-5 text-left"
-              >
-                <span className="font-medium pr-4">{faq.question}</span>
-                <ChevronDown
-                  className={cn(
-                    "h-5 w-5 text-blue shrink-0 transition-transform",
-                    openIndex === i && "rotate-180"
-                  )}
-                />
-              </button>
-              {openIndex === i && (
-                <div className="px-5 pb-5 text-muted text-sm leading-relaxed">
-                  {faq.answer}
-                </div>
-              )}
-            </motion.div>
-          ))}
         </div>
       </div>
     </section>
