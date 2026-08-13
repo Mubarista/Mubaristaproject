@@ -29,6 +29,8 @@ interface UserApplication {
   userName?: string;
   country?: string;
   mobileNumber?: string;
+  accessLink?: string;
+  accessLinkExpiresAt?: string;
   competitionTitle?: string | null;
   competitionSlug?: string | null;
   competitionStatus?: string | null;
@@ -55,6 +57,13 @@ function getStatusVariant(
   if (["pending", "unpaid"].includes(s)) return "yellow";
   if (["rejected", "revoked", "lost", "loss"].includes(s)) return "red";
   return "blue";
+}
+
+function isAccessValid(app: UserApplication) {
+  if (!app.accessLink) return false;
+  if (["revoked", "rejected", "archived"].includes(app.status || "")) return false;
+  if (app.accessLinkExpiresAt && new Date(app.accessLinkExpiresAt) < new Date()) return false;
+  return true;
 }
 
 export default function UserApplicationsPage() {
@@ -221,6 +230,19 @@ export default function UserApplicationsPage() {
                     )}
                   </div>
                 </details>
+
+                {isAccessValid(app) ? (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="mt-4 w-full"
+                    onClick={() => router.push(`/dashboard/participant?token=${app.accessLink}`)}
+                  >
+                    Participant Dashboard
+                  </Button>
+                ) : (
+                  <p className="mt-4 text-xs text-muted">Participant access not available</p>
+                )}
               </Card>
             ))}
           </div>
