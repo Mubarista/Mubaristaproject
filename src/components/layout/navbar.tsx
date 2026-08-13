@@ -41,9 +41,23 @@ export function Navbar() {
   const { cartCount } = useCart();
   const router = useRouter();
 
-  const visibleNavLinks = navLinks.filter(
-    (l) => !["Barista Jobs", "E-Books", "Tools"].includes(l.label)
-  );
+  const visibleNavLinks = navLinks
+    .filter((l) => !["Barista Jobs", "E-Books", "Tools"].includes(l.label))
+    .sort((a, b) => {
+      const order: Record<string, number> = {
+        Home: 0,
+        Competitions: 1,
+        Learn: 2,
+        Schools: 3,
+        "Tips & Skills": 4,
+        About: 5,
+        Contact: 6,
+        "Coffee Fact": 7,
+        "Coffee History": 8,
+        Legends: 9,
+      };
+      return (order[a.label] ?? 99) - (order[b.label] ?? 99);
+    });
 
   useEffect(() => {
     setMounted(true);
