@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { LiveChatContent } from "./live-chat-content";
+import { WithdrawalModal } from "./withdrawal-modal";
 import {
   Trophy,
   Upload,
@@ -268,6 +269,7 @@ export default function ParticipantDashboardContent() {
           value: `${wallet.balance} ${wallet.currency}`,
           icon: Wallet,
           color: "text-yellow" as const,
+          action: isWinner && wallet.balance > 0 ? () => setActiveModal("withdraw") : undefined,
         }]
       : []),
   ];
@@ -794,6 +796,14 @@ export default function ParticipantDashboardContent() {
                     <p className="text-muted">No awards yet. Judging is still in progress.</p>
                   )}
                 </div>
+              )}
+
+              {activeModal === "withdraw" && (
+                <WithdrawalModal
+                  onClose={() => setActiveModal(null)}
+                  userEmail={user?.email || application?.userEmail || application?.email || ""}
+                  competitionTitle={application?.competition?.title}
+                />
               )}
 
               {activeModal === "results" && (
