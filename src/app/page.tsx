@@ -6,7 +6,6 @@ import { TestimonialsSection } from "@/components/home/testimonials-section";
 import { CTASection } from "@/components/home/cta-section";
 import {
   SponsorsSection,
-  ArticlesSection,
 } from "@/components/home/more-sections";
 
 export default function HomePage() {
@@ -18,7 +17,6 @@ export default function HomePage() {
       <FeaturedArtSection />
       <HowItWorksSection />
       <TestimonialsSection />
-      <ArticlesSection />
       <CTASection />
     </>
   );
