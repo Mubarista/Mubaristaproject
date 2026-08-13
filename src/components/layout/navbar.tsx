@@ -165,6 +165,12 @@ export function Navbar() {
                       <LinkLabel label={link.label} />
                     </Link>
                   ))}
+                <Link
+                  href="/articles"
+                  className="px-3 py-2 text-sm text-muted hover:text-foreground transition-colors rounded-lg hover:bg-white/5"
+                >
+                  News
+                </Link>
                 <div className="relative group">
                   <button className="px-3 py-2 text-sm text-muted hover:text-foreground transition-colors rounded-lg hover:bg-white/5 inline-flex items-center gap-1">
                     Market <ChevronDown className="h-4 w-4" />
@@ -215,6 +221,12 @@ export function Navbar() {
                     <LinkLabel label={link.label} />
                   </Link>
                 ))}
+                <Link
+                  href="/articles"
+                  className="px-3 py-2 text-sm text-muted hover:text-foreground transition-colors rounded-lg hover:bg-white/5"
+                >
+                  News
+                </Link>
                 <Link
                   href="/coffee-facts"
                   className="px-3 py-2 rounded-lg hover:bg-white/5 transition-colors"
