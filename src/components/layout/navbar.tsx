@@ -153,7 +153,7 @@ export function Navbar() {
             {user ? (
               <>
                 {visibleNavLinks
-                  .filter((l) => ["Home", "Competitions", "Learn"].includes(l.label))
+                  .filter((l) => ["Home", "Competitions", "Learn", "Schools"].includes(l.label))
                   .map((link) => (
                     <Link
                       key={link.href}
