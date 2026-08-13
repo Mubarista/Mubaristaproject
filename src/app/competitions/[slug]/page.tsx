@@ -34,6 +34,8 @@ export default function CompetitionDetailPage({ params }: Props) {
   const [slug, setSlug] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [competition, setCompetition] = useState<Competition | null>(null);
+  const [hasApplied, setHasApplied] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -65,6 +67,25 @@ export default function CompetitionDetailPage({ params }: Props) {
     if (!slug) return;
     fetchCompetition();
   }, [slug]);
+
+  useEffect(() => {
+    if (!user?.id || !competition?.id) return;
+    const userId = user.id;
+    const competitionId = competition.id;
+    async function checkApplication() {
+      const { data } = await supabase
+        .from("competition_applications")
+        .select("id, status")
+        .eq("user_id", userId)
+        .eq("competition_id", competitionId)
+        .maybeSingle();
+      if (data) {
+        setHasApplied(true);
+        setApplicationStatus(data.status);
+      }
+    }
+    checkApplication();
+  }, [user?.id, competition?.id]);
 
   useEffect(() => {
     if (!slug) return;
@@ -240,15 +261,28 @@ export default function CompetitionDetailPage({ params }: Props) {
 
               {competition.status === "Registration Open" && competition.availableSlots > 0 ? (
                 <>
-                  <Link href={`/competitions/${slug}/apply`}>
-                    <Button variant="premium" className="w-full" size="lg">
-                      Apply Now
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </Button>
-                  </Link>
-                  <p className="text-xs text-muted text-center mt-3">
-                    Apply first, then pay entry fee after nomination
-                  </p>
+                  {hasApplied ? (
+                    <>
+                      <Button variant="secondary" className="w-full" size="lg" disabled>
+                        Already Applied
+                      </Button>
+                      <p className="text-xs text-muted text-center mt-3">
+                        You have already applied to this competition{applicationStatus ? ` — ${applicationStatus}` : ""}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <Link href={`/competitions/${slug}/apply`}>
+                        <Button variant="premium" className="w-full" size="lg">
+                          Apply Now
+                          <ArrowRight className="h-4 w-4 ml-2" />
+                        </Button>
+                      </Link>
+                      <p className="text-xs text-muted text-center mt-3">
+                        Apply first, then pay entry fee after nomination
+                      </p>
+                    </>
+                  )}
                 </>
               ) : competition.status === "Registration Open" && competition.availableSlots <= 0 ? (
                 <>
