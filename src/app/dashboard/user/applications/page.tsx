@@ -17,6 +17,7 @@ import {
   MapPin,
   Phone,
   ChevronDown,
+  ExternalLink,
 } from "lucide-react";
 
 interface UserApplication {
@@ -167,11 +168,14 @@ export default function UserApplicationsPage() {
                     {app.competitionSlug ? (
                       <Link
                         href={`/competitions/${app.competitionSlug}`}
-                        className="hover:text-blue transition-colors"
+                        className="hover:text-blue transition-colors inline-flex items-center gap-1"
+                        title={`Click to view ${app.competitionTitle || "this competition"}`}
+                        aria-label={`View ${app.competitionTitle || "this competition"}`}
                       >
                         <CardTitle className="text-lg leading-tight">
                           {app.competitionTitle || "Unknown Competition"}
                         </CardTitle>
+                        <ExternalLink className="h-3.5 w-3.5 text-muted" />
                       </Link>
                     ) : (
                       <CardTitle className="text-lg leading-tight">
