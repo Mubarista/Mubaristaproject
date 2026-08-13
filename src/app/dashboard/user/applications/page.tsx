@@ -52,10 +52,10 @@ function getStatusVariant(
   status?: string | null
 ): "green" | "yellow" | "red" | "blue" | "premium" {
   const s = (status || "").toLowerCase();
-  if (["approved", "paid", "completed"].includes(s)) return "green";
+  if (["won", "winner", "approved", "paid", "completed"].includes(s)) return "green";
   if (["nominated"].includes(s)) return "premium";
   if (["pending", "unpaid"].includes(s)) return "yellow";
-  if (["rejected", "revoked", "lost", "loss"].includes(s)) return "red";
+  if (["failed", "rejected", "revoked", "lost", "loss"].includes(s)) return "red";
   return "blue";
 }
 
