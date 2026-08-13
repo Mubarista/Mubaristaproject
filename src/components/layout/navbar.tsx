@@ -25,22 +25,7 @@ import { useCart } from "@/lib/cart-context";
 import { safeLocalStorage } from "@/lib/safe-storage";
 import { cn } from "@/lib/utils";
 
-function LinkLabel({ href, label }: { href: string; label: string }) {
-  // For the Coffee Facts header link we only show the lightbulb icon (visually)
-  // but keep an accessible label for screen readers.
-  if (href === "/coffee-facts") {
-    return (
-      <span className="inline-flex items-center text-yellow" aria-hidden={false}>
-        <motion.span
-          animate={{ opacity: [1, 0.5, 1], scale: [1, 1.2, 1] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-        >
-          <Lightbulb className="h-4 w-4" />
-        </motion.span>
-        <span className="sr-only">{label}</span>
-      </span>
-    );
-  }
+function LinkLabel({ label }: { label: string }) {
   return <>{label}</>;
 }
 
@@ -153,9 +138,22 @@ export function Navbar() {
                 href={link.href}
                 className="px-3 py-2 text-sm text-muted hover:text-foreground transition-colors rounded-lg hover:bg-white/5"
               >
-                <LinkLabel href={link.href} label={link.label} />
+                <LinkLabel label={link.label} />
               </Link>
             ))}
+            <Link
+              href="/coffee-facts"
+              className="px-3 py-2 rounded-lg hover:bg-white/5 transition-colors"
+              aria-label="Coffee Facts"
+              title="Coffee Facts"
+            >
+              <motion.span
+                animate={{ opacity: [1, 0.5, 1], scale: [1, 1.2, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              >
+                <Lightbulb className="h-5 w-5 text-yellow" />
+              </motion.span>
+            </Link>
           </div>
 
           <div className="flex items-center gap-1">
@@ -282,7 +280,7 @@ export function Navbar() {
                     href={link.href}
                     className="block px-3 py-2 text-sm rounded-lg hover:bg-white/5 transition-colors"
                   >
-                    <LinkLabel href={link.href} label={link.label} />
+                    <LinkLabel label={link.label} />
                   </Link>
                 ))}
               </div>
@@ -314,7 +312,7 @@ export function Navbar() {
                     onClick={() => setIsOpen(false)}
                     className="block px-4 py-3 rounded-xl hover:bg-white/5 transition-colors"
                   >
-                    <LinkLabel href={link.href} label={link.label} />
+                    <LinkLabel label={link.label} />
                   </Link>
                 ))}
                 <div className="pt-4 flex flex-col gap-2 border-t border-white/10">
