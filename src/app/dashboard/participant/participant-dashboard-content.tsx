@@ -23,6 +23,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Countdown } from "@/components/shared/countdown";
 import { useLiveScores } from "@/lib/use-live-scores";
 import type { CompetitionApplication, CompetitionResult } from "@/types";
 
@@ -71,11 +72,22 @@ export default function ParticipantDashboardContent() {
   const [uploadUrl, setUploadUrl] = useState<string | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [competitionId, setCompetitionId] = useState<string | null>(null);
+  const [videoSubmissionOpen, setVideoSubmissionOpen] = useState<string | null>(null);
 
   const isSubmissionOpen = useMemo(
     () => application?.competition?.status === "in_progress",
     [application?.competition?.status]
   );
+
+  useEffect(() => {
+    const timeline = application?.competition?.eventTimeline || [];
+    const inProgressEvent = timeline.find(
+      (t) =>
+        t.phase === "in_progress" ||
+        /submissions?\s*open|upload|video|in\s*progress/i.test(t.event || "")
+    );
+    setVideoSubmissionOpen(inProgressEvent?.date || null);
+  }, [application?.competition?.eventTimeline]);
 
   async function fetchResults(app: CompetitionApplication) {
     try {
@@ -525,6 +537,16 @@ export default function ParticipantDashboardContent() {
                 >
                   <Upload className="h-4 w-4" /> {application?.videoUrl ? "View Submitted Video" : "Submit Competition Video"}
                 </Button>
+
+                {!application?.videoUrl && !isSubmissionOpen && videoSubmissionOpen && (
+                  <div className="flex items-center justify-center gap-2 text-xs text-muted mt-2">
+                    <span>Submissions open in</span>
+                    <Countdown deadline={videoSubmissionOpen} closedText="Submissions open now" />
+                  </div>
+                )}
+                {!application?.videoUrl && !isSubmissionOpen && !videoSubmissionOpen && (
+                  <p className="text-xs text-muted text-center mt-2">Submissions are currently closed</p>
+                )}
               </div>
             </Card>
           </div>
