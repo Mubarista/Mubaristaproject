@@ -110,6 +110,21 @@ export default function ApplyPage() {
     }
   }, [competition?.difficulty]);
 
+  // Pre-fill application form with signed-in user's profile data.
+  useEffect(() => {
+    if (!user) return;
+    setFormData((prev) => ({
+      ...prev,
+      fullName: prev.fullName || user.name || "",
+      email: prev.email || user.email || "",
+      mobileNumber: prev.mobileNumber || user.phone || "",
+      country: prev.country || user.country || "",
+      profilePhotoUrl: prev.profilePhotoUrl || user.avatar || "",
+      birthDate: prev.birthDate || (user as any).dateOfBirth || "",
+      gender: prev.gender || (user as any).gender || "",
+    }));
+  }, [user]);
+
   useEffect(() => {
     async function fetchSiteSettings() {
       try {
