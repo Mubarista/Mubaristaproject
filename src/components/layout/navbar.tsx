@@ -26,16 +26,18 @@ import { safeLocalStorage } from "@/lib/safe-storage";
 import { cn } from "@/lib/utils";
 
 function LinkLabel({ href, label }: { href: string; label: string }) {
+  // For the Coffee Facts header link we only show the lightbulb icon (visually)
+  // but keep an accessible label for screen readers.
   if (href === "/coffee-facts") {
     return (
-      <span className="inline-flex items-center gap-1.5 text-yellow">
-        {label}
+      <span className="inline-flex items-center text-yellow" aria-hidden={false}>
         <motion.span
           animate={{ opacity: [1, 0.5, 1], scale: [1, 1.2, 1] }}
           transition={{ duration: 1.5, repeat: Infinity }}
         >
           <Lightbulb className="h-4 w-4" />
         </motion.span>
+        <span className="sr-only">{label}</span>
       </span>
     );
   }
