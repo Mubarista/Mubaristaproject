@@ -24,6 +24,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useCart } from "@/lib/cart-context";
 import { safeLocalStorage } from "@/lib/safe-storage";
 import { cn } from "@/lib/utils";
+import { NotificationsDialog } from "@/components/notifications-dialog";
 
 function LinkLabel({ label }: { label: string }) {
   return <>{label}</>;
@@ -36,6 +37,7 @@ export function Navbar() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [siteLogo, setSiteLogo] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
+  const [notifOpen, setNotifOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const { user, logout } = useAuth();
   const { cartCount } = useCart();
@@ -258,8 +260,8 @@ export function Navbar() {
                     {user.name.split(' ')[0]}
                   </Button>
                 </Link>
-                <Link href="/settings/notifications" className="relative">
-                  <Button variant="ghost" size="sm">
+                <div className="relative">
+                  <Button variant="ghost" size="sm" onClick={() => setNotifOpen(true)}>
                     <Bell className="h-4 w-4" />
                   </Button>
                   {unreadCount > 0 && (
@@ -267,7 +269,7 @@ export function Navbar() {
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
-                </Link>
+                </div>
                 <Link href="/settings">
                   <Button variant="ghost" size="sm">
                     <Settings className="h-4 w-4" />
@@ -309,14 +311,17 @@ export function Navbar() {
 
             {user && (
               <div className="flex sm:hidden items-center gap-0.5">
-                <Link href="/settings/notifications" className="relative p-2 rounded-xl hover:bg-white/5 transition-colors">
+                <button
+                  onClick={() => setNotifOpen(true)}
+                  className="relative p-2 rounded-xl hover:bg-white/5 transition-colors"
+                >
                   <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
                     <span className="absolute top-0 right-0 h-4 w-4 bg-red text-white text-[10px] rounded-full flex items-center justify-center font-medium">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
-                </Link>
+                </button>
                 <Link href="/cart" className="relative p-2 rounded-xl hover:bg-white/5 transition-colors">
                   <ShoppingBag className="h-5 w-5" />
                   {cartCount > 0 && (
@@ -456,6 +461,12 @@ export function Navbar() {
             </div>
           </div>
         )}
+
+        <NotificationsDialog
+          open={notifOpen}
+          onOpenChange={setNotifOpen}
+          onRead={fetchUnreadCount}
+        />
       </nav>
     </header>
   );
