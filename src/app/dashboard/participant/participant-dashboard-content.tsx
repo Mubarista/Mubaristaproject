@@ -313,9 +313,9 @@ export default function ParticipantDashboardContent() {
         return;
       }
 
-      if (video.videoHeight < 1040) {
+      if (video.videoHeight < 1080) {
         URL.revokeObjectURL(objectUrl);
-        alert("Video resolution must be at least 1040p in landscape orientation (height >= 1040).");
+        alert("Video resolution must be at least 1080p in landscape orientation (height >= 1080).");
         return;
       }
 
@@ -639,7 +639,7 @@ export default function ParticipantDashboardContent() {
                           <li>Once submitted, the video cannot be re-uploaded or modified.</li>
                           <li>You have reviewed the video carefully before submitting.</li>
                           <li>The video has good lighting and clear audio/visual quality.</li>
-                          <li>The video is in landscape (horizontal) orientation with a minimum 1040p resolution.</li>
+                          <li>The video is in landscape (horizontal) orientation with a minimum 1080p resolution.</li>
                           <li>The video length does not exceed {durationText}.</li>
                           <li>The video file size does not exceed {sizeText}.</li>
                         </ul>
