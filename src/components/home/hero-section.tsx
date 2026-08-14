@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Play, Trophy, Users, Globe } from "lucide-react";
+import { ArrowRight, Play, Trophy, Users, Globe, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LoadingDots } from "@/components/ui/loading-dots";
 import { formatNumber } from "@/lib/utils";
@@ -205,6 +205,7 @@ export function HeroSection() {
                 value: platformStats.liveCompetitions,
                 label: "Live Competitions",
                 color: "text-yellow",
+                onClick: () => router.push("/competitions"),
               }] : []),
               {
                 icon: Users,
@@ -218,6 +219,13 @@ export function HeroSection() {
                 label: "Countries Joined",
                 color: "text-green",
               },
+              {
+                icon: BarChart3,
+                value: "Leaderboard",
+                label: "Live Rankings",
+                color: "text-purple",
+                onClick: () => router.push("/competitions/leaderboard"),
+              },
             ].map((stat, i) => (
               <motion.div
                 key={i}
@@ -225,12 +233,13 @@ export function HeroSection() {
                 whileTap={{ scale: 0.95 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 className="rounded-2xl p-6 text-center text-white bg-black/50 border border-white/10 backdrop-blur-2xl hover:bg-white/10 transition-colors cursor-pointer"
-                onClick={() => stat.label === "Live Competitions" && router.push("/competitions")}
-                role={stat.label === "Live Competitions" ? "button" : undefined}
+                onClick={stat.onClick}
+                role={stat.onClick ? "button" : undefined}
+                tabIndex={stat.onClick ? 0 : undefined}
               >
                 <stat.icon className={`h-6 w-6 mx-auto mb-2 ${stat.color}`} />
                 <div className="text-3xl font-bold mb-1 text-white">
-                  {formatNumber(stat.value)}
+                  {typeof stat.value === "number" ? formatNumber(stat.value) : stat.value}
                   {stat.label === "Live Competitions" && "+"}
                 </div>
                 <div className="text-sm text-white/60">{stat.label}</div>
