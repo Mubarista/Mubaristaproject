@@ -1,6 +1,5 @@
 "use client";
 
-import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -126,7 +125,16 @@ export default function CompetitionDetailPage({ params }: Props) {
     );
   }
 
-  if (!competition) notFound();
+  if (!competition) {
+    return (
+      <div className="pt-24 pb-16 min-h-screen">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12 text-center">
+          <h1 className="text-2xl font-bold mb-2">Competition Not Found</h1>
+          <p className="text-muted">The competition you are looking for does not exist or has been removed.</p>
+        </div>
+      </div>
+    );
+  }
 
   const registrationClosed = isRegistrationClosed(competition.registrationDeadline);
 
