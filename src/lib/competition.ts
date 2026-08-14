@@ -105,6 +105,38 @@ export function computeStatusFromTimeline(
   return active || "upcoming";
 }
 
+async function deleteEndedCompetitionVideos(competitionId: string) {
+  const { data: apps, error } = await supabaseAdmin
+    .from("competition_applications")
+    .select("id, video_path")
+    .eq("competition_id", competitionId)
+    .not("video_path", "is", null);
+
+  if (error) {
+    console.error(`Error fetching videos to delete for ${competitionId}:`, error);
+    return;
+  }
+  if (!apps || apps.length === 0) return;
+
+  const paths = apps.map((a: any) => a.video_path).filter(Boolean) as string[];
+  if (paths.length > 0) {
+    const { error: removeError } = await supabaseAdmin.storage.from("Videos").remove(paths);
+    if (removeError) {
+      console.error(`Error deleting videos for ${competitionId}:`, removeError);
+    }
+  }
+
+  const { error: updateError } = await supabaseAdmin
+    .from("competition_applications")
+    .update({ video_url: null, video_path: null, updated_at: new Date().toISOString() })
+    .eq("competition_id", competitionId)
+    .not("video_path", "is", null);
+
+  if (updateError) {
+    console.error(`Error clearing video fields for ${competitionId}:`, updateError);
+  }
+}
+
 export async function syncCompetitionStatuses() {
   const { data: competitions, error } = await supabaseAdmin
     .from("competitions")
@@ -129,6 +161,10 @@ export async function syncCompetitionStatuses() {
       if (updateError) {
         console.error(`Error updating competition ${c.id} status:`, updateError);
       }
+    }
+
+    if (computed === "ended") {
+      await deleteEndedCompetitionVideos(c.id);
     }
   }
 }

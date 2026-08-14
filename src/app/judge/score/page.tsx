@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/lib/supabase";
 import {
   Star, Play, ChevronLeft, ChevronRight, MessageSquare,
   CheckCircle2, RotateCcw, Send,
@@ -162,6 +163,41 @@ export default function ScorePage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchQueue();
   }, [judgeId, fetchQueue]);
+
+  useEffect(() => {
+    if (!competition?.id) return;
+    const competitionId = competition.id;
+
+    const tables = [
+      "competition_applications",
+      "competition_results",
+      "judge_scores",
+      "competition_votes",
+    ];
+
+    const channels = tables.map((table) =>
+      supabase
+        .channel(`judge-score-${table}-${competitionId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table,
+            filter: `competition_id=eq.${competitionId}`,
+          },
+          () => fetchQueue()
+        )
+        .subscribe()
+    );
+
+    return () => {
+      channels.forEach((channel) => {
+        channel.unsubscribe();
+        supabase.removeChannel(channel);
+      });
+    };
+  }, [competition?.id, fetchQueue]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

@@ -21,6 +21,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/lib/supabase";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -129,6 +130,39 @@ export default function ParticipantDashboardContent() {
       fetchNotifications(application);
     }
   });
+
+  useEffect(() => {
+    if (!competitionId) return;
+
+    const tables = ["competition_results", "competition_votes"];
+    const channels = tables.map((table) =>
+      supabase
+        .channel(`participant-${table}-${competitionId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table,
+            filter: `competition_id=eq.${competitionId}`,
+          },
+          () => {
+            if (application) {
+              fetchResults(application);
+              fetchNotifications(application);
+            }
+          }
+        )
+        .subscribe()
+    );
+
+    return () => {
+      channels.forEach((channel) => {
+        channel.unsubscribe();
+        supabase.removeChannel(channel);
+      });
+    };
+  }, [competitionId, application, fetchResults, fetchNotifications]);
 
   async function fetchNotifications(app: CompetitionApplication) {
     try {
@@ -645,6 +679,9 @@ export default function ParticipantDashboardContent() {
                           <li>The video length does not exceed {durationText}.</li>
                           <li>The video file size does not exceed {sizeText}.</li>
                         </ul>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Notice: All uploaded competition videos will be permanently deleted from our servers once the competition officially closes.
+                        </p>
                       </div>
 
                       <label className="flex items-start gap-2 text-sm cursor-pointer">

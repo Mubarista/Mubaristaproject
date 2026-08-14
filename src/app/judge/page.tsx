@@ -7,6 +7,7 @@ import {
   Users, Play, ChevronRight, Award,
 } from "lucide-react";
 import { useJudgeAuth } from "@/lib/judge-auth-context";
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
 function G({ label, value, icon: Icon, color, sub }: { label: string; value: string; icon: React.ElementType; color: string; sub: string }) {
@@ -38,6 +39,7 @@ type Submission = {
 
 type PortalData = {
   competition: {
+    id: string;
     title: string;
     round: string;
     deadline: string;
@@ -84,6 +86,42 @@ export default function JudgeDashboard() {
     }, 5000);
     return () => clearInterval(interval);
   }, [judgeId, fetchPortalData]);
+
+  const competitionId = data?.competition?.id;
+
+  useEffect(() => {
+    if (!competitionId) return;
+
+    const tables = [
+      "competition_applications",
+      "competition_results",
+      "judge_scores",
+      "competition_votes",
+    ];
+
+    const channels = tables.map((table) =>
+      supabase
+        .channel(`judge-portal-${table}-${competitionId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table,
+            filter: `competition_id=eq.${competitionId}`,
+          },
+          () => fetchPortalData()
+        )
+        .subscribe()
+    );
+
+    return () => {
+      channels.forEach((channel) => {
+        channel.unsubscribe();
+        supabase.removeChannel(channel);
+      });
+    };
+  }, [competitionId, fetchPortalData]);
 
   if (loading) {
     return <div className="flex items-center justify-center py-12">Loading...</div>;
