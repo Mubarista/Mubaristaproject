@@ -9,7 +9,53 @@ export async function GET(req: NextRequest) {
     const competitionId = searchParams.get("competitionId");
 
     if (!slug && !competitionId) {
-      return NextResponse.json({ error: "Missing slug or competitionId" }, { status: 400 });
+      // Global live leaderboard across all competitions
+      const { count } = await supabaseAdmin
+        .from("competitions")
+        .select("id", { count: "exact", head: true });
+
+      if (!count || count === 0) {
+        return NextResponse.json({ available: false, leaderboard: [] });
+      }
+
+      const { data: applications, error: appError } = await supabaseAdmin
+        .from("competition_applications")
+        .select("id, full_name, country, competition_id, profile_photo_url");
+
+      const { data: results, error: resultError } = await supabaseAdmin
+        .from("competition_results")
+        .select("application_id, vote_points, score, rank");
+
+      const { data: competitions, error: compError } = await supabaseAdmin
+        .from("competitions")
+        .select("id, title");
+
+      if (appError || resultError || compError) {
+        console.error("Global leaderboard errors:", { appError, resultError, compError });
+        return NextResponse.json({ error: "Failed to fetch global leaderboard" }, { status: 500 });
+      }
+
+      const compMap = new Map((competitions || []).map((c: any) => [c.id, c.title]));
+      const resultMap = new Map((results || []).map((r: any) => [r.application_id, r]));
+
+      const leaderboard = (applications || [])
+        .map((app: any) => {
+          const result = resultMap.get(app.id);
+          return {
+            id: app.id,
+            fullName: app.full_name || "Participant",
+            country: app.country || "",
+            competitionTitle: compMap.get(app.competition_id) || "Unknown Competition",
+            profilePhotoUrl: app.profile_photo_url || "",
+            votes: Math.round((result?.vote_points || 0) / 3),
+            totalScore: result?.score || 0,
+            rank: result?.rank || 0,
+          };
+        })
+        .sort((a, b) => b.totalScore - a.totalScore || b.votes - a.votes)
+        .map((item, index) => ({ ...item, rank: index + 1 }));
+
+      return NextResponse.json({ available: true, leaderboard });
     }
 
     let resolvedId = competitionId;
