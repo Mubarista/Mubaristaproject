@@ -5,8 +5,10 @@ import {
   useContext,
   useState,
   useEffect,
+  useCallback,
   type ReactNode,
 } from "react";
+import { supabase } from "@/lib/supabase";
 import type { Competition, Article, Book, Tool, Job, School, Legend, Testimonial, Payment, Invoice, MonthlyStatement, PaymentContextSettings, CurrencyContextSettings, JudgeCredential } from "@/types";
 import { platformStats as initPlatformStats } from "@/data/mock-data";
 
@@ -341,60 +343,94 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [judgeCredentials, setJudgeCredentials] = useState<JudgeCredential[]>([]);
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>(defaultSubscriptionPlans);
 
-  // Fetch all data from API on mount
-  useEffect(() => {
-    async function fetchAll() {
-      const fetches: Promise<void>[] = [
-        fetch("/api/competitions", { cache: "no-store" }).then(r => r.ok ? r.json() : []).then(d => setCompetitions(d)).catch(() => {}),
-        fetch("/api/winners").then(r => r.ok ? r.json() : []).then(d => setWinners(d)).catch(() => {}),
-        fetch("/api/latte-art").then(r => r.ok ? r.json() : []).then(d => setLatteArt(d)).catch(() => {}),
-        fetch("/api/testimonials").then(r => r.ok ? r.json() : []).then(d => setTestimonials(d)).catch(() => {}),
-        fetch("/api/sponsors").then(r => r.ok ? r.json() : []).then(d => setSponsors(d)).catch(() => {}),
-        fetch("/api/coffee-facts").then(r => r.ok ? r.json() : []).then(d => setCoffeeFacts(d)).catch(() => {}),
-        fetch("/api/articles").then(r => r.ok ? r.json() : []).then(d => setArticles(d)).catch(() => {}),
-        fetch("/api/faqs").then(r => r.ok ? r.json() : []).then(d => setFaqs(d)).catch(() => {}),
-        fetch("/api/learn-categories?includeInactive=true").then(r => r.ok ? r.json() : []).then(d => setLearnCategories(d)).catch(() => {}),
-        fetch("/api/books?includeInactive=true").then(r => r.ok ? r.json() : []).then(d => setBooks(d)).catch(() => {}),
-        fetch("/api/tools?includeInactive=true").then(r => r.ok ? r.json() : []).then(d => setTools(d)).catch(() => {}),
-        fetch("/api/jobs?includeInactive=true").then(r => r.ok ? r.json() : []).then(d => setJobs(d)).catch(() => {}),
-        fetch("/api/schools?includeInactive=true").then(r => r.ok ? r.json() : []).then(d => setSchools(d)).catch(() => {}),
-        fetch("/api/timeline?includeInactive=true").then(r => r.ok ? r.json() : []).then(d => setTimeline(d)).catch(() => {}),
-        fetch("/api/about").then(r => r.ok ? r.json() : null).then(d => {
-          if (d) {
-            // Handle about data if needed
-          }
-        }).catch(() => {}),
-        fetch("/api/coffee-history?includeInactive=true").then(r => r.ok ? r.json() : []).then(d => {
-          // Handle coffee history data if needed
-        }).catch(() => {}),
-        fetch("/api/legends").then(r => r.ok ? r.json() : []).then(d => setLegends(d)).catch(() => {}),
-        fetch("/api/judges").then(r => r.ok ? r.json() : []).then(d => setJudgeCredentials(d)).catch(() => {}),
-        fetch("/api/payments").then(r => r.ok ? r.json() : []).then(d => setPayments(d)).catch(() => {}),
-        fetch("/api/invoices").then(r => r.ok ? r.json() : []).then(d => setInvoices(d)).catch(() => {}),
-        fetch("/api/statements").then(r => r.ok ? r.json() : []).then(d => setStatements(d)).catch(() => {}),
-        fetch("/api/hero").then(r => r.ok ? r.json() : null).then(d => {
-          if (d) {
-            if (d.heroContent) setHeroContent(d.heroContent);
-            if (d.heroBackground) setHeroBackground(d.heroBackground);
-            if (d.platformStats) setPlatformStats(d.platformStats);
-          }
-        }).catch(() => {}),
-        fetch("/api/platform-stats").then(r => r.ok ? r.json() : null).then(d => {
-          if (d) setPlatformStats(d);
-        }).catch(() => {}),
-        fetch("/api/tips").then(r => r.ok ? r.json() : []).then(d => { /* tips stored in context if needed */ }).catch(() => {}),
-        fetch("/api/subscription-plans?includeInactive=true").then(r => r.ok ? r.json() : []).then(d => setSubscriptionPlans(d)).catch(() => {}),
-        fetch("/api/site-settings").then(r => r.ok ? r.json() : null).then(d => {
-          if (d) {
-            if (Array.isArray(d.supportedCountries)) setSupportedCountries(d.supportedCountries);
-            if (d.defaultCountryCode) setDefaultCountryCode(d.defaultCountryCode);
-          }
-        }).catch(() => {}),
-      ];
-      await Promise.all(fetches);
-    }
-    fetchAll();
+  // Fetch all data from API
+  const fetchAll = useCallback(async () => {
+    const fetches: Promise<void>[] = [
+      fetch("/api/competitions", { cache: "no-store" }).then(r => r.ok ? r.json() : []).then(d => setCompetitions(d)).catch(() => {}),
+      fetch("/api/winners").then(r => r.ok ? r.json() : []).then(d => setWinners(d)).catch(() => {}),
+      fetch("/api/latte-art").then(r => r.ok ? r.json() : []).then(d => setLatteArt(d)).catch(() => {}),
+      fetch("/api/testimonials").then(r => r.ok ? r.json() : []).then(d => setTestimonials(d)).catch(() => {}),
+      fetch("/api/sponsors").then(r => r.ok ? r.json() : []).then(d => setSponsors(d)).catch(() => {}),
+      fetch("/api/coffee-facts").then(r => r.ok ? r.json() : []).then(d => setCoffeeFacts(d)).catch(() => {}),
+      fetch("/api/articles").then(r => r.ok ? r.json() : []).then(d => setArticles(d)).catch(() => {}),
+      fetch("/api/faqs").then(r => r.ok ? r.json() : []).then(d => setFaqs(d)).catch(() => {}),
+      fetch("/api/learn-categories?includeInactive=true").then(r => r.ok ? r.json() : []).then(d => setLearnCategories(d)).catch(() => {}),
+      fetch("/api/books?includeInactive=true").then(r => r.ok ? r.json() : []).then(d => setBooks(d)).catch(() => {}),
+      fetch("/api/tools?includeInactive=true").then(r => r.ok ? r.json() : []).then(d => setTools(d)).catch(() => {}),
+      fetch("/api/jobs?includeInactive=true").then(r => r.ok ? r.json() : []).then(d => setJobs(d)).catch(() => {}),
+      fetch("/api/schools?includeInactive=true").then(r => r.ok ? r.json() : []).then(d => setSchools(d)).catch(() => {}),
+      fetch("/api/timeline?includeInactive=true").then(r => r.ok ? r.json() : []).then(d => setTimeline(d)).catch(() => {}),
+      fetch("/api/about").then(r => r.ok ? r.json() : null).then(d => {
+        if (d) {
+          // Handle about data if needed
+        }
+      }).catch(() => {}),
+      fetch("/api/coffee-history?includeInactive=true").then(r => r.ok ? r.json() : []).then(d => {
+        // Handle coffee history data if needed
+      }).catch(() => {}),
+      fetch("/api/legends").then(r => r.ok ? r.json() : []).then(d => setLegends(d)).catch(() => {}),
+      fetch("/api/judges").then(r => r.ok ? r.json() : []).then(d => setJudgeCredentials(d)).catch(() => {}),
+      fetch("/api/payments").then(r => r.ok ? r.json() : []).then(d => setPayments(d)).catch(() => {}),
+      fetch("/api/invoices").then(r => r.ok ? r.json() : []).then(d => setInvoices(d)).catch(() => {}),
+      fetch("/api/statements").then(r => r.ok ? r.json() : []).then(d => setStatements(d)).catch(() => {}),
+      fetch("/api/hero").then(r => r.ok ? r.json() : null).then(d => {
+        if (d) {
+          if (d.heroContent) setHeroContent(d.heroContent);
+          if (d.heroBackground) setHeroBackground(d.heroBackground);
+          if (d.platformStats) setPlatformStats(d.platformStats);
+        }
+      }).catch(() => {}),
+      fetch("/api/platform-stats").then(r => r.ok ? r.json() : null).then(d => {
+        if (d) setPlatformStats(d);
+      }).catch(() => {}),
+      fetch("/api/tips").then(r => r.ok ? r.json() : []).then(d => { /* tips stored in context if needed */ }).catch(() => {}),
+      fetch("/api/subscription-plans?includeInactive=true").then(r => r.ok ? r.json() : []).then(d => setSubscriptionPlans(d)).catch(() => {}),
+      fetch("/api/site-settings").then(r => r.ok ? r.json() : null).then(d => {
+        if (d) {
+          if (Array.isArray(d.supportedCountries)) setSupportedCountries(d.supportedCountries);
+          if (d.defaultCountryCode) setDefaultCountryCode(d.defaultCountryCode);
+        }
+      }).catch(() => {}),
+    ];
+    await Promise.all(fetches);
   }, []);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
+
+  // Realtime sync with database
+  useEffect(() => {
+    const tables = [
+      "competitions",
+      "competition_applications",
+      "competition_results",
+      "competition_votes",
+      "judge_scores",
+      "judge_credentials",
+      "users",
+      "deleted_accounts",
+    ];
+
+    const channels = tables.map((table) =>
+      supabase
+        .channel(`admin-data-${table}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table },
+          () => fetchAll()
+        )
+        .subscribe()
+    );
+
+    return () => {
+      channels.forEach((channel) => {
+        channel.unsubscribe();
+        supabase.removeChannel(channel);
+      });
+    };
+  }, [fetchAll]);
 
   return (
     <AdminDataContext.Provider
