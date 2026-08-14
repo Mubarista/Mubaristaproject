@@ -9,33 +9,51 @@ export async function GET(req: NextRequest) {
     const competitionId = searchParams.get("competitionId");
 
     if (!slug && !competitionId) {
-      // Global live leaderboard across all competitions
-      const { count } = await supabaseAdmin
-        .from("competitions")
-        .select("id", { count: "exact", head: true });
+      // Global live leaderboard across currently live competitions
+      const LIVE_STATUSES = [
+        "Registration Open",
+        "in_progress",
+        "voting",
+        "judging",
+        "winner_announcement",
+      ];
 
-      if (!count || count === 0) {
+      const { data: liveCompetitions, error: compError } = await supabaseAdmin
+        .from("competitions")
+        .select("id, title, status")
+        .in("status", LIVE_STATUSES);
+
+      if (compError) {
+        console.error("Global leaderboard competition fetch error:", compError);
+        return NextResponse.json({ error: "Failed to fetch live competitions" }, { status: 500 });
+      }
+
+      if (!liveCompetitions || liveCompetitions.length === 0) {
         return NextResponse.json({ available: false, leaderboard: [] });
       }
 
+      const liveIds = liveCompetitions.map((c: any) => c.id);
+      const compMap = new Map(liveCompetitions.map((c: any) => [c.id, c.title]));
+
       const { data: applications, error: appError } = await supabaseAdmin
         .from("competition_applications")
-        .select("id, full_name, country, competition_id, profile_photo_url");
+        .select("id, full_name, country, competition_id, profile_photo_url")
+        .in("competition_id", liveIds);
+
+      if (appError) {
+        console.error("Global leaderboard applications error:", appError);
+        return NextResponse.json({ error: "Failed to fetch applications" }, { status: 500 });
+      }
 
       const { data: results, error: resultError } = await supabaseAdmin
         .from("competition_results")
-        .select("application_id, vote_points, score, rank");
+        .select("application_id, vote_points, score, rank")
+        .in("competition_id", liveIds);
 
-      const { data: competitions, error: compError } = await supabaseAdmin
-        .from("competitions")
-        .select("id, title");
-
-      if (appError || resultError || compError) {
-        console.error("Global leaderboard errors:", { appError, resultError, compError });
-        return NextResponse.json({ error: "Failed to fetch global leaderboard" }, { status: 500 });
+      if (resultError) {
+        console.error("Global leaderboard results error:", resultError);
       }
 
-      const compMap = new Map((competitions || []).map((c: any) => [c.id, c.title]));
       const resultMap = new Map((results || []).map((r: any) => [r.application_id, r]));
 
       const leaderboard = (applications || [])
