@@ -6,6 +6,12 @@ import type { User, UserRole } from "@/types";
 import { supabase } from "@/lib/supabase";
 import { addSubscriptionDuration } from "@/lib/utils";
 
+const RESERVED_ADMIN_EMAIL = "admin@mubarista.com";
+
+function isReservedAdmin(email?: string) {
+  return email?.toLowerCase().trim() === RESERVED_ADMIN_EMAIL;
+}
+
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
@@ -143,6 +149,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async function init() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user && mounted) {
+        if (isReservedAdmin(session.user.email)) {
+          await supabase.auth.signOut({ scope: "local" });
+          if (mounted) {
+            setUser(null);
+            setIsLoading(false);
+          }
+          return;
+        }
         const profile = await ensureUserProfile(session.user);
         if (mounted) {
           if (profile) {
@@ -169,6 +183,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (session?.user) {
+        if (isReservedAdmin(session.user.email)) {
+          await supabase.auth.signOut({ scope: "local" });
+          if (mounted) {
+            setUser(null);
+            setIsLoading(false);
+          }
+          return;
+        }
         const profile = await ensureUserProfile(session.user);
         if (mounted) {
           if (profile) {
@@ -197,6 +219,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
+    if (isReservedAdmin(email)) {
+      throw new Error("This email is reserved for admin access. Please use the admin portal.");
+    }
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       if (error.message === "Email not confirmed") {
@@ -227,6 +252,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const register = useCallback(async (email: string, password: string, name: string, phone: string, country: string) => {
+    if (isReservedAdmin(email)) {
+      throw new Error("This email is reserved for admin access. Please use the admin portal.");
+    }
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     const conditions = [`email.eq.${email}`];
     const trimmedPhone = phone?.trim();
@@ -324,6 +352,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const sendOTP = useCallback(async (identifier: string, method?: "email" | "phone") => {
+    if (method !== "phone" && !identifier.startsWith("+") && isReservedAdmin(identifier)) {
+      return { success: false, message: "This email is reserved for admin access. Please use the admin portal." };
+    }
     if (method === "phone" || identifier.startsWith("+")) {
       const { error } = await supabase.auth.signInWithOtp({ phone: identifier });
       return { success: !error, message: error?.message || "OTP sent" };
