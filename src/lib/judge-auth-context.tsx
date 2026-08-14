@@ -5,11 +5,17 @@ import { useAdminData } from "@/lib/admin-data-context";
 
 export type LoginError = "invalid_credentials" | "account_disabled" | "expired" | "link_expired" | "link_invalid" | null;
 
+interface TokenValidationResult {
+  credential: JudgeSession | null;
+  error: LoginError;
+}
+
 interface JudgeAuthContextType {
   isJudgeAuthed: boolean;
   judgeLogin: (username: string, password: string) => LoginError;
   judgeLoginWithToken: (token: string) => LoginError;
-  authenticateWithToken: (token: string | null) => Promise<LoginError>;
+  validateToken: (token: string | null) => Promise<TokenValidationResult>;
+  authenticateWithToken: (token: string, password: string) => Promise<LoginError>;
   judgeLogout: () => void;
   judgeName: string;
   judgeId: string;
@@ -87,27 +93,52 @@ export function JudgeAuthProvider({ children }: { children: ReactNode }) {
     return null;
   }, [judgeCredentials]);
 
-  // Async API-based validation - checks the real database
-  const authenticateWithToken = useCallback(async (token: string | null): Promise<LoginError> => {
-    if (!token) return "link_invalid";
+  // Async API-based token validation - only checks the token, does not log in
+  const validateToken = useCallback(async (token: string | null): Promise<TokenValidationResult> => {
+    if (!token) return { credential: null, error: "link_invalid" };
     try {
       const response = await fetch(`/api/judges/validate?token=${encodeURIComponent(token)}`);
       if (!response.ok) {
         const data = await response.json().catch(() => ({ error: "invalid" }));
         const error = data.error as LoginError;
         if (error === "account_disabled" || error === "expired" || error === "link_expired") {
+          return { credential: null, error };
+        }
+        return { credential: null, error: "link_invalid" };
+      }
+
+      const credential = (await response.json()) as JudgeSession;
+
+      if (!credential.active) return { credential: null, error: "account_disabled" };
+      if (isAccountExpired(credential)) return { credential: null, error: "expired" };
+      if (isLinkExpired(credential)) return { credential: null, error: "link_expired" };
+
+      return { credential, error: null };
+    } catch (error) {
+      console.error("Judge token validation error:", error);
+      return { credential: null, error: "link_invalid" };
+    }
+  }, []);
+
+  // Async API-based validation with password - checks the token and password, then logs in
+  const authenticateWithToken = useCallback(async (token: string, password: string): Promise<LoginError> => {
+    try {
+      const response = await fetch("/api/judges/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, password }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({ error: "invalid" }));
+        const error = data.error as LoginError;
+        if (error === "account_disabled" || error === "expired" || error === "link_expired" || error === "invalid_credentials") {
           return error;
         }
         return "link_invalid";
       }
 
       const credential = (await response.json()) as JudgeSession;
-
-      // Double-check expiry on the client side as well
-      if (!credential.active) return "account_disabled";
-      if (isAccountExpired(credential)) return "expired";
-      if (isLinkExpired(credential)) return "link_expired";
-
       setSession(credential);
       return null;
     } catch (error) {
@@ -121,7 +152,7 @@ export function JudgeAuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <JudgeAuthContext.Provider value={{ isJudgeAuthed: authed, judgeLogin, judgeLogout, judgeLoginWithToken, authenticateWithToken, judgeName, judgeId, assignedCompetition }}>
+    <JudgeAuthContext.Provider value={{ isJudgeAuthed: authed, judgeLogin, judgeLogout, judgeLoginWithToken, validateToken, authenticateWithToken, judgeName, judgeId, assignedCompetition }}>
       {children}
     </JudgeAuthContext.Provider>
   );

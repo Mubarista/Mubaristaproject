@@ -128,11 +128,88 @@ function TokenLoadingScreen() {
   );
 }
 
+function TokenPasswordScreen({
+  judgeName,
+  onSubmit,
+  error,
+}: {
+  judgeName: string;
+  onSubmit: (password: string) => Promise<void>;
+  error: LoginError;
+}) {
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!password.trim() || submitting) return;
+    setSubmitting(true);
+    await onSubmit(password);
+    setSubmitting(false);
+  }
+
+  return (
+    <div className="relative min-h-screen flex flex-col" style={{ background: "linear-gradient(135deg, #0a0a12 0%, #0d1117 50%, #0a0f1a 100%)" }}>
+      <Background />
+      <div className="relative z-10 w-full px-6 py-4">
+        <Link href="/judge" className="flex items-center gap-2.5">
+          <JudgeLogo className="h-7 w-7" iconClassName="h-4 w-4" />
+          <span className="text-base font-bold text-white tracking-tight">MUBARISTA</span>
+        </Link>
+      </div>
+      <div className="relative z-10 flex-1 flex items-center justify-center px-4">
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-6">
+            <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl mb-6 shadow-2xl" style={{ background: "linear-gradient(135deg, #c9a227, #f5c842)" }}>
+              <Lock className="h-10 w-10 text-black" strokeWidth={1.5} />
+            </div>
+            <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Judge Portal</h1>
+            <p className="text-sm" style={{ color: "#6b7280" }}>
+              Welcome, <span className="text-white font-medium">{judgeName}</span>. Enter the password provided by the admin.
+            </p>
+          </div>
+          <form onSubmit={handleSubmit} className="rounded-3xl border p-6 text-left" style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(201,162,39,0.25)", backdropFilter: "blur(20px)" }}>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "#9ca3af" }}>Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your judge password"
+              className="w-full rounded-xl bg-muted-bg border border-white/10 px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-yellow mb-4"
+              disabled={submitting}
+            />
+            {error && (
+              <p className="text-sm mb-4" style={{ color: "#ef4444" }}>
+                {ERROR_MSG[error] || "Unable to sign in."}
+              </p>
+            )}
+            <button
+              type="submit"
+              disabled={!password.trim() || submitting}
+              className="w-full py-3 rounded-xl text-sm font-bold text-black transition-all disabled:opacity-50"
+              style={{ background: "linear-gradient(135deg, #c9a227, #f5c842)" }}
+            >
+              {submitting ? "Verifying…" : "Enter Portal"}
+            </button>
+          </form>
+          <div className="mt-6 text-center">
+            <Link href="/" className="text-xs transition-colors" style={{ color: "#6b7280" }}>
+              ← Back to MUBARISTA site
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TokenGateContent({ children }: { children: React.ReactNode }) {
-  const { isJudgeAuthed, authenticateWithToken } = useJudgeAuth();
+  const { isJudgeAuthed, validateToken, authenticateWithToken } = useJudgeAuth();
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState<"loading" | "denied" | "error" | "ready">("loading");
+  const [status, setStatus] = useState<"loading" | "denied" | "error" | "password" | "ready">("loading");
   const [error, setError] = useState<LoginError>(null);
+  const [pendingToken, setPendingToken] = useState<string | null>(null);
+  const [pendingName, setPendingName] = useState("");
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -156,24 +233,35 @@ function TokenGateContent({ children }: { children: React.ReactNode }) {
       safeSessionStorage.setItem(TOKEN_KEY, tokenFromUrl);
     }
 
-    async function validateToken() {
-      const err = await authenticateWithToken(token);
+    async function checkToken() {
+      const { credential, error: err } = await validateToken(token);
       if (err) {
         setError(err);
         setStatus("error");
         safeSessionStorage.removeItem(TOKEN_KEY);
-      } else {
-        setStatus("ready");
+      } else if (credential) {
+        setPendingToken(token);
+        setPendingName(credential.name || "Judge");
+        setStatus("password");
       }
     }
 
-    validateToken();
-  }, [isJudgeAuthed, authenticateWithToken, searchParams]);
+    checkToken();
+  }, [isJudgeAuthed, validateToken, searchParams]);
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  async function handlePassword(password: string) {
+    if (!pendingToken) return;
+    const err = await authenticateWithToken(pendingToken, password);
+    if (err) {
+      setError(err);
+    }
+  }
 
   if (status === "loading") return <TokenLoadingScreen />;
   if (status === "denied") return <AccessDeniedScreen />;
   if (status === "error") return <TokenErrorScreen error={error} />;
+  if (status === "password") return <TokenPasswordScreen judgeName={pendingName} onSubmit={handlePassword} error={error} />;
   return <>{children}</>;
 }
 
