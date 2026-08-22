@@ -12,10 +12,12 @@ interface TokenValidationResult {
 
 interface JudgeAuthContextType {
   isJudgeAuthed: boolean;
+  termsAccepted: boolean;
   judgeLogin: (username: string, password: string) => LoginError;
   judgeLoginWithToken: (token: string) => LoginError;
   validateToken: (token: string | null) => Promise<TokenValidationResult>;
   authenticateWithToken: (token: string, password: string) => Promise<LoginError>;
+  acceptTerms: () => Promise<boolean>;
   judgeLogout: () => void;
   judgeName: string;
   judgeId: string;
@@ -32,12 +34,14 @@ interface JudgeSession {
   accessToken?: string;
   username?: string;
   password?: string;
+  termsAcceptedAt?: string | null;
 }
 
 const JudgeAuthContext = createContext<JudgeAuthContextType | undefined>(undefined);
 
 export function JudgeAuthProvider({ children }: { children: ReactNode }) {
   const [authed, setAuthed] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [judgeName, setJudgeName] = useState("");
   const [judgeId, setJudgeId] = useState("");
   const [assignedCompetition, setAssignedCompetition] = useState("");
@@ -57,11 +61,12 @@ export function JudgeAuthProvider({ children }: { children: ReactNode }) {
     return expiry < new Date();
   }
 
-  function setSession(c: { id: string; name: string; assignedCompetition: string }) {
+  function setSession(c: { id: string; name: string; assignedCompetition: string; termsAcceptedAt?: string | null }) {
     setAuthed(true);
     setJudgeName(c.name);
     setJudgeId(c.id);
     setAssignedCompetition(c.assignedCompetition);
+    setTermsAccepted(!!c.termsAcceptedAt);
   }
 
   function clearSession() {
@@ -69,7 +74,27 @@ export function JudgeAuthProvider({ children }: { children: ReactNode }) {
     setJudgeName("");
     setJudgeId("");
     setAssignedCompetition("");
+    setTermsAccepted(false);
   }
+
+  const acceptTerms = useCallback(async (): Promise<boolean> => {
+    if (!judgeId) return false;
+    try {
+      const response = await fetch("/api/judges/accept-terms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ judgeId }),
+      });
+      if (response.ok) {
+        setTermsAccepted(true);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error accepting terms:", error);
+      return false;
+    }
+  }, [judgeId]);
 
   const judgeLogin = useCallback((username: string, password: string): LoginError => {
     const match = judgeCredentials.find(
@@ -78,7 +103,12 @@ export function JudgeAuthProvider({ children }: { children: ReactNode }) {
     if (!match) return "invalid_credentials";
     if (!match.active) return "account_disabled";
     if (isAccountExpired(match)) return "expired";
-    setSession(match);
+    setSession({
+      id: match.id,
+      name: match.name,
+      assignedCompetition: match.assignedCompetition,
+      termsAcceptedAt: match.termsAcceptedAt,
+    });
     return null;
   }, [judgeCredentials]);
 
@@ -89,7 +119,12 @@ export function JudgeAuthProvider({ children }: { children: ReactNode }) {
     if (isLinkExpired(match)) return "link_expired";
     if (!match.active) return "account_disabled";
     if (isAccountExpired(match)) return "expired";
-    setSession(match);
+    setSession({
+      id: match.id,
+      name: match.name,
+      assignedCompetition: match.assignedCompetition,
+      termsAcceptedAt: match.termsAcceptedAt,
+    });
     return null;
   }, [judgeCredentials]);
 
@@ -139,7 +174,12 @@ export function JudgeAuthProvider({ children }: { children: ReactNode }) {
       }
 
       const credential = (await response.json()) as JudgeSession;
-      setSession(credential);
+      setSession({
+        id: credential.id,
+        name: credential.name,
+        assignedCompetition: credential.assignedCompetition,
+        termsAcceptedAt: credential.termsAcceptedAt,
+      });
       return null;
     } catch (error) {
       console.error("Judge authentication error:", error);
@@ -152,7 +192,7 @@ export function JudgeAuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <JudgeAuthContext.Provider value={{ isJudgeAuthed: authed, judgeLogin, judgeLogout, judgeLoginWithToken, validateToken, authenticateWithToken, judgeName, judgeId, assignedCompetition }}>
+    <JudgeAuthContext.Provider value={{ isJudgeAuthed: authed, termsAccepted, judgeLogin, judgeLogout, judgeLoginWithToken, validateToken, authenticateWithToken, acceptTerms, judgeName, judgeId, assignedCompetition }}>
       {children}
     </JudgeAuthContext.Provider>
   );

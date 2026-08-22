@@ -3,6 +3,12 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { createNotification } from "@/lib/notifications";
 import { recalculateRanks } from "@/lib/ranking";
 
+function isScored(scoreRow: unknown): boolean {
+  if (!scoreRow || typeof scoreRow !== "object") return false;
+  const row = scoreRow as Record<string, unknown>;
+  return row.score !== null && row.score !== undefined && row.score !== "";
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -28,6 +34,39 @@ export async function GET(request: Request) {
   }
 }
 
+async function determineActiveJudge(competitionId: string, applicationId: string) {
+  const { data: competition } = await supabaseAdmin
+    .from("competitions")
+    .select("title")
+    .eq("id", competitionId)
+    .maybeSingle();
+
+  const competitionTitle = competition ? String((competition as any).title || "").replace(/'/g, "''") : "";
+  const judgeQuery = competitionTitle
+    ? supabaseAdmin.from("judge_credentials").select("id, name, active, created_at").or(`assigned_competition.eq.${competitionId},assigned_competition.ilike.${competitionTitle}`).order("created_at", { ascending: true })
+    : supabaseAdmin.from("judge_credentials").select("id, name, active, created_at").eq("assigned_competition", competitionId).order("created_at", { ascending: true });
+
+  const { data: allJudges } = await judgeQuery;
+  const activeJudges = (allJudges || []).filter((j: any) => j.active !== false).sort((a: any, b: any) => {
+    const aTime = new Date(a.created_at || 0).getTime();
+    const bTime = new Date(b.created_at || 0).getTime();
+    return aTime - bTime;
+  });
+
+  const { data: appScores } = await supabaseAdmin
+    .from("judge_scores")
+    .select("judge_id, score")
+    .eq("application_id", applicationId);
+
+  const scoredJudgeIds = new Set(
+    (appScores || [])
+      .filter((s: any) => s.score !== null && s.score !== undefined && s.score !== "")
+      .map((s: any) => s.judge_id)
+  );
+
+  return activeJudges.find((j: any) => !scoredJudgeIds.has(j.id)) || null;
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -51,7 +90,7 @@ export async function POST(request: Request) {
 
     const { data: competition, error: compError } = await supabaseAdmin
       .from("competitions")
-      .select("status")
+      .select("status, title")
       .eq("id", resolvedCompetitionId)
       .single();
 
@@ -59,57 +98,60 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Competition not found" }, { status: 404 });
     }
 
-    if (competition.status !== "judging") {
+    if ((competition as any).status !== "judging") {
       return NextResponse.json({ error: "Judging is not open for this competition" }, { status: 403 });
     }
 
-    const { data: existing, error: existingError } = await supabaseAdmin
+    // Prevent scoring already-submitted scores (no undo)
+    const { data: existing } = await supabaseAdmin
       .from("judge_scores")
       .select("id")
       .eq("judge_id", judgeId)
       .eq("application_id", applicationId)
       .maybeSingle();
 
-    if (existingError) throw existingError;
-
-    const payload = {
-      judge_id: judgeId,
-      application_id: applicationId,
-      competition_id: resolvedCompetitionId,
-      participant_name: participantName || null,
-      score,
-      feedback: comments || null,
-      criteria_scores: criteriaScores || {},
-      updated_at: new Date().toISOString(),
-    };
-
-    let result;
     if (existing) {
-      const { data, error } = await supabaseAdmin
-        .from("judge_scores")
-        .update(payload)
-        .eq("id", existing.id)
-        .select()
-        .single();
-      if (error) throw error;
-      result = data;
-    } else {
-      const { data, error } = await supabaseAdmin
-        .from("judge_scores")
-        .insert({ ...payload, created_at: new Date().toISOString() })
-        .select()
-        .single();
-      if (error) throw error;
-      result = data;
+      return NextResponse.json(
+        { error: "You have already scored this participant. Scores cannot be changed or undone." },
+        { status: 409 }
+      );
     }
 
+    // Turn-based: only the active judge may submit
+    const activeJudge = await determineActiveJudge(resolvedCompetitionId, applicationId);
+    if (!activeJudge || activeJudge.id !== judgeId) {
+      const nextName = activeJudge ? String(activeJudge.name) : "another judge";
+      return NextResponse.json(
+        { error: `Please wait. It is currently ${nextName}'s turn to score this participant.` },
+        { status: 403 }
+      );
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from("judge_scores")
+      .insert({
+        judge_id: judgeId,
+        application_id: applicationId,
+        competition_id: resolvedCompetitionId,
+        participant_name: participantName || null,
+        score,
+        feedback: comments || null,
+        criteria_scores: criteriaScores || {},
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
     // Recalculate the average judge score for this application
-    const { data: allScores } = await supabaseAdmin
+    const { data: appScores } = await supabaseAdmin
       .from("judge_scores")
       .select("score")
       .eq("application_id", applicationId);
 
-    const judgeScores = (allScores || []).map((s: any) => Number(s.score || 0));
+    const judgeScores = (appScores || []).map((s: any) => Number(s.score || 0));
     const averageJudgeScore = judgeScores.length > 0
       ? judgeScores.reduce((sum, s) => sum + s, 0) / judgeScores.length
       : 0;
@@ -160,10 +202,10 @@ export async function POST(request: Request) {
         });
       }
     } catch (notifyError) {
-      console.error("Failed to notify participant about judge score:", notifyError);
+      console.error("Failed to notify participant about judge score:", error);
     }
 
-    return NextResponse.json({ success: true, score: result });
+    return NextResponse.json({ success: true, score: data });
   } catch (error) {
     console.error("Error saving judge score:", error);
     return NextResponse.json({ error: "Failed to save judge score" }, { status: 500 });
@@ -171,9 +213,9 @@ export async function POST(request: Request) {
 }
 
 export async function PUT() {
-  return NextResponse.json({ message: "Not implemented" }, { status: 405 });
+  return NextResponse.json({ error: "Scores cannot be updated once submitted" }, { status: 405 });
 }
 
 export async function DELETE() {
-  return NextResponse.json({ message: "Not implemented" }, { status: 405 });
+  return NextResponse.json({ error: "Scores cannot be deleted" }, { status: 405 });
 }

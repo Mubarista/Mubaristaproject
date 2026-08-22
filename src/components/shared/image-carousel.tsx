@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ImageItem {
   url: string;
@@ -21,10 +22,28 @@ export function ImageCarousel({ images, alt, aspectRatio = "3/4", className = ""
   const [index, setIndex] = useState(0);
   const [imageAspects, setImageAspects] = useState<Record<number, string>>({});
   const touchStartX = useRef<number | null>(null);
+  const imgRefs = useRef<HTMLImageElement[]>([]);
+  const [loadedSlides, setLoadedSlides] = useState<Set<number>>(new Set());
 
   const normalized = images.map((img) =>
     typeof img === "string" ? { url: img, caption: "" } : img
   );
+
+  useEffect(() => {
+    // Calculate aspect ratios after images load
+    imgRefs.current.forEach((img, i) => {
+      if (img && objectFit !== "contain") return;
+      const ratio = img.naturalWidth / img.naturalHeight;
+      const minRatio = 3 / 4;
+      const maxRatio = 4 / 3;
+      if (ratio >= minRatio && ratio <= maxRatio) {
+        setImageAspects((aspects) => ({
+          ...aspects,
+          [i]: `${img.naturalWidth}/${img.naturalHeight}`,
+        }));
+      }
+    });
+  }, [index, objectFit]);
 
   useEffect(() => {
     if (normalized.length <= 1) return;
@@ -70,25 +89,22 @@ export function ImageCarousel({ images, alt, aspectRatio = "3/4", className = ""
             className="absolute inset-0 transition-transform duration-300 ease-out"
             style={{ transform: `translateX(${(i - index) * 100}%)` }}
           >
+            {!loadedSlides.has(i) && (
+              <div aria-hidden className="skeleton-shimmer absolute inset-0 z-[1]" />
+            )}
             <Image
               src={item.url}
               alt={`${alt} ${i + 1}`}
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
-              className={objectFit === "cover" ? "object-cover" : "object-contain"}
+              className={cn(
+                objectFit === "cover" ? "object-cover" : "object-contain",
+                "transition-opacity duration-500",
+                loadedSlides.has(i) ? "opacity-100" : "opacity-0"
+              )}
               loading="eager"
-              onLoadingComplete={(img) => {
-                if (objectFit !== "contain") return;
-                const ratio = img.naturalWidth / img.naturalHeight;
-                const minRatio = 3 / 4;
-                const maxRatio = 4 / 3;
-                if (ratio >= minRatio && ratio <= maxRatio) {
-                  setImageAspects((aspects) => ({
-                    ...aspects,
-                    [i]: `${img.naturalWidth}/${img.naturalHeight}`,
-                  }));
-                }
-              }}
+              ref={(el) => { if (el) imgRefs.current[i] = el; }}
+              onLoad={() => setLoadedSlides((prev) => new Set(prev).add(i))}
             />
           </div>
         ))}

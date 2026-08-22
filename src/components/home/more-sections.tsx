@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useAdminData } from "@/lib/admin-data-context";
 import { SectionHeading } from "@/components/shared/section-heading";
-import Image from "next/image";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
@@ -839,7 +839,7 @@ export function ArticlesSection() {
                 >
                 <div className="relative h-48 overflow-hidden">
                   {article.coverImage ? (
-                    <Image
+                    <ImageWithSkeleton
                       src={article.coverImage}
                       alt={article.title}
                       fill

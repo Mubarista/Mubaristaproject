@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import Link from "next/link";
 import { Calendar, Globe, Trophy, Users, ArrowRight } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
@@ -12,6 +12,7 @@ import { Countdown } from "@/components/shared/countdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { TopParticipantCard } from "@/components/leaderboard/top-participant-card";
 import { formatCurrency } from "@/lib/utils";
 import type { Competition } from "@/types";
 
@@ -25,6 +26,10 @@ const difficultyColors: Record<string, "blue" | "green" | "yellow" | "red"> = {
 function isRegistrationClosed(deadline: string) {
   const d = new Date(deadline);
   return !isNaN(d.getTime()) && d.getTime() < Date.now();
+}
+
+function formatStatus(status: string) {
+  return status.replace(/_/g, " ").replace("in progress", "Competition Submission");
 }
 
 export default function CompetitionsPage() {
@@ -95,7 +100,7 @@ export default function CompetitionsPage() {
               <Card glass={false} className="overflow-hidden p-0 h-full flex flex-col bg-black/60 border-white/10 text-white">
                 <div className="relative h-48">
                   {comp.banner ? (
-                    <Image src={comp.banner} alt={comp.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw" className="object-cover" />
+                    <ImageWithSkeleton src={comp.banner} alt={comp.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw" className="object-cover" />
                   ) : (
                     <div className="w-full h-full bg-muted-bg flex items-center justify-center">
                       <span className="text-muted">No image</span>
@@ -118,15 +123,15 @@ export default function CompetitionsPage() {
                         ? "blue"
                         : comp.status === "judging"
                         ? "yellow"
+                        : comp.status === "in_progress"
+                        ? "blue"
                         : "default"
                     }
                     className="absolute top-4 right-4"
                   >
                     {isRegistrationClosed(comp.registrationDeadline)
                       ? "Registration Closed"
-                      : comp.status === "judging"
-                      ? "judging"
-                      : comp.status}
+                      : formatStatus(comp.status)}
                   </Badge>
                   <div className="absolute bottom-2 left-2 z-10 bg-black/60 backdrop-blur-sm rounded-lg p-1 flex items-center gap-1.5">
                     <span className="text-[10px] text-white/80 uppercase tracking-wide leading-none">End-In:</span>
@@ -162,18 +167,15 @@ export default function CompetitionsPage() {
                     <span className="font-semibold text-green">
                       Entry: {formatCurrency(comp.entryFee)}
                     </span>
-                    {comp.status === "judging" || comp.availableSlots <= 0 || isRegistrationClosed(comp.registrationDeadline) ? (
-                      <Button variant="secondary" size="sm" disabled>
-                        {isRegistrationClosed(comp.registrationDeadline) ? "Registration Closed" : "Full"}
+                    <Link href={`/competitions/${encodeURIComponent(comp.slug)}`}>
+                      <Button 
+                        variant={comp.status === "judging" || comp.availableSlots <= 0 || isRegistrationClosed(comp.registrationDeadline) ? "secondary" : "primary"} 
+                        size="sm"
+                      >
+                        {isRegistrationClosed(comp.registrationDeadline) ? "Registration Closed" : comp.availableSlots <= 0 ? "Full" : "View Details"}
+                        <ArrowRight className="h-4 w-4" />
                       </Button>
-                    ) : (
-                      <Link href={`/competitions/${encodeURIComponent(comp.slug)}`}>
-                        <Button variant="primary" size="sm">
-                          View Details
-                          <ArrowRight className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                    )}
+                    </Link>
                   </div>
                 </div>
               </Card>
@@ -183,5 +185,28 @@ export default function CompetitionsPage() {
         )}
       </div>
     </div>
+);
+
+  // Show top participant card for the first live competition
+  const liveCompetitions = competitions.filter(
+    (c) =>
+      c.status === "in_progress" ||
+      c.status === "judging" ||
+      c.status === "voting"
   );
+
+  if (liveCompetitions.length > 0) {
+    return (
+      <>
+        <SectionHeading
+          eyebrow="Live Ranking"
+          title="Current Top Participant"
+          description="The participant with the highest score"
+        />
+        <TopParticipantCard competitionId={liveCompetitions[0].id} />
+      </>
+    );
+  }
+
+  return null;
 }

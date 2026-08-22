@@ -34,6 +34,12 @@ function parseCriteria(criteria: unknown): { key: string; label: string; weight:
   });
 }
 
+function isScored(scoreRow: unknown): boolean {
+  if (!scoreRow || typeof scoreRow !== "object") return false;
+  const row = scoreRow as Record<string, unknown>;
+  return row.score !== null && row.score !== undefined && row.score !== "";
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -70,58 +76,144 @@ export async function GET(request: Request) {
 
     const competitionId = competition ? String(competition.id) : null;
 
+    // Get all active judges for this competition to determine required score count and turn order
+    const competitionTitle = competition ? String(competition.title || "").replace(/'/g, "''") : "";
+    const judgeQuery = competitionTitle
+      ? supabaseAdmin.from("judge_credentials").select("id, name, active, created_at").or(`assigned_competition.eq.${competitionId},assigned_competition.ilike.${competitionTitle}`).order("created_at", { ascending: true })
+      : supabaseAdmin.from("judge_credentials").select("id, name, active, created_at").eq("assigned_competition", competitionId).order("created_at", { ascending: true });
+    const { data: allJudges, error: judgesError } = await judgeQuery;
+
+    if (judgesError) throw judgesError;
+
+    const activeJudges = (allJudges || []).filter((j: any) => j.active !== false);
+    const totalJudges = Math.max(activeJudges.length, 1);
+
     const { data: applications, error: appsError } = await supabaseAdmin
       .from("competition_applications")
       .select("*")
       .eq("competition_id", competitionId)
       .neq("status", "declined")
-      .order("created_at", { ascending: false });
+      .order("scoring_order", { ascending: true })
+      .order("created_at", { ascending: true });
     if (appsError) throw appsError;
 
     const apps = (mapKeysToCamelCase(applications || []) as unknown[]) as Record<string, unknown>[];
 
-    const { data: scores, error: scoresError } = await supabaseAdmin
+    // Get all scores for this competition
+    const { data: allScores, error: scoresError } = await supabaseAdmin
       .from("judge_scores")
       .select("*")
-      .eq("judge_id", judgeId);
+      .eq("competition_id", competitionId);
     if (scoresError) throw scoresError;
 
-    const scoresMap = new Map((scores || []).map((s: unknown) => {
+    // Build a map of application_id -> list of judge ids who scored
+    const scoresByApp = new Map<string, { judgeId: string; score: number | null; feedback: string; criteriaScores: Record<string, number> }[]>();
+    (allScores || []).forEach((s: unknown) => {
       const row = s as Record<string, unknown>;
-      return [String(row.application_id), row];
+      const appId = String(row.application_id);
+      if (!scoresByApp.has(appId)) {
+        scoresByApp.set(appId, []);
+      }
+      if (isScored(row)) {
+        scoresByApp.get(appId)?.push({
+          judgeId: String(row.judge_id),
+          score: Number(row.score),
+          feedback: String(row.feedback || ""),
+          criteriaScores: (row.criteria_scores as Record<string, number>) || {},
+        });
+      }
+    });
+
+    // Find current active application (first one not yet fully scored)
+    let currentApp: Record<string, unknown> | null = null;
+    let currentIndex = 0;
+    const completedApplicationIds: string[] = [];
+
+    for (let i = 0; i < apps.length; i++) {
+      const app = apps[i];
+      const appId = String(app.id);
+      const scored = scoresByApp.get(appId) || [];
+      if (scored.length >= totalJudges) {
+        completedApplicationIds.push(appId);
+      } else {
+        currentApp = app;
+        currentIndex = i;
+        break;
+      }
+    }
+
+    // If all applications scored, show the last one as completed
+    if (!currentApp && apps.length > 0) {
+      currentApp = apps[apps.length - 1];
+      currentIndex = apps.length - 1;
+    }
+
+    const currentAppId = currentApp ? String(currentApp.id) : null;
+    const currentScores = currentAppId ? (scoresByApp.get(currentAppId) || []) : [];
+    const myScore = currentScores.find(s => s.judgeId === judgeId);
+    const iScoredCurrent = !!myScore;
+    const currentCompletedCount = currentScores.length;
+    const currentAllDone = currentScores.length >= totalJudges;
+
+    // Turn-based: determine which judge is up next for the current participant
+    // Order judges by created_at; the first one who has not scored is the active turn
+    const judgeOrder = activeJudges.map((j: any) => ({
+      id: j.id,
+      name: j.name,
     }));
 
-    const submissions = apps.map((app) => {
-      const appId = String(app.id);
-      const scoreRow = scoresMap.get(appId);
-      const status = scoreRow ? "scored" : "pending";
+    const scoredJudgeIds = new Set(currentScores.map(s => s.judgeId));
+    const currentTurnJudge = judgeOrder.find(j => !scoredJudgeIds.has(j.id)) || null;
+    const isYourTurn = !!currentTurnJudge && currentTurnJudge.id === judgeId;
+    const waitingForJudge = currentTurnJudge && currentTurnJudge.id !== judgeId ? currentTurnJudge.name : null;
+
+    const judgeStatuses = judgeOrder.map((j) => {
+      const scored = currentScores.find((s: any) => s.judgeId === j.id);
+      const isCurrentTurn = currentTurnJudge?.id === j.id && !scored;
       return {
-        id: appId,
-        applicationId: appId,
-        name: String(app.fullName || app.userName || app.userName || "Participant"),
-        country: String(app.country || "Unknown"),
-        flag: "",
-        category: String(competition?.difficulty || ""),
-        duration: "",
-        videoUrl: String(app.videoUrl || app.video_url || ""),
-        status,
-        score: status === "scored" ? Number(scoreRow?.score) : null,
-        criteriaScores: (scoreRow?.criteria_scores as Record<string, number>) || {},
-        feedback: String(scoreRow?.feedback || ""),
+        id: j.id,
+        name: j.name,
+        done: !!scored,
+        isCurrentTurn,
       };
     });
 
-    const scoredCount = submissions.filter((s) => s.status === "scored").length;
-    const totalEntries = submissions.length;
-    const pendingCount = totalEntries - scoredCount;
-    const avgScore = scoredCount > 0
-      ? (submissions
-          .filter((s) => s.score !== null)
-          .reduce((acc, s) => acc + (s.score || 0), 0) / scoredCount)
+    const submissions = currentApp
+      ? [
+          {
+            id: currentAppId,
+            applicationId: currentAppId,
+            name: String(currentApp.fullName || currentApp.userName || "Participant"),
+            country: String(currentApp.country || "Unknown"),
+            flag: "",
+            category: String(competition?.difficulty || ""),
+            duration: "",
+            videoUrl: String(currentApp.videoUrl || currentApp.video_url || ""),
+            status: iScoredCurrent ? ("scored" as const) : ("pending" as const),
+            score: myScore ? myScore.score : null,
+            criteriaScores: myScore ? myScore.criteriaScores : {},
+            feedback: myScore ? myScore.feedback : "",
+          },
+        ]
+      : [];
+
+    const scoredCount = completedApplicationIds.length + (currentAllDone ? 1 : 0) - (iScoredCurrent ? 0 : 0);
+    const totalEntries = apps.length;
+    const pendingCount = totalEntries - (iScoredCurrent ? completedApplicationIds.length + (currentAllDone ? 1 : 0) : completedApplicationIds.length);
+
+    const avgScore = totalEntries > 0
+      ? (apps
+          .map(app => {
+            const appScores = scoresByApp.get(String(app.id)) || [];
+            const total = appScores.reduce((sum, s) => sum + (s.score || 0), 0);
+            return appScores.length > 0 ? total / appScores.length : 0;
+          })
+          .reduce((sum, s) => sum + s, 0) / totalEntries)
           .toFixed(1)
       : "0.0";
 
-    const activity = (scores || [])
+    const activity = (allScores || [])
+      .filter((s: unknown) => (s as Record<string, unknown>).judge_id === judgeId)
       .sort((a: unknown, b: unknown) => {
         const aTime = new Date(String((a as Record<string, unknown>).updated_at || (a as Record<string, unknown>).created_at)).getTime();
         const bTime = new Date(String((b as Record<string, unknown>).updated_at || (b as Record<string, unknown>).created_at)).getTime();
@@ -162,6 +254,18 @@ export async function GET(request: Request) {
             criteria: [],
           },
       submissions,
+      progress: {
+        currentIndex: currentIndex + 1,
+        totalEntries,
+        completedApplicationIds,
+        judgeStatuses,
+        currentCompletedCount,
+        totalJudges,
+        currentAllDone,
+        isYourTurn,
+        waitingForJudge,
+        turnBased: true,
+      },
       avgScore,
       activity,
     };
@@ -172,16 +276,3 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Failed to fetch judge portal data" }, { status: 500 });
   }
 }
-
-export async function POST() {
-  return NextResponse.json({ message: "Not implemented" }, { status: 405 });
-}
-
-export async function PUT() {
-  return NextResponse.json({ message: "Not implemented" }, { status: 405 });
-}
-
-export async function DELETE() {
-  return NextResponse.json({ message: "Not implemented" }, { status: 405 });
-}
-

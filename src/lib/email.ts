@@ -339,3 +339,37 @@ export async function sendPaymentFailedEmail(
     },
   });
 }
+
+export interface SendJudgeAccessEmailInput {
+  to: string;
+  name: string;
+  username: string;
+  password: string;
+  accessLink: string;
+  competitionTitle?: string;
+  expiresAt?: string | null;
+}
+
+export async function sendJudgeAccessEmail(
+  input: SendJudgeAccessEmailInput
+): Promise<SendEmailResult> {
+  const { to, name, username, password, accessLink, competitionTitle, expiresAt } = input;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
+
+  return sendEmail({
+    to,
+    subject: "Your Judge Access Link - MUBARISTA Competition",
+    fromName: "MUBARISTA HUB LTD",
+    fromEmail: "team@mubarista.com",
+    templateId: "judge-access-link",
+    templateData: {
+      NAME: name,
+      USERNAME: username,
+      PASSWORD: password,
+      ACCESS_LINK: accessLink,
+      COMPETITION_TITLE: competitionTitle || "Competition",
+      EXPIRES_AT: expiresAt || "No expiry",
+      SITE_URL: siteUrl,
+    },
+  });
+}

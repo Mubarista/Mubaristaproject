@@ -273,6 +273,18 @@ export default function ApplyPage() {
       if (duration > maxVideoDuration) {
         setErrorMessage(`Video is too long (${Math.round(duration)}s). Maximum duration is ${maxVideoDuration}s (${Math.floor(maxVideoDuration / 60)} minutes). Please trim the video.`);
       }
+      
+      // Check video orientation
+      if (video.videoWidth <= video.videoHeight) {
+        setErrorMessage("Video must be in landscape (horizontal) orientation.");
+        return;
+      }
+      
+      // Check video resolution (height between 864 and 1080)
+      if (video.videoHeight < 864 || video.videoHeight > 1080) {
+        setErrorMessage("Video resolution must be between 1920×864 and 1920×1080 in landscape orientation.");
+        return;
+      }
     };
     video.onerror = () => {
       setErrorMessage("Unable to read video. Please try a different file.");
@@ -477,6 +489,7 @@ export default function ApplyPage() {
               <p>• The video must be recent, original and unedited</p>
               <p>• Maximum duration: {maxVideoDuration} seconds ({Math.floor(maxVideoDuration / 60)} minutes)</p>
               <p>• Maximum file size: {maxVideoSize} MB</p>
+              <p>• Resolution must be between 1920×864 and 1920×1080 in landscape orientation</p>
               <p>• Good lighting and clear audio are required</p>
               <p>• Your face and hands must be clearly visible while performing techniques</p>
               <p>• No filters, effects, or post-production editing allowed</p>

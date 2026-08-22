@@ -662,7 +662,7 @@ export default function CheckoutPage() {
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted mt-4">
                       <Lock className="h-3 w-3" />
-                      <span>This is a demo payment. No real charges will be made.</span>
+                      <span>Payments are securely processed by RwandaPay or Pesapal.</span>
                     </div>
                     <div className="flex gap-3">
                       <Button

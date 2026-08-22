@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { MapPin, Star, ExternalLink, Mail } from "lucide-react";
+import { MapPin, Star, ExternalLink, Mail, ChevronDown } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,16 @@ export default function SchoolsPage() {
   const { user } = useAuth();
   const [schools, setSchools] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  function toggleSchool(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   useEffect(() => {
     fetchSchools();
@@ -81,57 +91,86 @@ export default function SchoolsPage() {
           description="Global coffee schools offering certifications and professional programs. Free for all visitors."
         />
 
-        <div className="space-y-8">
-          {schools.map((school, i) => (
-            <motion.div
-              key={school.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-            >
-              <Card>
-                <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <CardTitle>{school.name}</CardTitle>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-yellow text-yellow" />
-                        <span className="text-sm font-medium">{school.rating}</span>
-                        <span className="text-sm text-muted">({school.reviews})</span>
+        <div className="space-y-4">
+          {schools.map((school, i) => {
+            const isExpanded = expanded.has(school.id);
+            return (
+              <motion.div
+                key={school.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <Card>
+                  <button
+                    onClick={() => toggleSchool(school.id)}
+                    className="w-full text-left"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <CardTitle className="shrink-0">{school.name}</CardTitle>
+                        <div className="flex items-center gap-1">
+                          <Star className="h-4 w-4 fill-yellow text-yellow" />
+                          <span className="text-sm font-medium">{school.rating}</span>
+                          <span className="text-sm text-muted">({school.reviews})</span>
+                        </div>
                       </div>
+                      <motion.div
+                        animate={{ rotate: isExpanded ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ChevronDown className="h-5 w-5 text-muted" />
+                      </motion.div>
                     </div>
-                    <p className="flex items-center gap-2 text-muted text-sm mb-4">
-                      <MapPin className="h-4 w-4 text-green" /> {school.location}
-                    </p>
-                    <div className="mb-4">
-                      <p className="text-sm font-medium mb-2">Certifications</p>
-                      <div className="flex flex-wrap gap-2">
-                        {school.certifications && school.certifications.split(',').map((c: string, idx: number) => (
-                          <Badge key={idx} variant="green">{c.trim()}</Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium mb-2">Programs</p>
-                      <div className="flex flex-wrap gap-2">
-                        {school.programs && school.programs.split(',').map((p: string, idx: number) => (
-                          <Badge key={idx} variant="blue">{p.trim()}</Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2 shrink-0">
-                    <Button variant="primary">
-                      <Mail className="h-4 w-4" /> {school.contact}
-                    </Button>
-                    <Button variant="outline">
-                      <ExternalLink className="h-4 w-4" /> {school.website}
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="pt-4 flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+                          <div className="flex-1">
+                            <p className="flex items-center gap-2 text-muted text-sm mb-4">
+                              <MapPin className="h-4 w-4 text-green" /> {school.location}
+                            </p>
+                            <div className="mb-4">
+                              <p className="text-sm font-medium mb-2">Certifications</p>
+                              <div className="flex flex-wrap gap-2">
+                                {school.certifications && school.certifications.split(',').map((c: string, idx: number) => (
+                                  <Badge key={idx} variant="green">{c.trim()}</Badge>
+                                ))}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium mb-2">Programs</p>
+                              <div className="flex flex-wrap gap-2">
+                                {school.programs && school.programs.split(',').map((p: string, idx: number) => (
+                                  <Badge key={idx} variant="blue">{p.trim()}</Badge>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-2 shrink-0">
+                            <Button variant="primary">
+                              <Mail className="h-4 w-4" /> {school.contact}
+                            </Button>
+                            <Button variant="outline">
+                              <ExternalLink className="h-4 w-4" /> {school.website}
+                            </Button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </Card>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </div>

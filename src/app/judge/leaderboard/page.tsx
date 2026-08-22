@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Trophy, TrendingUp, TrendingDown, Minus, Medal, Search } from "lucide-react";
 import { useJudgeAuth } from "@/lib/judge-auth-context";
 import { useLiveScores } from "@/lib/use-live-scores";
+import { LiveScoringLeaderboard } from "@/components/leaderboard/live-scoring-leaderboard";
 
 type EntryStatus = "qualified" | "borderline" | "pending" | "eliminated";
 
@@ -148,6 +149,13 @@ export default function LeaderboardPage() {
           ))}
         </div>
       </div>
+
+      {/* Live Scoring Queue */}
+      {competitionId && (
+        <div className="mb-6">
+          <LiveScoringLeaderboard competitionId={competitionId} title="Live Scoring Queue" />
+        </div>
+      )}
 
       {/* Table */}
       <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>

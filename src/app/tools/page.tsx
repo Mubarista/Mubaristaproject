@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import Image from "next/image";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import Link from "next/link";
 import { Search, Star, ChevronDown } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
@@ -197,7 +197,7 @@ export default function ToolsPage() {
             <Link key={tool.id} href={`/tools/${tool.id}`}>
               <Card className="overflow-hidden p-0 cursor-pointer hover:border-blue/50 transition-colors">
                 <div className="relative h-40">
-                  <Image src={getImageUrl(tool.image)} alt={tool.name} fill sizes="(max-width: 640px) 100vw, 25vw" className="object-cover" />
+                  <ImageWithSkeleton src={getImageUrl(tool.image)} alt={tool.name} fill sizes="(max-width: 640px) 100vw, 25vw" className="object-cover" />
                 </div>
                 <div className="p-5">
                   <Badge variant="blue" className="mb-2">{tool.category}</Badge>

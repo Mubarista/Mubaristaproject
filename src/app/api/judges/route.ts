@@ -6,7 +6,14 @@ export async function GET() {
   try {
     const { data, error } = await supabaseAdmin.from("judge_credentials").select("*").order("created_at", { ascending: false });
     if (error) throw error;
-    return NextResponse.json(mapKeysToCamelCase(data) || []);
+    
+    // Handle backward compatibility - add email field if missing
+    const normalizedData = (mapKeysToCamelCase(data) || []).map((item: any) => ({
+      ...item,
+      email: item.email || "",
+    }));
+    
+    return NextResponse.json(normalizedData);
   } catch (error) {
     console.error("Error fetching judge credentials:", error);
     return NextResponse.json([]);
@@ -16,11 +23,29 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const snakeCaseData = keysToSnakeCase(body);
+    
+    // Remove email if column doesn't exist yet
     const { data, error } = await supabaseAdmin.from("judge_credentials").insert({
-      ...keysToSnakeCase(body),
+      ...snakeCaseData,
+      email: snakeCaseData.email || "",
       created_at: new Date().toISOString(),
     }).select().single();
-    if (error) throw error;
+    
+    if (error) {
+      // If error is about column not existing, try without email
+      if (error.message?.includes('column') && error.message?.includes('email')) {
+        const { email, ...dataWithoutEmail } = snakeCaseData;
+        const { data: retryData, error: retryError } = await supabaseAdmin.from("judge_credentials").insert({
+          ...dataWithoutEmail,
+          created_at: new Date().toISOString(),
+        }).select().single();
+        if (retryError) throw retryError;
+        return NextResponse.json(mapKeysToCamelCase({ ...retryData, email: body.email || "" }));
+      }
+      throw error;
+    }
+    
     return NextResponse.json(mapKeysToCamelCase(data));
   } catch (error) {
     console.error("Error creating judge credential:", error);
@@ -32,16 +57,38 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json();
     const { id, ...updateData } = body;
+    const snakeCaseData = keysToSnakeCase(updateData);
+    
     const { data, error } = await supabaseAdmin
       .from("judge_credentials")
       .update({
-        ...keysToSnakeCase(updateData),
+        ...snakeCaseData,
+        email: snakeCaseData.email || "",
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
       .select()
       .single();
-    if (error) throw error;
+    
+    if (error) {
+      // If error is about column not existing, try without email
+      if (error.message?.includes('column') && error.message?.includes('email')) {
+        const { email, ...dataWithoutEmail } = snakeCaseData;
+        const { data: retryData, error: retryError } = await supabaseAdmin
+          .from("judge_credentials")
+          .update({
+            ...dataWithoutEmail,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", id)
+          .select()
+          .single();
+        if (retryError) throw retryError;
+        return NextResponse.json(mapKeysToCamelCase({ ...retryData, email: body.email || "" }));
+      }
+      throw error;
+    }
+    
     return NextResponse.json(mapKeysToCamelCase(data));
   } catch (error) {
     console.error("Error updating judge credential:", error);

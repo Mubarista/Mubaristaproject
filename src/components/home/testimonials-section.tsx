@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { Star, Quote, Send, Lock } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
 import { useAuth } from "@/lib/auth-context";
@@ -135,7 +135,7 @@ export function TestimonialsSection() {
               <div className="flex items-center gap-3">
                 <div className="relative h-12 w-12 rounded-full overflow-hidden">
                   {t.avatar ? (
-                    <Image src={t.avatar} alt={t.name} fill sizes="48px" className="object-cover" />
+                    <ImageWithSkeleton src={t.avatar} alt={t.name} fill sizes="48px" className="object-cover" />
                   ) : (
                     <div className="w-full h-full bg-muted-bg flex items-center justify-center">
                       <span className="text-muted text-xs">{t.name.charAt(0)}</span>

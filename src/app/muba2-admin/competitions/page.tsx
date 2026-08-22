@@ -24,6 +24,10 @@ const diffColors: Record<string, "green" | "blue" | "yellow" | "red"> = {
   Beginner: "green", Intermediate: "blue", Professional: "yellow", Master: "red",
 };
 
+function formatStatus(status: string) {
+  return status.replace(/_/g, " ").replace("in progress", "Competition Submission");
+}
+
 export default function AdminCompetitionsPage() {
   const { supportedCountries } = useAdminData();
   const [competitions, setCompetitions] = useState<Competition[]>([]);
@@ -239,10 +243,12 @@ export default function AdminCompetitionsPage() {
                     ? "yellow"
                     : c.status === "winner_announcement"
                     ? "yellow"
+                    : c.status === "in_progress"
+                    ? "blue"
                     : "default"
                 }
               >
-                {c.status.replace(/_/g, " ")}
+                {formatStatus(c.status)}
               </Badge>
             ),
           },
@@ -336,7 +342,7 @@ export default function AdminCompetitionsPage() {
                       options={[
                         { value: "upcoming", label: "Upcoming" },
                         { value: "Registration Open", label: "Open for registration" },
-                        { value: "in_progress", label: "In progress" },
+                        { value: "in_progress", label: "Competition Submission" },
                         { value: "voting", label: "Voting" },
                         { value: "judging", label: "Judging" },
                         { value: "winner_announcement", label: "Winner announcement" },

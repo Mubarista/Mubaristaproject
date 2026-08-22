@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { ArrowLeft, Calendar, User } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
 
@@ -78,7 +78,7 @@ export default function ArticleDetailPage() {
 
         {article.coverImage && (
           <div className="relative h-64 md:h-80 w-full rounded-2xl overflow-hidden mb-8">
-            <Image
+            <ImageWithSkeleton
               src={article.coverImage}
               alt={article.title}
               fill

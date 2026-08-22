@@ -47,6 +47,7 @@ export function HeroSection() {
   const [heroBackground, setHeroBackground] = useState<HeroBackground | null>(null);
   const [loading, setLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [bgLoaded, setBgLoaded] = useState(false);
 
   const { user, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
@@ -116,13 +117,17 @@ export function HeroSection() {
           playsInline
         />
       ) : heroBackground?.imageUrl && !imageError ? (
-        <img
-          src={heroBackground.imageUrl}
-          alt=""
-          loading="eager"
-          className="absolute inset-0 w-full h-full object-cover"
-          onError={() => setImageError(true)}
-        />
+        <>
+          <img
+            src={heroBackground.imageUrl}
+            alt=""
+            loading="eager"
+            className="absolute inset-0 w-full h-full object-cover"
+            onError={() => setImageError(true)}
+            onLoad={() => setBgLoaded(true)}
+          />
+          {!bgLoaded && <div aria-hidden className="absolute inset-0 skeleton-shimmer" />}
+        </>
       ) : (
         <div className="absolute inset-0 bg-gradient-to-br from-black via-black/90 to-black/80" />
       )}

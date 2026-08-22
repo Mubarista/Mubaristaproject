@@ -28,20 +28,6 @@ export interface PesapalInitiateInput {
   meta: Record<string, any>;
 }
 
-export interface DemoInitiateInput {
-  amount: number;
-  reference: string;
-  customer: {
-    name: string;
-    email: string;
-    phone?: string;
-    country?: string;
-  };
-  currency: string;
-  description: string;
-  meta: Record<string, any>;
-}
-
 export interface CreatePaymentInput {
   userId?: string;
   userName: string;
@@ -145,31 +131,4 @@ export async function initiatePesapal(input: PesapalInitiateInput): Promise<{
   }
 
   return data as { payment_url: string; reference: string; order_tracking_id: string; currency: string };
-}
-
-export async function initiateDemoPayment(input: DemoInitiateInput): Promise<{
-  payment_url: string;
-  reference: string;
-}> {
-  const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token;
-  if (!token) {
-    throw new Error("Please log in to make a payment.");
-  }
-
-  const response = await fetch("/api/payments/demo/initiate", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(input),
-  });
-
-  const data = await response.json().catch(() => ({ error: "Invalid response" }));
-  if (!response.ok) {
-    throw new Error(data.error || "Failed to start demo payment");
-  }
-
-  return data as { payment_url: string; reference: string };
 }

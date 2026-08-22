@@ -12,6 +12,10 @@ import { Badge } from "@/components/ui/badge";
 import { LoadingDots } from "@/components/ui/loading-dots";
 import { Upload, ArrowRight, Play } from "lucide-react";
 
+function formatStatus(status: string) {
+  return status.replace(/_/g, " ").replace("in progress", "Competition Submission");
+}
+
 export default function UploadVideoPage() {
   const { slug } = useParams<{ slug: string }>();
   const { user } = useAuth();
@@ -153,7 +157,7 @@ export default function UploadVideoPage() {
       <div className="pt-24 pb-16">
         <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-2xl font-bold mb-4">{competition.title}</h1>
-          <Badge>{competition.status.replace(/_/g, " ")}</Badge>
+          <Badge>{formatStatus(competition.status)}</Badge>
           <p className="text-muted mt-4">Video upload is not open at the moment.</p>
         </div>
       </div>

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase } from "@/lib/supabase-utils";
 
-const PUBLIC_FIELDS = "id, name, username, assigned_competition, active, expires_at, access_token, access_link_expires_at, created_at, updated_at";
+const PUBLIC_FIELDS = "id, name, username, assigned_competition, active, expires_at, access_token, access_link_expires_at, terms_accepted_at, created_at, updated_at";
 
 async function getCredentialByToken(token: string) {
   const { data, error } = await supabaseAdmin

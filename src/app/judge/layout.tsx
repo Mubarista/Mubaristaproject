@@ -11,6 +11,7 @@ import { LoadingDots } from "@/components/ui/loading-dots";
 import { useJudgeAuth, type LoginError } from "@/lib/judge-auth-context";
 import { safeSessionStorage } from "@/lib/safe-storage";
 import { JudgeLogo } from "@/components/judge/judge-logo";
+import { JudgeTermsDialog } from "@/components/judge/judge-terms-dialog";
 
 const TOKEN_KEY = "judge_access_token";
 
@@ -45,7 +46,7 @@ function AccessDeniedScreen() {
       <div className="relative z-10 w-full px-6 py-4">
         <Link href="/judge" className="flex items-center gap-2.5">
           <JudgeLogo className="h-7 w-7" iconClassName="h-4 w-4" />
-          <span className="text-base font-bold text-white tracking-tight">MUBARISTA</span>
+          <span className="text-base font-bold text-white tracking-tight">MUBARISTA HUB JUDGEMENT</span>
         </Link>
       </div>
       <div className="relative z-10 flex-1 flex items-center justify-center px-4">
@@ -83,7 +84,7 @@ function TokenErrorScreen({ error }: { error: LoginError }) {
       <div className="relative z-10 w-full px-6 py-4">
         <Link href="/judge" className="flex items-center gap-2.5">
           <JudgeLogo className="h-7 w-7" iconClassName="h-4 w-4" />
-          <span className="text-base font-bold text-white tracking-tight">MUBARISTA</span>
+          <span className="text-base font-bold text-white tracking-tight">MUBARISTA HUB JUDGEMENT</span>
         </Link>
       </div>
       <div className="relative z-10 flex-1 flex items-center justify-center px-4">
@@ -115,7 +116,7 @@ function TokenLoadingScreen() {
       <div className="relative z-10 w-full px-6 py-4">
         <Link href="/judge" className="flex items-center gap-2.5">
           <JudgeLogo className="h-7 w-7" iconClassName="h-4 w-4" />
-          <span className="text-base font-bold text-white tracking-tight">MUBARISTA</span>
+          <span className="text-base font-bold text-white tracking-tight">MUBARISTA HUB JUDGEMENT</span>
         </Link>
       </div>
       <div className="relative z-10 flex-1 flex items-center justify-center px-4">
@@ -154,7 +155,7 @@ function TokenPasswordScreen({
       <div className="relative z-10 w-full px-6 py-4">
         <Link href="/judge" className="flex items-center gap-2.5">
           <JudgeLogo className="h-7 w-7" iconClassName="h-4 w-4" />
-          <span className="text-base font-bold text-white tracking-tight">MUBARISTA</span>
+          <span className="text-base font-bold text-white tracking-tight">MUBARISTA HUB JUDGEMENT</span>
         </Link>
       </div>
       <div className="relative z-10 flex-1 flex items-center justify-center px-4">
@@ -204,9 +205,9 @@ function TokenPasswordScreen({
 }
 
 function TokenGateContent({ children }: { children: React.ReactNode }) {
-  const { isJudgeAuthed, validateToken, authenticateWithToken } = useJudgeAuth();
+  const { isJudgeAuthed, termsAccepted, acceptTerms, validateToken, authenticateWithToken, judgeLogout } = useJudgeAuth();
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState<"loading" | "denied" | "error" | "password" | "ready">("loading");
+  const [status, setStatus] = useState<"loading" | "denied" | "error" | "password" | "terms" | "ready">("loading");
   const [error, setError] = useState<LoginError>(null);
   const [pendingToken, setPendingToken] = useState<string | null>(null);
   const [pendingName, setPendingName] = useState("");
@@ -215,7 +216,11 @@ function TokenGateContent({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Already logged in from a previous token in this session
     if (isJudgeAuthed) {
-      setStatus("ready");
+      if (termsAccepted) {
+        setStatus("ready");
+      } else {
+        setStatus("terms");
+      }
       return;
     }
 
@@ -247,7 +252,7 @@ function TokenGateContent({ children }: { children: React.ReactNode }) {
     }
 
     checkToken();
-  }, [isJudgeAuthed, validateToken, searchParams]);
+  }, [isJudgeAuthed, termsAccepted, validateToken, searchParams]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   async function handlePassword(password: string) {
@@ -255,13 +260,29 @@ function TokenGateContent({ children }: { children: React.ReactNode }) {
     const err = await authenticateWithToken(pendingToken, password);
     if (err) {
       setError(err);
+    } else {
+      setStatus("terms");
     }
+  }
+
+  async function handleAcceptTerms() {
+    const success = await acceptTerms();
+    if (success) {
+      setStatus("ready");
+    }
+  }
+
+  function handleDeclineTerms() {
+    judgeLogout();
+    safeSessionStorage.removeItem(TOKEN_KEY);
+    setStatus("denied");
   }
 
   if (status === "loading") return <TokenLoadingScreen />;
   if (status === "denied") return <AccessDeniedScreen />;
   if (status === "error") return <TokenErrorScreen error={error} />;
   if (status === "password") return <TokenPasswordScreen judgeName={pendingName} onSubmit={handlePassword} error={error} />;
+  if (status === "terms") return <JudgeTermsDialog open judgeName={pendingName} onAccept={handleAcceptTerms} onDecline={handleDeclineTerms} />;
   return <>{children}</>;
 }
 
@@ -290,7 +311,7 @@ export default function JudgeLayout({ children }: { children: React.ReactNode })
           <div className="flex items-center justify-between h-14 px-4 sm:px-6">
             <Link href="/judge" className="flex items-center gap-2.5">
               <JudgeLogo className="h-7 w-7" iconClassName="h-4 w-4" />
-              <span className="text-base font-bold text-white tracking-tight">MUBARISTA</span>
+              <span className="text-base font-bold text-white tracking-tight">MUBARISTA HUB JUDGEMENT</span>
             </Link>
 
             <div className="flex items-center gap-3">

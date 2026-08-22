@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { LiveChatContent } from "./live-chat-content";
@@ -19,6 +19,9 @@ import {
   X,
   CheckCircle,
   ExternalLink,
+  Volume2,
+  VolumeX,
+  Maximize,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
@@ -27,6 +30,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Countdown } from "@/components/shared/countdown";
 import { useLiveScores } from "@/lib/use-live-scores";
+import { LiveScoringLeaderboard } from "@/components/leaderboard/live-scoring-leaderboard";
+import { ErrorPopup } from "@/components/ui/error-popup";
+import { SuccessPopup } from "@/components/ui/success-popup";
+import { uploadWithRetry } from "@/lib/resumable-upload";
 import type { CompetitionApplication, CompetitionResult } from "@/types";
 
 interface NotificationItem {
@@ -74,7 +81,22 @@ export default function ParticipantDashboardContent() {
   const [uploadUrl, setUploadUrl] = useState<string | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [competitionId, setCompetitionId] = useState<string | null>(null);
+  const [currentVideo, setCurrentVideo] = useState<{ participantName: string; videoUrl: string; completed: boolean; currentJudge?: { id: string; name: string } | null; judgesDone?: number; totalJudges?: number } | null>(null);
   const [videoSubmissionOpen, setVideoSubmissionOpen] = useState<string | null>(null);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const [errorPopup, setErrorPopup] = useState<{ open: boolean; title: string; message: string }>({
+    open: false,
+    title: "",
+    message: "",
+  });
+  const [successPopup, setSuccessPopup] = useState<{ open: boolean; title: string; message: string }>({
+    open: false,
+    title: "",
+    message: "",
+  });
 
   const isSubmissionOpen = useMemo(
     () => application?.competition?.status === "in_progress",
@@ -95,6 +117,15 @@ export default function ParticipantDashboardContent() {
     try {
       const compId = app?.competitionId || app?.competition?.id;
       if (compId) setCompetitionId(compId);
+
+      // Fetch current video judges are scoring
+      if (compId) {
+        const videoRes = await fetch(`/api/competitions/current-scoring-video?competitionId=${compId}`);
+        if (videoRes.ok) {
+          const videoData = await videoRes.json();
+          setCurrentVideo(videoData.current || null);
+        }
+      }
 
       let resultData: CompetitionResult[] = [];
 
@@ -130,6 +161,56 @@ export default function ParticipantDashboardContent() {
       fetchNotifications(application);
     }
   });
+
+  // Listen for judge video playback state
+  useEffect(() => {
+    if (!competitionId) return;
+
+    const channel = supabase
+      .channel(`competition-video-${competitionId}`, {
+        config: { broadcast: { self: false } },
+      })
+      .on("broadcast", { event: "video-state" }, (payload) => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        const { type, currentTime, applicationId } = payload.payload as { type: string; currentTime?: number; applicationId?: string };
+
+        // Ignore state from other applications
+        if (applicationId && currentVideo?.videoUrl && !currentVideo.videoUrl.includes(applicationId)) {
+          // still allow because currentVideo is tied to the active application
+        }
+
+        if (typeof currentTime === "number" && Math.abs(video.currentTime - currentTime) > 1) {
+          video.currentTime = currentTime;
+        }
+
+        if (type === "play") {
+          video.play().catch(() => {});
+        } else if (type === "pause") {
+          video.pause();
+        } else if (type === "seek" || type === "time") {
+          if (typeof currentTime === "number") {
+            video.currentTime = currentTime;
+          }
+        }
+      })
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+      supabase.removeChannel(channel);
+    };
+  }, [competitionId, currentVideo?.videoUrl]);
+
+  // Track fullscreen state
+  useEffect(() => {
+    const handleChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener("fullscreenchange", handleChange);
+    return () => document.removeEventListener("fullscreenchange", handleChange);
+  }, []);
 
   useEffect(() => {
     if (!competitionId) return;
@@ -208,6 +289,22 @@ export default function ParticipantDashboardContent() {
       }
     } catch (error) {
       console.error("Error fetching wallet:", error);
+    }
+  }
+
+  async function refreshApplicationData() {
+    if (!user) return;
+    try {
+      const res = await fetch(`/api/competitions/applications?userId=${user.id}`);
+      if (res.ok) {
+        const apps = await res.json();
+        const currentApp = apps.find((a: CompetitionApplication) => a.id === application?.id);
+        if (currentApp) {
+          setApplication(currentApp);
+        }
+      }
+    } catch (error) {
+      console.error("Error refreshing application data:", error);
     }
   }
 
@@ -316,12 +413,20 @@ export default function ParticipantDashboardContent() {
     const maxSize = application?.competition?.maxVideoSize;
 
     if (!file.type.startsWith("video/")) {
-      alert("Only video files are accepted for competition submissions.");
+      setErrorPopup({
+        open: true,
+        title: "Invalid File Type",
+        message: "Only video files are accepted for competition submissions.",
+      });
       return;
     }
 
     if (maxSize && file.size > maxSize * 1024 * 1024) {
-      alert(`Video file size must not exceed ${maxSize} MB.`);
+      setErrorPopup({
+        open: true,
+        title: "File Size Exceeded",
+        message: `Video file size must not exceed ${maxSize} MB.`,
+      });
       return;
     }
 
@@ -339,19 +444,31 @@ export default function ParticipantDashboardContent() {
 
       if (maxDuration && video.duration > maxDuration) {
         URL.revokeObjectURL(objectUrl);
-        alert(`Video duration must not exceed ${maxDuration} seconds.`);
+        setErrorPopup({
+          open: true,
+          title: "Duration Exceeded",
+          message: `Video duration must not exceed ${maxDuration} seconds.`,
+        });
         return;
       }
 
       if (video.videoWidth <= video.videoHeight) {
         URL.revokeObjectURL(objectUrl);
-        alert("Video must be in landscape (horizontal) orientation.");
+        setErrorPopup({
+          open: true,
+          title: "Orientation Required",
+          message: "Video must be in landscape (horizontal) orientation.",
+        });
         return;
       }
 
-      if (video.videoHeight < 1080) {
+      if (video.videoHeight < 864 || video.videoHeight > 1080) {
         URL.revokeObjectURL(objectUrl);
-        alert("Video resolution must be at least 1080p in landscape orientation (height >= 1080).");
+        setErrorPopup({
+          open: true,
+          title: "Resolution Required",
+          message: "Video resolution must be between 1920×864 and 1920×1080 in landscape orientation.",
+        });
         return;
       }
 
@@ -359,7 +476,11 @@ export default function ParticipantDashboardContent() {
     } catch (error) {
       URL.revokeObjectURL(objectUrl);
       console.error("Video validation error:", error);
-      alert("Could not validate the video. Please try a different file.");
+      setErrorPopup({
+        open: true,
+        title: "Validation Error",
+        message: "Could not validate the video. Please try a different file.",
+      });
       return;
     }
 
@@ -367,33 +488,28 @@ export default function ParticipantDashboardContent() {
     setUploadProgress(0);
     setUploadUrl(null);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("type", "video");
-
-      const data = await new Promise<{ url: string }>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            setUploadProgress(Math.round((e.loaded / e.total) * 100));
-          }
-        };
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve(JSON.parse(xhr.responseText));
-          } else {
-            reject(new Error(`Upload failed with status ${xhr.status}`));
-          }
-        };
-        xhr.onerror = () => reject(new Error("Upload failed"));
-        xhr.open("POST", "/api/upload");
-        xhr.send(formData);
-      });
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${file.name.split('.').pop()}`;
+      
+      const data = await uploadWithRetry(
+        file,
+        "Videos",
+        fileName,
+        file.type,
+        (progress) => {
+          setUploadProgress(progress.percentage);
+        },
+        3 // max retries
+      );
 
       setUploadUrl(data.url);
+      console.log("Upload successful:", data.url);
     } catch (error) {
       console.error("Upload error:", error);
-      alert("Failed to upload file.");
+      setErrorPopup({
+        open: true,
+        title: "Upload Failed",
+        message: error instanceof Error ? error.message : "Failed to upload file. Please try again.",
+      });
     } finally {
       setUploading(false);
     }
@@ -402,7 +518,11 @@ export default function ParticipantDashboardContent() {
   async function saveSubmissionUrl() {
     if (!uploadUrl || !application?.id) return;
     if (!termsAccepted) {
-      alert("You must read and accept the terms and conditions before submitting.");
+      setErrorPopup({
+        open: true,
+        title: "Terms Required",
+        message: "You must read and accept the terms and conditions before submitting.",
+      });
       return;
     }
     try {
@@ -412,14 +532,28 @@ export default function ParticipantDashboardContent() {
         body: JSON.stringify({ videoUrl: uploadUrl }),
       });
       if (response.ok) {
-        alert("Submission saved successfully!");
+        setSuccessPopup({
+          open: true,
+          title: "Submission Saved",
+          message: "Your competition video has been successfully submitted.",
+        });
         setActiveModal(null);
+        // Refresh application data to update UI
+        await refreshApplicationData();
       } else {
-        alert("Failed to save submission.");
+        setErrorPopup({
+          open: true,
+          title: "Save Failed",
+          message: "Failed to save submission. Please try again.",
+        });
       }
     } catch (error) {
       console.error("Save submission error:", error);
-      alert("Failed to save submission.");
+      setErrorPopup({
+        open: true,
+        title: "Save Failed",
+        message: "Failed to save submission. Please try again.",
+      });
     }
   }
 
@@ -476,29 +610,8 @@ export default function ParticipantDashboardContent() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                {results.length > 0 ? (
-                  <div className="space-y-2">
-                    {results.slice(0, 10).map((result, index) => {
-                      const isCurrent = displayName && result.participantName?.toLowerCase() === displayName.toLowerCase();
-                      return (
-                        <div
-                          key={result.id}
-                          className={`flex items-center justify-between p-3 rounded-xl ${
-                            isCurrent ? "bg-blue/10 border border-blue/30" : "bg-muted-bg"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className={`font-bold ${index < 3 ? "text-yellow" : "text-muted"}`}>
-                              #{result.rank}
-                            </span>
-                            <span className="text-sm">{result.participantName}</span>
-                            {result.isWinner && <Badge variant="premium">Winner</Badge>}
-                          </div>
-                          <span className="font-mono text-sm">{result.score}/10</span>
-                        </div>
-                      );
-                    })}
-                  </div>
+                {competitionId ? (
+                  <LiveScoringLeaderboard competitionId={competitionId} title="Live Competition Results" />
                 ) : (
                   <p className="text-muted text-sm">No results available yet</p>
                 )}
@@ -507,13 +620,84 @@ export default function ParticipantDashboardContent() {
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted">Video judges are scoring</p>
                 {(() => {
-                  const current = results.find((r) => r.rank === 1) || results[0];
-                  return current?.videoUrl ? (
-                    <video
-                      src={current.videoUrl}
-                      controls
-                      className="w-full h-40 rounded-xl bg-black object-contain"
-                    />
+                  return currentVideo?.videoUrl ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-white font-medium truncate">{currentVideo.participantName}</p>
+                        {currentVideo.currentJudge && (
+                          <span className="text-xs" style={{ color: "#c9a227" }}>
+                            Turn: {currentVideo.currentJudge.name}
+                          </span>
+                        )}
+                      </div>
+                      <div ref={wrapperRef} className="relative w-full h-40 rounded-xl bg-black overflow-hidden group">
+                        <video
+                          ref={videoRef}
+                          src={currentVideo.videoUrl}
+                          autoPlay
+                          muted={isMuted}
+                          loop
+                          preload="metadata"
+                          playsInline
+                          controls={false}
+                          disablePictureInPicture
+                          controlsList="nodownload noremoteplayback"
+                          onContextMenu={e => e.preventDefault()}
+                          onClick={e => e.preventDefault()}
+                          onDoubleClick={e => e.preventDefault()}
+                          tabIndex={-1}
+                          className="w-full h-full object-contain bg-black"
+                        />
+                        <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide text-white"
+                          style={{ background: "rgba(220,38,38,0.9)", boxShadow: "0 0 0 2px rgba(220,38,38,0.4)" }}>
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                          </span>
+                          LIVE
+                        </div>
+                        <div className={"absolute bottom-0 inset-x-0 p-2 flex items-center justify-between transition-opacity " + (isFullscreen ? "opacity-100" : "opacity-0 group-hover:opacity-100")}
+                          style={{ background: "linear-gradient(transparent, rgba(0,0,0,0.7))" }}>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                setIsMuted(v => {
+                                  const next = !v;
+                                  if (videoRef.current) videoRef.current.muted = next;
+                                  return next;
+                                });
+                              }}
+                              className="p-1.5 rounded-lg text-white hover:bg-white/20 transition-colors"
+                              aria-label="Toggle volume"
+                            >
+                              {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                            </button>
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (!document.fullscreenElement && wrapperRef.current?.requestFullscreen) {
+                                wrapperRef.current.requestFullscreen();
+                              } else if (document.exitFullscreen) {
+                                document.exitFullscreen();
+                              }
+                            }}
+                            className="p-1.5 rounded-lg text-white hover:bg-white/20 transition-colors"
+                            aria-label="Full screen"
+                          >
+                            {isFullscreen ? <X className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </div>
+                      {currentVideo.totalJudges && currentVideo.totalJudges > 1 && (
+                        <p className="text-xs" style={{ color: "#6b7280" }}>
+                          {currentVideo.judgesDone || 0} of {currentVideo.totalJudges} judges have scored this participant
+                        </p>
+                      )}
+                    </div>
+                  ) : currentVideo?.completed ? (
+                    <div className="w-full h-40 rounded-xl bg-black flex items-center justify-center">
+                      <span className="text-xs text-muted text-center px-2">Judging has been completed</span>
+                    </div>
                   ) : (
                     <div className="w-full h-40 rounded-xl bg-black flex items-center justify-center">
                       <span className="text-xs text-muted text-center px-2">No current video to display</span>
@@ -558,20 +742,28 @@ export default function ParticipantDashboardContent() {
                   <FileText className="h-4 w-4" /> View Certificates
                 </Button>
                 <Button
-                  variant={application?.videoUrl ? "ghost" : "premium"}
+                  variant={application?.videoUrl ? "secondary" : "premium"}
                   className="w-full"
                   size={application?.videoUrl ? "sm" : "lg"}
-                  disabled={!application?.videoUrl && !isSubmissionOpen}
+                  disabled={!!application?.videoUrl || (!isSubmissionOpen)}
                   title={
                     application?.videoUrl
-                      ? "View your submitted video"
+                      ? "Video already submitted"
                       : isSubmissionOpen
                       ? "Submit your competition video"
                       : "Video submissions are not open right now"
                   }
-                  onClick={() => setActiveModal("upload")}
+                  onClick={() => !application?.videoUrl && setActiveModal("upload")}
                 >
-                  <Upload className="h-4 w-4" /> {application?.videoUrl ? "View Submitted Video" : "Submit Competition Video"}
+                  {application?.videoUrl ? (
+                    <>
+                      <CheckCircle className="h-4 w-4" /> Submitted
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4" /> Submit Competition Video
+                    </>
+                  )}
                 </Button>
 
                 {!application?.videoUrl && !isSubmissionOpen && videoSubmissionOpen && (
@@ -675,7 +867,7 @@ export default function ParticipantDashboardContent() {
                           <li>Once submitted, the video cannot be re-uploaded or modified.</li>
                           <li>You have reviewed the video carefully before submitting.</li>
                           <li>The video has good lighting and clear audio/visual quality.</li>
-                          <li>The video is in landscape (horizontal) orientation with a minimum 1080p resolution.</li>
+                          <li>The video is in landscape (horizontal) orientation with resolution between 1920×864 and 1920×1080.</li>
                           <li>The video length does not exceed {durationText}.</li>
                           <li>The video file size does not exceed {sizeText}.</li>
                         </ul>
@@ -849,17 +1041,6 @@ export default function ParticipantDashboardContent() {
                     <BarChart3 className="h-5 w-5" /> Results
                   </CardTitle>
 
-                  {application?.videoUrl && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted">Your submitted video</p>
-                      <video
-                        src={application.videoUrl}
-                        controls
-                        className="w-full max-h-48 rounded-xl bg-black"
-                      />
-                    </div>
-                  )}
-
                   {userResult ? (
                     <div className="space-y-4">
                       <div className="p-4 rounded-lg bg-muted-bg">
@@ -894,6 +1075,20 @@ export default function ParticipantDashboardContent() {
           </div>
         )}
       </div>
+
+      <ErrorPopup
+        open={errorPopup.open}
+        onClose={() => setErrorPopup({ open: false, title: "", message: "" })}
+        title={errorPopup.title}
+        message={errorPopup.message}
+      />
+      <SuccessPopup
+        open={successPopup.open}
+        onClose={() => setSuccessPopup({ open: false, title: "", message: "" })}
+        title={successPopup.title}
+        message={successPopup.message}
+        icon="check"
+      />
     </div>
   );
 }

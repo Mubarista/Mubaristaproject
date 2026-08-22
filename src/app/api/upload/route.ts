@@ -4,12 +4,15 @@ import sharp from 'sharp';
 
 export async function POST(request: Request) {
   try {
+    console.log("Upload request received");
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const type = formData.get("type") as string || "photo";
     const maxWidth = parseInt((formData.get("maxWidth") as string) || "1920");
     const maxHeight = parseInt((formData.get("maxHeight") as string) || "1080");
     const quality = parseInt((formData.get("quality") as string) || "85");
+    
+    console.log("FormData parsed:", { type, fileName: file?.name, fileSize: file?.size });
     
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -51,9 +54,11 @@ export async function POST(request: Request) {
       if (file.size > 200 * 1024 * 1024) {
         return NextResponse.json({ error: "Video must be less than 200MB" }, { status: 400 });
       }
+      console.log(`Video upload validation passed: ${file.name}, size: ${(file.size / 1024 / 1024).toFixed(2)}MB, type: ${file.type}`);
     }
 
     console.log("Upload request:", { type, fileName: file.name, fileType: file.type, fileSize: file.size, maxWidth, maxHeight, quality });
+    console.log("Buffer size:", buffer.length, "bytes");
 
     // Process image if it's an image type
     if (type === "photo" && file.type.startsWith("image/")) {
@@ -93,10 +98,15 @@ export async function POST(request: Request) {
     // body correctly instead of coercing it to a UTF-8 string.
     const bucketName = type === "pdf" ? "Documents" : type === "video" ? "Videos" : "Images";
 
+    console.log("Uploading to bucket:", bucketName, "file:", fileName, "contentType:", contentType);
+
     // Ensure the target storage bucket exists
     const { data: buckets } = await supabaseAdmin.storage.listBuckets();
     const bucketExists = buckets?.some((b) => b.name === bucketName);
+    console.log("Buckets:", buckets?.map(b => b.name), "Target bucket exists:", bucketExists);
+    
     if (!bucketExists) {
+      console.log("Creating bucket:", bucketName);
       const { error: createError } = await supabaseAdmin.storage.createBucket(bucketName, { public: true });
       if (createError) {
         console.error("Failed to create storage bucket:", createError);
@@ -105,6 +115,9 @@ export async function POST(request: Request) {
     }
 
     const uploadBody = new Blob([buffer], { type: contentType });
+    console.log("Upload body size:", uploadBody.size, "bytes");
+    
+    console.log("Starting upload to Supabase...");
     const { error } = await supabaseAdmin
       .storage
       .from(bucketName)
@@ -117,6 +130,8 @@ export async function POST(request: Request) {
       console.error("Upload error:", error);
       return NextResponse.json({ error: "Failed to upload image to storage", details: error.message }, { status: 500 });
     }
+    
+    console.log("Upload to Supabase successful");
 
     // Get public URL
     const { data: { publicUrl } } = supabaseAdmin

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { VisaIcon } from "@/components/icons/visa";
 import { MastercardIcon } from "@/components/icons/mastercard";
 import { formatCurrency } from "@/lib/utils";
-import { initiateDemoPayment, initiatePesapal, generateReference } from "@/lib/payment";
+import { initiateRwandaPay, initiatePesapal, generateReference } from "@/lib/payment";
 import type { CompetitionApplication } from "@/types";
 
 export default function PaymentPage() {
@@ -63,15 +63,14 @@ export default function PaymentPage() {
       const customerEmail = application.email || application.userEmail || "";
       const customerPhone = application.mobileNumber || "";
 
-      if (selectedMethod === "Demo Pay") {
-        const { payment_url } = await initiateDemoPayment({
+      if (selectedMethod === "RwandaPay") {
+        const { payment_url } = await initiateRwandaPay({
           amount,
-          reference,
+          tx_ref: reference,
           customer: {
             name: customerName,
             email: customerEmail,
             phone: customerPhone,
-            country: application.country || "RW",
           },
           currency: "RWF",
           description: `Entry fee for ${application.competition?.title || "competition"}`,
@@ -213,7 +212,7 @@ export default function PaymentPage() {
             <h3 className="text-sm font-medium mb-3">Select Payment Method</h3>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { name: "Demo Pay", icon: <CreditCard className="h-8 w-8 mx-auto" /> },
+                { name: "RwandaPay", icon: <CreditCard className="h-8 w-8 mx-auto" /> },
                 { name: "Visa", icon: <VisaIcon className="h-8 w-12 mx-auto" /> },
                 { name: "Mastercard", icon: <MastercardIcon className="h-8 w-12 mx-auto" /> },
               ].map((method) => (

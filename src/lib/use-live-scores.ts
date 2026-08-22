@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "./supabase";
 
 export type ScoreChange = {
@@ -19,54 +19,88 @@ export function useLiveScores(
   onChangeRef.current = onChange;
 
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (!competitionId) return;
+    if (!competitionId) {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+      return;
+    }
 
-    const channelName = `live-scores-${competitionId}`;
-    const channel = supabase.channel(channelName, {
-      config: {
-        broadcast: { self: false },
-      },
-    });
+    let isActive = true;
+    const maxRetries = 3;
+    let retryCount = 0;
 
-    channel
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "judge_scores",
-          filter: `competition_id=eq.${competitionId}`,
+    function setupChannel() {
+      if (!isActive) return;
+
+      const channelName = `live-scores-${competitionId}-${Date.now()}`;
+      const channel = supabase.channel(channelName, {
+        config: {
+          broadcast: { self: false },
         },
-        (payload) => {
-          const eventType = payload.eventType as "INSERT" | "UPDATE" | "DELETE";
-          const newRecord = payload.new as Record<string, unknown> | undefined;
-          const oldRecord = payload.old as Record<string, unknown> | undefined;
-
-          const record = newRecord || oldRecord || {};
-
-          onChangeRef.current({
-            eventType,
-            judgeId: record.judge_id ? String(record.judge_id) : null,
-            applicationId: record.application_id ? String(record.application_id) : null,
-            competitionId: record.competition_id ? String(record.competition_id) : null,
-            score: typeof record.score === "number" ? record.score : null,
-          });
-        }
-      )
-      .subscribe((status) => {
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-          console.error("Live scores channel error:", status);
-        }
       });
 
-    channelRef.current = channel;
+      channel
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "judge_scores",
+            filter: `competition_id=eq.${competitionId}`,
+          },
+          (payload) => {
+            const eventType = payload.eventType as "INSERT" | "UPDATE" | "DELETE";
+            const newRecord = payload.new as Record<string, unknown> | undefined;
+            const oldRecord = payload.old as Record<string, unknown> | undefined;
+
+            const record = newRecord || oldRecord || {};
+
+            onChangeRef.current({
+              eventType,
+              judgeId: record.judge_id ? String(record.judge_id) : null,
+              applicationId: record.application_id ? String(record.application_id) : null,
+              competitionId: record.competition_id ? String(record.competition_id) : null,
+              score: typeof record.score === "number" ? record.score : null,
+            });
+          }
+        )
+        .subscribe((status, err) => {
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            if (retryCount < maxRetries) {
+              retryCount++;
+              console.warn(`Live scores channel ${status} (retry ${retryCount}/${maxRetries})`);
+              retryTimeoutRef.current = setTimeout(() => {
+                channel.unsubscribe();
+                supabase.removeChannel(channel);
+                setupChannel();
+              }, 2000 * retryCount);
+            } else {
+              console.warn("Live scores channel failed after maximum retries. Falling back to manual refresh.");
+            }
+          }
+        });
+
+      channelRef.current = channel;
+    }
+
+    setupChannel();
 
     return () => {
-      channel.unsubscribe();
-      supabase.removeChannel(channel);
-      channelRef.current = null;
+      isActive = false;
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+      if (channelRef.current) {
+        channelRef.current.unsubscribe();
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
   }, [competitionId]);
 }

@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
+import { Skeleton, SkeletonText } from "@/components/ui/skeleton";
 import { Trophy } from "lucide-react";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { Badge } from "@/components/ui/badge";
-import { LoadingDots } from "@/components/ui/loading-dots";
 
 interface Winner {
   id: string;
@@ -19,6 +19,25 @@ interface Winner {
   winType: string;
   prize: string;
   currency: string;
+}
+
+function WinnerCardSkeleton() {
+  return (
+    <div className="rounded-2xl overflow-hidden glass-card">
+      <Skeleton className="h-48 w-full rounded-none" />
+      <div className="p-6 space-y-3">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-12 w-12 rounded-full shrink-0" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-3 w-1/3" />
+          </div>
+        </div>
+        <SkeletonText lines={2} />
+        <Skeleton className="h-5 w-24" />
+      </div>
+    </div>
+  );
 }
 
 function winLabel(type: string) {
@@ -61,8 +80,10 @@ export default function WinnersPage() {
             title="Past Winners"
             description="Celebrating the baristas who pushed the boundaries of latte art excellence."
           />
-          <div className="flex items-center justify-center py-12">
-            <LoadingDots />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <WinnerCardSkeleton key={i} />
+            ))}
           </div>
         </div>
       </div>
@@ -93,7 +114,7 @@ export default function WinnersPage() {
               >
                 <div className="relative h-48 overflow-hidden">
                   {winner.artImage ? (
-                    <Image
+                    <ImageWithSkeleton
                       src={winner.artImage}
                       alt={winner.name}
                       fill
@@ -115,7 +136,7 @@ export default function WinnersPage() {
                   <div className="flex items-center gap-3 mb-3">
                     <div className="relative h-12 w-12 rounded-full overflow-hidden ring-2 ring-yellow">
                       {winner.image ? (
-                        <Image src={winner.image} alt={winner.name} fill sizes="48px" className="object-cover" />
+                        <ImageWithSkeleton src={winner.image} alt={winner.name} fill sizes="48px" className="object-cover" />
                       ) : (
                         <div className="w-full h-full bg-muted-bg flex items-center justify-center">
                           <span className="text-muted text-xs">{winner.name?.charAt(0)}</span>

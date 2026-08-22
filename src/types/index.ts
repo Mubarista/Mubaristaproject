@@ -28,6 +28,7 @@ export interface JudgeCredential {
   name: string;
   username: string;
   password: string;
+  email?: string;
   /** ISO date string e.g. "2026-12-31" — null means no expiry */
   expiresAt: string | null;
   /** Which competition(s) this judge is assigned to */
@@ -39,6 +40,8 @@ export interface JudgeCredential {
   accessToken: string | null;
   /** ISO date string when the access link expires. null = link never expires. */
   accessLinkExpiresAt: string | null;
+  /** ISO date string when the judge accepted the terms. null = not accepted yet. */
+  termsAcceptedAt?: string | null;
 }
 
 export interface JudgeReport {

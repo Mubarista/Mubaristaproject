@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, ChevronLeft, ChevronRight, Star, Heart, ShoppingBag, Check, Truck, Shield, RotateCcw, Send } from "lucide-react";
@@ -265,7 +265,7 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
               role="button"
               aria-label="Pause slideshow"
             >
-              <Image src={getImageUrl(mainImage)} alt={tool.name} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
+              <ImageWithSkeleton src={getImageUrl(mainImage)} alt={tool.name} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
               {allImages.length > 1 && (
                 <>
                   <button
@@ -307,7 +307,7 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
                     onClick={() => { setSelectedIndex(thumbIndex); pauseAutoSlide(); }}
                     className={`relative h-24 bg-muted-bg rounded-xl overflow-hidden cursor-pointer transition-colors border-2 ${isActive ? "border-blue" : "border-transparent hover:border-blue/50"}`}
                   >
-                    <Image src={getImageUrl(img)} alt={`${tool.name} view ${i + 1}`} fill sizes="100px" className="object-cover" />
+                    <ImageWithSkeleton src={getImageUrl(img)} alt={`${tool.name} view ${i + 1}`} fill sizes="100px" className="object-cover" />
                   </div>
                 );
               })}
@@ -499,7 +499,7 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
               <Link key={relatedTool.id} href={`/tools/${relatedTool.id}`}>
                 <Card className="overflow-hidden p-0 cursor-pointer hover:border-blue/50 transition-colors">
                   <div className="relative h-40">
-                    <Image src={getImageUrl(relatedTool.image)} alt={relatedTool.name} fill sizes="25vw" className="object-cover" />
+                    <ImageWithSkeleton src={getImageUrl(relatedTool.image)} alt={relatedTool.name} fill sizes="25vw" className="object-cover" />
                   </div>
                   <div className="p-5">
                     <Badge variant="blue" className="mb-2 text-xs">{relatedTool.category}</Badge>

@@ -4,11 +4,13 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Pencil, Trash2, Copy, CheckCircle2, Eye, EyeOff,
-  ShieldCheck, ShieldOff, Clock, AlertTriangle, X, Save, RefreshCw, Scale, Link as LinkIcon, Search, FileText, ArrowLeft,
+  ShieldCheck, ShieldOff, Clock, AlertTriangle, X, Save, RefreshCw, Scale, Link as LinkIcon, Search, FileText, ArrowLeft, Mail,
 } from "lucide-react";
 import { useAdminData } from "@/lib/admin-data-context";
 import type { JudgeCredential, JudgeReport } from "@/types";
 import { Button } from "@/components/ui/button";
+import { SuccessPopup } from "@/components/ui/success-popup";
+import { ErrorPopup } from "@/components/ui/error-popup";
 
 /* ── helpers ── */
 function genUUID() {
@@ -30,6 +32,10 @@ function buildLink(origin: string, token: string) {
   return `${origin}/judge?token=${token}`;
 }
 
+function formatStatus(status: string) {
+  return status.replace(/_/g, " ").replace("in progress", "Competition Submission");
+}
+
 function expiryStatus(expiresAt: string | null, active: boolean): {
   label: string; color: string; bg: string; border: string; icon: React.ReactNode;
 } {
@@ -44,7 +50,7 @@ function expiryStatus(expiresAt: string | null, active: boolean): {
 }
 
 const EMPTY: Omit<JudgeCredential, "id" | "createdAt"> = {
-  name: "", username: "", password: "", expiresAt: "", assignedCompetition: "", active: true, notes: "", accessToken: null, accessLinkExpiresAt: null,
+  name: "", username: "", password: "", email: "", expiresAt: "", assignedCompetition: "", active: true, notes: "", accessToken: null, accessLinkExpiresAt: null, termsAcceptedAt: null,
 };
 
 /* ── Modal ── */
@@ -63,6 +69,7 @@ function CredentialModal({
           name: initial.name || "", 
           username: initial.username || "", 
           password: initial.password || "", 
+          email: initial.email || "",
           expiresAt: initial.expiresAt ?? "", 
           assignedCompetition: initial.assignedCompetition || "", 
           active: initial.active, 
@@ -74,6 +81,16 @@ function CredentialModal({
   );
   const [showPwd, setShowPwd] = useState(isNew);
   const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string>>>({});
+  const [successPopup, setSuccessPopup] = useState<{ open: boolean; title: string; message: string }>({
+    open: false,
+    title: "",
+    message: "",
+  });
+  const [errorPopup, setErrorPopup] = useState<{ open: boolean; title: string; message: string }>({
+    open: false,
+    title: "",
+    message: "",
+  });
 
   function validate() {
     const e: typeof errors = {};
@@ -82,7 +99,15 @@ function CredentialModal({
     if (form.username.includes(" ")) e.username = "No spaces in username";
     if (!form.password.trim()) e.password = "Password is required";
     if (form.password.length < 8) e.password = "Minimum 8 characters";
+    if (form.email && !form.email.includes("@")) e.email = "Invalid email format";
     setErrors(e);
+    if (Object.keys(e).length > 0) {
+      setErrorPopup({
+        open: true,
+        title: "Validation Error",
+        message: "Please fix the form errors before saving.",
+      });
+    }
     return Object.keys(e).length === 0;
   }
 
@@ -93,6 +118,59 @@ function CredentialModal({
       ...form,
       expiresAt: form.expiresAt || null,
     });
+  }
+
+  async function sendAccessEmail() {
+    if (!form.email) {
+      setErrorPopup({
+        open: true,
+        title: "Email Required",
+        message: "Please enter an email address first.",
+      });
+      return;
+    }
+
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const token = form.accessToken || genToken();
+    const accessLink = buildLink(origin, token);
+
+    try {
+      const response = await fetch("/api/judges/send-access-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: form.email,
+          name: form.name,
+          username: form.username,
+          password: form.password,
+          accessLink,
+          competitionTitle: form.assignedCompetition,
+          expiresAt: form.expiresAt || null,
+        }),
+      });
+
+      if (response.ok) {
+        setSuccessPopup({
+          open: true,
+          title: "Access Link Sent",
+          message: `Access link sent successfully to ${form.email}`,
+        });
+      } else {
+        const error = await response.json();
+        setErrorPopup({
+          open: true,
+          title: "Send Failed",
+          message: error.error || "Failed to send email. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("Error sending email:", error);
+      setErrorPopup({
+        open: true,
+        title: "Send Failed",
+        message: "Failed to send email. Please try again.",
+      });
+    }
   }
 
   function set(field: keyof typeof form, val: string | boolean) {
@@ -166,6 +244,16 @@ function CredentialModal({
             {errors.password && <p className="text-xs mt-1" style={{ color: "#ef4444" }}>{errors.password}</p>}
           </div>
 
+          {/* Email */}
+          <div>
+            <label className="text-xs font-medium mb-1.5 block" style={{ color: "#9ca3af" }}>Email (Optional)</label>
+            <input value={form.email} onChange={e => set("email", e.target.value)}
+              placeholder="e.g. judge@example.com"
+              className="w-full rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-1 transition-all"
+              style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${errors.email ? "#ef4444" : "rgba(255,255,255,0.1)"}` }} />
+            {errors.email && <p className="text-xs mt-1" style={{ color: "#ef4444" }}>{errors.email}</p>}
+          </div>
+
           {/* Expiry + Active row */}
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -208,7 +296,7 @@ function CredentialModal({
                 .sort((a, b) => a.title.localeCompare(b.title))
                 .map(c => (
                   <option key={c.id} value={c.id} style={{ color: "#000" }}>
-                    {c.title} {c.status ? `(${c.status})` : ""}
+                    {c.title} {c.status ? `(${formatStatus(c.status)})` : ""}
                   </option>
                 ))}
             </select>
@@ -233,6 +321,13 @@ function CredentialModal({
             style={{ background: "rgba(255,255,255,0.04)", color: "#6b7280", border: "1px solid rgba(255,255,255,0.08)" }}>
             Cancel
           </button>
+          {form.email && (
+            <button onClick={sendAccessEmail}
+              className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center gap-2"
+              style={{ background: "rgba(59,130,246,0.12)", color: "#60a5fa", border: "1px solid rgba(59,130,246,0.3)" }}>
+              <Mail className="h-4 w-4" /> Send Access Link
+            </button>
+          )}
           <button onClick={save}
             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-black transition-all"
             style={{ background: "linear-gradient(135deg, #c9a227, #f5c842)", boxShadow: "0 4px 16px rgba(201,162,39,0.25)" }}>
@@ -240,6 +335,21 @@ function CredentialModal({
           </button>
         </div>
       </motion.div>
+
+      <SuccessPopup
+        open={successPopup.open}
+        onClose={() => setSuccessPopup({ ...successPopup, open: false })}
+        title={successPopup.title}
+        message={successPopup.message}
+        icon="mail"
+      />
+
+      <ErrorPopup
+        open={errorPopup.open}
+        onClose={() => setErrorPopup({ ...errorPopup, open: false })}
+        title={errorPopup.title}
+        message={errorPopup.message}
+      />
     </div>
   );
 }
@@ -666,6 +776,11 @@ export default function JudgesPage() {
   const [copied, setCopied] = useState<string | null>(null);
   const [showPwdFor, setShowPwdFor] = useState<Set<string>>(() => new Set());
   const [search, setSearch] = useState("");
+  const [successPopup, setSuccessPopup] = useState<{ open: boolean; title: string; message: string }>({
+    open: false,
+    title: "",
+    message: "",
+  });
 
   const [reports, setReports] = useState<JudgeReport[]>([]);
   const [reportsModalOpen, setReportsModalOpen] = useState(false);
@@ -721,6 +836,13 @@ export default function JudgesPage() {
             : [...judgeCredentials, updated]
         );
         closeModal();
+        setSuccessPopup({
+          open: true,
+          title: judgeCredentials.find(x => x.id === c.id) ? "Changes Saved" : "Judge Created",
+          message: judgeCredentials.find(x => x.id === c.id)
+            ? "Judge credential has been updated successfully."
+            : "New judge credential has been created successfully.",
+        });
       }
     } catch (error) {
       console.error("Failed to save credential:", error);
@@ -739,6 +861,12 @@ export default function JudgesPage() {
         setJudgeCredentials(
           judgeCredentials.map(x => x.id === c.id ? updated : x)
         );
+        closeLinkModal();
+        setSuccessPopup({
+          open: true,
+          title: "Access Link Saved",
+          message: "The judge access link has been generated and saved successfully.",
+        });
       }
     } catch (error) {
       console.error("Failed to save link credential:", error);
@@ -1026,6 +1154,15 @@ export default function JudgesPage() {
           />
         )}
       </AnimatePresence>
+
+      {/* Success Popup */}
+      <SuccessPopup
+        open={successPopup.open}
+        onClose={() => setSuccessPopup({ ...successPopup, open: false })}
+        title={successPopup.title}
+        message={successPopup.message}
+        icon="check"
+      />
     </div>
   );
 }

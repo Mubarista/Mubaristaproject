@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import Link from "next/link";
 import {
   Calendar,
@@ -27,6 +27,10 @@ interface Props {
 function isRegistrationClosed(deadline: string) {
   const d = new Date(deadline);
   return !isNaN(d.getTime()) && d.getTime() < Date.now();
+}
+
+function formatStatus(status: string) {
+  return status.replace(/_/g, " ").replace("in progress", "Competition Submission");
 }
 
 export default function CompetitionDetailPage({ params }: Props) {
@@ -142,7 +146,7 @@ export default function CompetitionDetailPage({ params }: Props) {
     <div className="pt-24 pb-16">
       <div className="relative h-[40vh] min-h-[300px]">
         {competition.banner ? (
-          <Image src={competition.banner} alt={competition.title} fill sizes="100vw" className="object-cover" />
+          <ImageWithSkeleton src={competition.banner} alt={competition.title} fill sizes="100vw" className="object-cover" />
         ) : (
           <div className="w-full h-full bg-muted-bg flex items-center justify-center">
             <span className="text-muted">No image</span>
@@ -260,11 +264,13 @@ export default function CompetitionDetailPage({ params }: Props) {
                     ? "yellow"
                     : competition.status === "ended"
                     ? "red"
+                    : competition.status === "in_progress"
+                    ? "blue"
                     : "default"
                 }
                 className="mb-4"
               >
-                {competition.status.replace(/_/g, " ")}
+                {formatStatus(competition.status)}
               </Badge>
 
               {competition.status === "Registration Open" && competition.availableSlots > 0 ? (

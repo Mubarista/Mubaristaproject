@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import Link from "next/link";
 import { Search, Star, Bookmark, ShoppingBag, ChevronDown } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
@@ -199,7 +199,7 @@ export default function BooksPage() {
             <Card key={book.id} className="overflow-hidden p-0">
               <Link href={`/books/${book.id}`}>
                 <div className="relative h-56">
-                  <Image src={getImageUrl(book.cover)} alt={book.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover" />
+                  <ImageWithSkeleton src={getImageUrl(book.cover)} alt={book.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover" />
                 </div>
                 <div className="p-6">
                   <Badge variant="default" className="mb-2">{book.category}</Badge>

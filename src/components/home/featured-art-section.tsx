@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { Heart, Lock, MessageCircle, Send, X } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
 import { useAuth } from "@/lib/auth-context";
@@ -237,7 +237,7 @@ export function FeaturedArtSection() {
                   className="group relative w-72 h-96 rounded-2xl overflow-hidden cursor-pointer shrink-0"
                   onClick={() => setSelectedArtId(art.id)}
                 >
-                  <Image
+                  <ImageWithSkeleton
                     src={art.image}
                     alt={art.title}
                     fill
@@ -301,7 +301,7 @@ export function FeaturedArtSection() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="relative aspect-[3/4] w-full max-h-64 overflow-hidden shrink-0">
-                <Image
+                <ImageWithSkeleton
                   src={selectedArt.image}
                   alt={selectedArt.title}
                   fill

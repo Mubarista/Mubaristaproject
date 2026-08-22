@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import Image from "next/image";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
@@ -11,6 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Trophy, Play, ThumbsUp, Loader2 } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
+
+function formatStatus(status: string) {
+  return status.replace(/_/g, " ").replace("in progress", "Competition Submission");
+}
 
 interface LeaderboardRow {
   id: string;
@@ -147,7 +151,7 @@ export default function LeaderboardPage() {
           <h1 className="text-3xl font-bold">{competition.title}</h1>
           <p className="text-muted mt-2">{showWinners ? "Winners" : "Live Leaderboard"}</p>
           <Badge className="mt-3" variant={isVoting ? "green" : showWinners ? "yellow" : "default"}>
-            {competition.status.replace(/_/g, " ")}
+            {formatStatus(competition.status)}
           </Badge>
         </div>
 
@@ -165,7 +169,7 @@ export default function LeaderboardPage() {
                   </div>
                   <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full">
                     {entry.profilePhotoUrl ? (
-                      <Image src={entry.profilePhotoUrl} alt={entry.fullName} fill className="object-cover" />
+                      <ImageWithSkeleton src={entry.profilePhotoUrl} alt={entry.fullName} fill className="object-cover" />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-muted-bg text-xs text-muted">N/A</div>
                     )}

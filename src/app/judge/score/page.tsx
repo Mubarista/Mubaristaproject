@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import {
-  Star, Play, ChevronLeft, ChevronRight, MessageSquare,
-  CheckCircle2, RotateCcw, Send,
+  Star, Play, MessageSquare,
+  CheckCircle2, Send, Users, Clock, AlertTriangle,
 } from "lucide-react";
 import { useJudgeAuth } from "@/lib/judge-auth-context";
 
@@ -13,13 +13,14 @@ type Scores = Record<string, number>;
 
 type Criterion = { key: string; label: string; weight: number; desc: string };
 
-function ScoreSlider({ score, onChange }: { score: number; onChange: (v: number) => void }) {
+function ScoreSlider({ score, onChange, disabled }: { score: number; onChange: (v: number) => void; disabled?: boolean }) {
   return (
     <div className="flex items-center gap-3">
       <div className="flex gap-1">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-          <button key={n} onClick={() => onChange(n)}
-            className="h-7 w-7 rounded-lg text-xs font-bold transition-all"
+          <button key={n} onClick={() => !disabled && onChange(n)}
+            disabled={disabled}
+            className="h-7 w-7 rounded-lg text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             style={n <= score
               ? { background: "linear-gradient(135deg, #c9a227, #f5c842)", color: "#000" }
               : { background: "rgba(255,255,255,0.05)", color: "#4b5563", border: "1px solid rgba(255,255,255,0.07)" }}>
@@ -86,7 +87,7 @@ function getVideoType(url?: string): VideoType {
 
 export default function ScorePage() {
   const { judgeName, judgeId } = useJudgeAuth();
-  const [current, setCurrent] = useState(0);
+  const [current] = useState(0);
   const [scores, setScores] = useState<Record<string, Scores>>({});
   const [comments, setComments] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState<Record<string, boolean>>({});
@@ -97,7 +98,21 @@ export default function ScorePage() {
   const [criteria, setCriteria] = useState<Criterion[]>([]);
   const [videoError, setVideoError] = useState(false);
   const [started, setStarted] = useState(false);
+  const [progress, setProgress] = useState<{
+    currentIndex: number;
+    totalEntries: number;
+    judgeStatuses: { id: string; name: string; done: boolean; isCurrentTurn: boolean }[];
+    currentCompletedCount: number;
+    totalJudges: number;
+    currentAllDone: boolean;
+    isYourTurn: boolean;
+    waitingForJudge: string | null;
+    turnBased: boolean;
+  } | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   type Submission = {
     id: string;
@@ -136,6 +151,7 @@ export default function ScorePage() {
         setQueue(submissions);
         setCompetition(data.competition || null);
         setCriteria(data.competition?.criteria || []);
+        setProgress(data.progress || null);
 
         // Load existing scores and comments
         const initialScores: Record<string, Scores> = {};
@@ -205,6 +221,59 @@ export default function ScorePage() {
     setStarted(false);
   }, [current]);
 
+  useEffect(() => {
+    const activeEntry = queue[current];
+    if (!competition?.id || !activeEntry?.applicationId || !videoRef.current) return;
+
+    const video = videoRef.current;
+    const channelName = `competition-video-${competition.id}`;
+    const channel = supabase.channel(channelName, {
+      config: { broadcast: { self: false } },
+    });
+
+    const throttledSend = (type: string, data: Record<string, unknown>) => {
+      try {
+        channel.send({
+          type: "broadcast",
+          event: "video-state",
+          payload: { type, ...data, applicationId: activeEntry.applicationId, judgeId, timestamp: Date.now() },
+        });
+      } catch (e) {
+        // ignore broadcast errors
+      }
+    };
+
+    const handlePlay = () => throttledSend("play", { currentTime: video.currentTime });
+    const handlePause = () => throttledSend("pause", { currentTime: video.currentTime });
+    const handleSeeked = () => throttledSend("seek", { currentTime: video.currentTime });
+    let lastTime = 0;
+    const handleTimeUpdate = () => {
+      const now = video.currentTime;
+      if (Math.abs(now - lastTime) > 2) {
+        throttledSend("time", { currentTime: now });
+        lastTime = now;
+      }
+    };
+
+    video.addEventListener("play", handlePlay);
+    video.addEventListener("pause", handlePause);
+    video.addEventListener("seeked", handleSeeked);
+    video.addEventListener("timeupdate", handleTimeUpdate);
+
+    channel.subscribe();
+    videoChannelRef.current = channel;
+
+    return () => {
+      video.removeEventListener("play", handlePlay);
+      video.removeEventListener("pause", handlePause);
+      video.removeEventListener("seeked", handleSeeked);
+      video.removeEventListener("timeupdate", handleTimeUpdate);
+      channel.unsubscribe();
+      supabase.removeChannel(channel);
+      videoChannelRef.current = null;
+    };
+  }, [competition?.id, current, queue, judgeId]);
+
   const entry = queue[current] || { id: "", name: "No entries", country: "", flag: "", category: "", duration: "" };
   const entryScores: Scores = scores[entry.applicationId || entry.id] ?? {};
   const entryComment = comments[entry.applicationId || entry.id] ?? "";
@@ -213,23 +282,25 @@ export default function ScorePage() {
   const total = weightedTotal(entryScores, criteria);
 
   function setScore(key: string, val: number) {
+    if (isSubmitted) return;
+    if (!progress?.isYourTurn) return;
     const id = entry.applicationId || entry.id;
     setScores(prev => ({ ...prev, [id]: { ...(prev[id] ?? {}), [key]: val } }));
   }
 
-  function reset() {
-    const id = entry.applicationId || entry.id;
-    setScores(prev => ({ ...prev, [id]: {} }));
-    setComments(prev => ({ ...prev, [id]: "" }));
-  }
-
   async function submit() {
     if (!allFilled || !judgeId) return;
-    
+    if (isSubmitted) {
+      setSubmitError("You have already submitted a score for this participant.");
+      return;
+    }
+
+    setSubmitError(null);
+    setSubmitSuccess(false);
     setSubmitting(true);
     try {
       const id = entry.applicationId || entry.id;
-      
+
       const res = await fetch("/api/judge/scores", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -243,12 +314,19 @@ export default function ScorePage() {
           criteriaScores: entryScores,
         }),
       });
-      
+
+      const data = await res.json();
+
       if (res.ok) {
         setSubmitted(prev => ({ ...prev, [id]: true }));
+        setSubmitSuccess(true);
+        await fetchQueue();
+      } else {
+        setSubmitError(data.error || "Failed to submit score.");
       }
     } catch (error) {
       console.error("Error submitting score:", error);
+      setSubmitError("Failed to submit score. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -275,7 +353,9 @@ export default function ScorePage() {
     );
   }
 
-  const pendingCount = queue ? queue.filter(q => !submitted[q.applicationId || q.id]).length : 0;
+  const pendingCount = progress?.totalEntries
+    ? progress.totalEntries - (progress.currentIndex - 1)
+    : 0;
 
   return (
     <div className="p-8 min-h-screen">
@@ -285,26 +365,62 @@ export default function ScorePage() {
           <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "rgba(201,162,39,0.15)", color: "#c9a227", border: "1px solid rgba(201,162,39,0.3)" }}>
             SCORING PANEL
           </span>
-          <span className="text-xs" style={{ color: "#4b5563" }}>· {pendingCount} entries pending</span>
+          <span className="text-xs" style={{ color: "#4b5563" }}>· {pendingCount} participants remaining</span>
         </div>
         <h1 className="text-2xl font-bold text-white mt-1">Score Submissions</h1>
         <p className="text-sm mt-0.5" style={{ color: "#6b7280" }}>Signed in as <span style={{ color: "#c9a227" }}>{judgeName}</span></p>
       </div>
 
-      {/* Queue navigator */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
-        {queue && queue.map((q, i) => (
-          <button key={q.applicationId || q.id} onClick={() => setCurrent(i)}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-all shrink-0"
-            style={i === current
-              ? { background: "rgba(201,162,39,0.2)", color: "#f5c842", border: "1px solid rgba(201,162,39,0.35)" }
-              : submitted[q.applicationId || q.id]
-                ? { background: "rgba(22,163,74,0.1)", color: "#4ade80", border: "1px solid rgba(22,163,74,0.25)" }
-                : { background: "rgba(255,255,255,0.03)", color: "#6b7280", border: "1px solid rgba(255,255,255,0.07)" }}>
-            {submitted[q.applicationId || q.id] ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Star className="h-3.5 w-3.5" />}
-            {q.flag} {q.name.split(" ")[0]}
-          </button>
-        ))}
+      {/* Queue progress */}
+      <div className="mb-6 p-4 rounded-2xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs" style={{ color: "#4b5563" }}>
+            Participant {progress?.currentIndex || 1} of {progress?.totalEntries || queue.length}
+          </span>
+          <span className="text-xs" style={{ color: "#6b7280" }}>
+            <Users className="h-3.5 w-3.5 inline mr-1" />
+            {progress?.currentCompletedCount || 0}/{progress?.totalJudges || 1} judges done
+          </span>
+        </div>
+
+        {progress && progress.judgeStatuses.length > 0 && (
+          <div className="flex items-center gap-2 flex-wrap">
+            {progress.judgeStatuses.map((judge) => (
+              <div key={judge.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs" style={{ background: judge.isCurrentTurn ? "rgba(201,162,39,0.15)" : judge.done ? "rgba(22,163,74,0.1)" : "rgba(255,255,255,0.04)", border: `1px solid ${judge.isCurrentTurn ? "rgba(201,162,39,0.4)" : judge.done ? "rgba(22,163,74,0.25)" : "rgba(255,255,255,0.07)"}` }}>
+                {judge.done ? <CheckCircle2 className="h-3 w-3" style={{ color: "#4ade80" }} /> : judge.isCurrentTurn ? <Star className="h-3 w-3" style={{ color: "#f5c842" }} /> : <Clock className="h-3 w-3" style={{ color: "#6b7280" }} />}
+                <span style={{ color: judge.isCurrentTurn ? "#f5c842" : judge.done ? "#4ade80" : "#9ca3af" }}>{judge.name}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {progress && !progress.isYourTurn && !isSubmitted && (
+          <p className="text-xs mt-2" style={{ color: "#f59e0b" }}>
+            <Clock className="h-3 w-3 inline mr-1" />
+            Please wait. {progress.waitingForJudge ? `${progress.waitingForJudge} is currently scoring this participant.` : "It is not your turn yet."}
+          </p>
+        )}
+
+        {progress && progress.isYourTurn && !isSubmitted && (
+          <p className="text-xs mt-2" style={{ color: "#4ade80" }}>
+            <Star className="h-3 w-3 inline mr-1" />
+            It's your turn to score this participant.
+          </p>
+        )}
+
+        {isSubmitted && !progress?.currentAllDone && (
+          <p className="text-xs mt-2" style={{ color: "#4ade80" }}>
+            <CheckCircle2 className="h-3 w-3 inline mr-1" />
+            You have scored this participant. Waiting for all other judges to finish.
+          </p>
+        )}
+
+        {!isSubmitted && progress?.currentAllDone && progress?.currentCompletedCount > 0 && (
+          <p className="text-xs mt-2" style={{ color: "#f59e0b" }}>
+            <AlertTriangle className="h-3 w-3 inline mr-1" />
+            Waiting for other judges to finish before moving to the next participant.
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -343,6 +459,8 @@ export default function ScorePage() {
                     key={entry.id}
                     src={entry.videoUrl}
                     controls
+                    autoPlay
+                    loop
                     preload="metadata"
                     onError={() => { setVideoError(true); setStarted(false); }}
                     onPlay={() => setStarted(true)}
@@ -473,7 +591,7 @@ export default function ScorePage() {
                       <span className="text-base font-bold ml-1" style={{ color: "#c9a227" }}>{entryScores[c.key]}/10</span>
                     </div>
                   ) : (
-                    <ScoreSlider score={entryScores[c.key] ?? 0} onChange={v => setScore(c.key, v)} />
+                    <ScoreSlider score={entryScores[c.key] ?? 0} onChange={v => setScore(c.key, v)} disabled={!progress?.isYourTurn} />
                   )}
                 </div>
               ))}
@@ -486,28 +604,44 @@ export default function ScorePage() {
               <MessageSquare className="h-4 w-4" style={{ color: "#6b7280" }} />
               <h3 className="text-sm font-semibold text-white">Judge Feedback</h3>
             </div>
-            <textarea rows={3} disabled={isSubmitted}
+            <textarea rows={3} disabled={isSubmitted || (!!progress && !progress.isYourTurn)}
               value={entryComment}
-              onChange={e => setComments(prev => ({ ...prev, [entry.id]: e.target.value }))}
-              placeholder="Optional feedback for the participant…"
+              onChange={e => setComments(prev => ({ ...prev, [entry.applicationId || entry.id]: e.target.value }))}
+              placeholder={progress && !progress.isYourTurn ? "Waiting for your turn to score…" : "Optional feedback for the participant…"}
               className="w-full rounded-xl px-4 py-3 text-sm text-white resize-none focus:outline-none focus:ring-1 transition-all disabled:opacity-50"
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }} />
           </div>
 
           {/* Actions */}
+          {submitError && (
+            <div className="mb-4 p-3 rounded-xl text-sm" style={{ background: "rgba(220,38,38,0.1)", color: "#ef4444", border: "1px solid rgba(220,38,38,0.25)" }}>
+              <AlertTriangle className="h-4 w-4 inline mr-2" />
+              {submitError}
+            </div>
+          )}
+
+          {submitSuccess && (
+            <div className="mb-4 p-3 rounded-xl text-sm" style={{ background: "rgba(22,163,74,0.1)", color: "#4ade80", border: "1px solid rgba(22,163,74,0.25)" }}>
+              <CheckCircle2 className="h-4 w-4 inline mr-2" />
+              Score submitted successfully. Please wait for the other judges to finish this participant.
+            </div>
+          )}
+
           <div className="flex gap-3">
             {!isSubmitted ? (
               <>
-                <button onClick={reset}
-                  className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all"
-                  style={{ background: "rgba(255,255,255,0.04)", color: "#6b7280", border: "1px solid rgba(255,255,255,0.08)" }}>
-                  <RotateCcw className="h-4 w-4" /> Reset
-                </button>
-                <button onClick={submit} disabled={!allFilled || submitting}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-black transition-all disabled:opacity-40"
-                  style={{ background: allFilled ? "linear-gradient(135deg, #c9a227, #f5c842)" : "#1f2937", boxShadow: allFilled ? "0 4px 20px rgba(201,162,39,0.3)" : "none" }}>
-                  {submitting ? <span>Submitting...</span> : <><Send className="h-4 w-4" /> Submit Score</>}
-                </button>
+                {!progress?.isYourTurn ? (
+                  <div className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold"
+                    style={{ background: "rgba(245,200,66,0.08)", color: "#f5c842", border: "1px solid rgba(201,162,39,0.25)" }}>
+                    <Clock className="h-4 w-4" /> Waiting for Your Turn
+                  </div>
+                ) : (
+                  <button onClick={submit} disabled={!allFilled || submitting}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-black transition-all disabled:opacity-40"
+                    style={{ background: allFilled ? "linear-gradient(135deg, #c9a227, #f5c842)" : "#1f2937", boxShadow: allFilled ? "0 4px 20px rgba(201,162,39,0.3)" : "none" }}>
+                    {submitting ? <span>Submitting...</span> : <><Send className="h-4 w-4" /> Submit Score</>}
+                  </button>
+                )}
               </>
             ) : (
               <AnimatePresence>
@@ -520,20 +654,10 @@ export default function ScorePage() {
             )}
           </div>
 
-          {/* Prev / Next */}
-          <div className="flex items-center justify-between pt-2">
-            <button onClick={() => setCurrent(Math.max(0, current - 1))} disabled={current === 0}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm transition-all disabled:opacity-30"
-              style={{ color: "#6b7280", border: "1px solid rgba(255,255,255,0.07)" }}>
-              <ChevronLeft className="h-4 w-4" /> Previous
-            </button>
-            <span className="text-xs" style={{ color: "#4b5563" }}>{current + 1} / {queue.length}</span>
-            <button onClick={() => setCurrent(Math.min(queue.length - 1, current + 1))} disabled={current === queue.length - 1}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm transition-all disabled:opacity-30"
-              style={{ color: "#6b7280", border: "1px solid rgba(255,255,255,0.07)" }}>
-              Next <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
+          <p className="text-xs mt-3" style={{ color: "#6b7280" }}>
+            <AlertTriangle className="h-3 w-3 inline mr-1" />
+            Important: Once submitted, your score is final and cannot be changed or undone.
+          </p>
         </div>
       </div>
     </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { LoadingDots } from "@/components/ui/loading-dots";
 
@@ -82,7 +82,7 @@ export default function CoffeeHistoryPage() {
                 <div className="glass-card rounded-2xl overflow-hidden">
                   {event.image ? (
                     <div className="relative h-40">
-                      <Image src={event.image} alt={event.title} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
+                      <ImageWithSkeleton src={event.image} alt={event.title} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
                     </div>
                   ) : null}
                   <div className="p-6">

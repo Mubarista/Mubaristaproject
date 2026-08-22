@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import Link from "next/link";
 import { Trophy, Globe, BookOpen, Briefcase, GraduationCap, Coffee, ArrowRight } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
@@ -97,7 +97,7 @@ export default function AboutPage() {
           </div>
           <div className="relative aspect-[210/297] rounded-2xl overflow-hidden group">
             {about?.imageUrl && (
-              <Image
+              <ImageWithSkeleton
                 src={about.imageUrl}
                 alt="Barista crafting latte art"
                 fill
