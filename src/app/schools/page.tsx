@@ -115,7 +115,7 @@ export default function SchoolsPage() {
                             alt={`${school.name} logo`}
                             fill
                             sizes="40px"
-                            className="object-contain p-1.5"
+                            className="object-cover"
                           />
                         </div>
                         <CardTitle className="shrink-0">{school.name}</CardTitle>
