@@ -271,6 +271,9 @@ CREATE TABLE IF NOT EXISTS schools (
   contact TEXT,
   website TEXT,
   logo TEXT,
+  phone TEXT,
+  registration_open_date DATE,
+  registration_close_date DATE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

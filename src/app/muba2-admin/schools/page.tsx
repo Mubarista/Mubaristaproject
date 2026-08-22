@@ -16,15 +16,18 @@ interface School {
   rating: number;
   reviews: number;
   contact: string;
+  phone: string;
   website: string;
   logo: string;
+  registrationOpenDate: string;
+  registrationCloseDate: string;
   active: boolean;
   order: number;
   createdAt: string;
   updatedAt: string;
 }
 
-const blank: Omit<School, 'id' | 'createdAt' | 'updatedAt'> = { name: "", location: "", certifications: "", programs: "", rating: 4.5, reviews: 0, contact: "", website: "", logo: "", active: true, order: 0 };
+const blank: Omit<School, 'id' | 'createdAt' | 'updatedAt'> = { name: "", location: "", certifications: "", programs: "", rating: 4.5, reviews: 0, contact: "", phone: "", website: "", logo: "", registrationOpenDate: "", registrationCloseDate: "", active: true, order: 0 };
 
 export default function AdminSchoolsPage() {
   const [schools, setSchools] = useState<School[]>([]);
@@ -54,7 +57,7 @@ export default function AdminSchoolsPage() {
   }
 
   function openAdd() { setDraft({ ...blank }); setEditing({ ...blank, id: "new", createdAt: "", updatedAt: "" }); }
-  function openEdit(s: School) { setDraft({ name: s.name, location: s.location, certifications: s.certifications, programs: s.programs, rating: s.rating, reviews: s.reviews, contact: s.contact, website: s.website, logo: s.logo || "", active: s.active, order: s.order }); setEditing(s); }
+  function openEdit(s: School) { setDraft({ name: s.name, location: s.location, certifications: s.certifications, programs: s.programs, rating: s.rating, reviews: s.reviews, contact: s.contact, phone: s.phone || "", website: s.website, logo: s.logo || "", registrationOpenDate: s.registrationOpenDate || "", registrationCloseDate: s.registrationCloseDate || "", active: s.active, order: s.order }); setEditing(s); }
   function closeModal() { setEditing(null); }
   function del(s: School) { setDeleting(s); }
 
@@ -166,7 +169,14 @@ export default function AdminSchoolsPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Contact Email"><Input value={draft.contact} onChange={set("contact")} /></Field>
+            <Field label="Phone Number"><Input type="tel" value={draft.phone} onChange={set("phone")} placeholder="+250 ..." /></Field>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
             <Field label="Website"><Input value={draft.website} onChange={set("website")} placeholder="school.com" /></Field>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Registration Opens"><Input type="date" value={draft.registrationOpenDate} onChange={set("registrationOpenDate")} /></Field>
+            <Field label="Registration Closes"><Input type="date" value={draft.registrationCloseDate} onChange={set("registrationCloseDate")} /></Field>
           </div>
           <Field label="School Logo">
             <ImageUpload
