@@ -112,9 +112,9 @@ export default function SchoolsPage() {
                         <Image
                           src={school.logo || "/logo-bimi.svg"}
                           alt={`${school.name} logo`}
-                          width={32}
-                          height={32}
-                          className="h-8 w-8 rounded-full object-contain bg-white/10 p-1 shrink-0"
+                          width={40}
+                          height={40}
+                          className="h-10 w-10 rounded-lg object-contain bg-white/10 p-1 shrink-0"
                         />
                         <CardTitle className="shrink-0">{school.name}</CardTitle>
                         <div className="flex items-center gap-1">
