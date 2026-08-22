@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { VisaIcon } from "@/components/icons/visa";
 import { MastercardIcon } from "@/components/icons/mastercard";
 import { formatCurrency } from "@/lib/utils";
-import { initiateRwandaPay, initiatePesapal, generateReference } from "@/lib/payment";
+import { initiatePesapal, generateReference } from "@/lib/payment";
+import { RwandaPayGateway } from "@/components/payment/rwandapay-gateway";
 import type { CompetitionApplication } from "@/types";
 
 export default function PaymentPage() {
@@ -24,6 +25,7 @@ export default function PaymentPage() {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [linkExpired, setLinkExpired] = useState(false);
+  const [showGateway, setShowGateway] = useState(false);
 
   async function fetchApplication() {
     try {
@@ -64,26 +66,8 @@ export default function PaymentPage() {
       const customerPhone = application.mobileNumber || "";
 
       if (selectedMethod === "RwandaPay") {
-        const { payment_url } = await initiateRwandaPay({
-          amount,
-          tx_ref: reference,
-          customer: {
-            name: customerName,
-            email: customerEmail,
-            phone: customerPhone,
-          },
-          currency: "RWF",
-          description: `Entry fee for ${application.competition?.title || "competition"}`,
-          meta: {
-            type: "competition_entry",
-            applicationId,
-            competitionId: application.competitionId,
-            competitionTitle: application.competition?.title || "",
-            userCountry: application.country,
-          },
-        });
-
-        window.location.href = payment_url;
+        setShowGateway(true);
+        return;
       } else {
         const { payment_url } = await initiatePesapal({
           amount,
@@ -117,6 +101,16 @@ export default function PaymentPage() {
     } finally {
       setProcessing(false);
     }
+  }
+
+  function handleGatewayComplete() {
+    setShowGateway(false);
+    setPaymentSuccess(true);
+  }
+
+  function handleGatewayCancel() {
+    setShowGateway(false);
+    setProcessing(false);
   }
 
   if (loading) {
@@ -248,6 +242,16 @@ export default function PaymentPage() {
           </p>
         </Card>
       </div>
+
+      {showGateway && application && (
+        <RwandaPayGateway
+          amount={application.competition?.entryFee ?? 0}
+          currency="RWF"
+          description={`Entry fee for ${application.competition?.title || "competition"}`}
+          onComplete={handleGatewayComplete}
+          onCancel={handleGatewayCancel}
+        />
+      )}
     </div>
   );
 }
