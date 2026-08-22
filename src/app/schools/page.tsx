@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { MapPin, Star, ExternalLink, Mail, ChevronDown } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
 import { SectionHeading } from "@/components/shared/section-heading";
@@ -108,6 +109,13 @@ export default function SchoolsPage() {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <Image
+                          src={school.logo || "/logo-bimi.svg"}
+                          alt={`${school.name} logo`}
+                          width={32}
+                          height={32}
+                          className="h-8 w-8 rounded-full object-contain bg-white/10 p-1 shrink-0"
+                        />
                         <CardTitle className="shrink-0">{school.name}</CardTitle>
                         <div className="flex items-center gap-1">
                           <Star className="h-4 w-4 fill-yellow text-yellow" />
