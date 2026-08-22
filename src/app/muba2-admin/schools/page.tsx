@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { AdminTable } from "@/components/admin/admin-table";
-import { AdminModal, Field, Input } from "@/components/admin/admin-modal";
+import { AdminModal, Field, Input, ImageUpload } from "@/components/admin/admin-modal";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { Star, Search } from "lucide-react";
 import { LoadingDots } from "@/components/ui/loading-dots";
@@ -33,7 +33,6 @@ export default function AdminSchoolsPage() {
   const [draft, setDraft] = useState<Omit<School, 'id' | 'createdAt' | 'updatedAt'>>(blank);
   const [deleting, setDeleting] = useState<School | null>(null);
   const [saving, setSaving] = useState(false);
-  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -95,35 +94,6 @@ export default function AdminSchoolsPage() {
       } catch (error) {
         console.error("Error deleting school:", error);
       }
-    }
-  }
-
-  async function uploadLogo(file: File) {
-    if (!file.type.startsWith("image/")) {
-      alert("Only image files are allowed");
-      return;
-    }
-    if (file.size > 500 * 1024) {
-      alert("Logo must not exceed 500KB");
-      return;
-    }
-    setUploadingLogo(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/sponsors/upload-logo", { method: "POST", body: formData });
-      if (res.ok) {
-        const data = await res.json();
-        setDraft((d) => ({ ...d, logo: data.url }));
-      } else {
-        const error = await res.json().catch(() => ({}));
-        alert(error.error || "Failed to upload logo");
-      }
-    } catch (error) {
-      console.error("Error uploading school logo:", error);
-      alert("Failed to upload logo");
-    } finally {
-      setUploadingLogo(false);
     }
   }
 
@@ -198,24 +168,15 @@ export default function AdminSchoolsPage() {
             <Field label="Contact Email"><Input value={draft.contact} onChange={set("contact")} /></Field>
             <Field label="Website"><Input value={draft.website} onChange={set("website")} placeholder="school.com" /></Field>
           </div>
-          <Field label="Logo URL">
-            <Input value={draft.logo} onChange={set("logo")} placeholder="https://..." />
-          </Field>
-          <div className="flex items-center gap-3">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => e.target.files?.[0] && uploadLogo(e.target.files[0])}
-              disabled={uploadingLogo}
-              className="text-sm text-muted file:mr-3 file:px-3 file:py-2 file:rounded-xl file:border file:border-white/10 file:bg-muted-bg file:text-foreground hover:file:bg-white/5"
+          <Field label="School Logo">
+            <ImageUpload
+              value={draft.logo}
+              onChange={(url) => setDraft((d) => ({ ...d, logo: url }))}
+              label="Upload logo"
+              aspectRatio="square"
+              allowCrop
             />
-            {uploadingLogo && <LoadingDots />}
-          </div>
-          {draft.logo && (
-            <div className="mt-2">
-              <img src={draft.logo} alt="Logo preview" className="h-12 w-12 rounded-lg object-contain bg-white/5 border border-white/10" />
-            </div>
-          )}
+          </Field>
         </AdminModal>
       )}
 
