@@ -109,13 +109,13 @@ export default function SchoolsPage() {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="relative h-10 w-10 rounded-full bg-white/10 border border-white/10 p-1.5 shrink-0">
+                        <div className="relative h-10 w-10 rounded-full bg-white/10 border border-white/10 overflow-hidden shrink-0">
                           <Image
                             src={school.logo || "/logo-bimi.svg"}
                             alt={`${school.name} logo`}
                             fill
                             sizes="40px"
-                            className="rounded-full object-contain"
+                            className="object-contain p-1.5"
                           />
                         </div>
                         <CardTitle className="shrink-0">{school.name}</CardTitle>
