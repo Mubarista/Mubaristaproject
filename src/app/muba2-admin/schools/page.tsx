@@ -17,13 +17,14 @@ interface School {
   reviews: number;
   contact: string;
   website: string;
+  logo: string;
   active: boolean;
   order: number;
   createdAt: string;
   updatedAt: string;
 }
 
-const blank: Omit<School, 'id' | 'createdAt' | 'updatedAt'> = { name: "", location: "", certifications: "", programs: "", rating: 4.5, reviews: 0, contact: "", website: "", active: true, order: 0 };
+const blank: Omit<School, 'id' | 'createdAt' | 'updatedAt'> = { name: "", location: "", certifications: "", programs: "", rating: 4.5, reviews: 0, contact: "", website: "", logo: "", active: true, order: 0 };
 
 export default function AdminSchoolsPage() {
   const [schools, setSchools] = useState<School[]>([]);
@@ -32,6 +33,7 @@ export default function AdminSchoolsPage() {
   const [draft, setDraft] = useState<Omit<School, 'id' | 'createdAt' | 'updatedAt'>>(blank);
   const [deleting, setDeleting] = useState<School | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -53,7 +55,7 @@ export default function AdminSchoolsPage() {
   }
 
   function openAdd() { setDraft({ ...blank }); setEditing({ ...blank, id: "new", createdAt: "", updatedAt: "" }); }
-  function openEdit(s: School) { setDraft({ name: s.name, location: s.location, certifications: s.certifications, programs: s.programs, rating: s.rating, reviews: s.reviews, contact: s.contact, website: s.website, active: s.active, order: s.order }); setEditing(s); }
+  function openEdit(s: School) { setDraft({ name: s.name, location: s.location, certifications: s.certifications, programs: s.programs, rating: s.rating, reviews: s.reviews, contact: s.contact, website: s.website, logo: s.logo || "", active: s.active, order: s.order }); setEditing(s); }
   function closeModal() { setEditing(null); }
   function del(s: School) { setDeleting(s); }
 
@@ -93,6 +95,35 @@ export default function AdminSchoolsPage() {
       } catch (error) {
         console.error("Error deleting school:", error);
       }
+    }
+  }
+
+  async function uploadLogo(file: File) {
+    if (!file.type.startsWith("image/")) {
+      alert("Only image files are allowed");
+      return;
+    }
+    if (file.size > 500 * 1024) {
+      alert("Logo must not exceed 500KB");
+      return;
+    }
+    setUploadingLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/sponsors/upload-logo", { method: "POST", body: formData });
+      if (res.ok) {
+        const data = await res.json();
+        setDraft((d) => ({ ...d, logo: data.url }));
+      } else {
+        const error = await res.json().catch(() => ({}));
+        alert(error.error || "Failed to upload logo");
+      }
+    } catch (error) {
+      console.error("Error uploading school logo:", error);
+      alert("Failed to upload logo");
+    } finally {
+      setUploadingLogo(false);
     }
   }
 
@@ -167,6 +198,24 @@ export default function AdminSchoolsPage() {
             <Field label="Contact Email"><Input value={draft.contact} onChange={set("contact")} /></Field>
             <Field label="Website"><Input value={draft.website} onChange={set("website")} placeholder="school.com" /></Field>
           </div>
+          <Field label="Logo URL">
+            <Input value={draft.logo} onChange={set("logo")} placeholder="https://..." />
+          </Field>
+          <div className="flex items-center gap-3">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => e.target.files?.[0] && uploadLogo(e.target.files[0])}
+              disabled={uploadingLogo}
+              className="text-sm text-muted file:mr-3 file:px-3 file:py-2 file:rounded-xl file:border file:border-white/10 file:bg-muted-bg file:text-foreground hover:file:bg-white/5"
+            />
+            {uploadingLogo && <LoadingDots />}
+          </div>
+          {draft.logo && (
+            <div className="mt-2">
+              <img src={draft.logo} alt="Logo preview" className="h-12 w-12 rounded-lg object-contain bg-white/5 border border-white/10" />
+            </div>
+          )}
         </AdminModal>
       )}
 

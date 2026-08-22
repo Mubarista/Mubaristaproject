@@ -270,6 +270,7 @@ CREATE TABLE IF NOT EXISTS schools (
   programs TEXT,
   contact TEXT,
   website TEXT,
+  logo TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
