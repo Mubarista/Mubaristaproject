@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Bell, Mail, Check, CreditCard, Crown, Shield, AlertTriangle, CheckCircle } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/lib/supabase";
 import { Card, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,15 +37,32 @@ export default function NotificationsPage() {
     return () => clearInterval(interval);
   }, [user?.id]);
 
+  async function getToken() {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token;
+  }
+
   async function fetchNotifications() {
     if (!user) return;
-    
+
     setLoading(true);
     try {
-      const res = await fetch(`/api/notifications?userId=${user.id}`);
+      const token = await getToken();
+      const res = await fetch("/api/notifications", {
+        headers: { Authorization: `Bearer ${token || ""}` },
+      });
       if (res.ok) {
         const data = await res.json();
-        setNotifications(data);
+        setNotifications((data.notifications || []).map((n: any) => ({
+          id: n.id,
+          userId: n.user_id,
+          title: n.title,
+          description: n.message || n.description,
+          type: n.type,
+          read: n.read,
+          metadata: n.data ? JSON.stringify(n.data) : null,
+          createdAt: n.created_at,
+        })));
       }
     } catch (error) {
       console.error("Error fetching notifications:", error);
@@ -55,13 +73,17 @@ export default function NotificationsPage() {
 
   async function markAsRead(id: string) {
     try {
-      const res = await fetch("/api/notifications", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, read: true }),
+      const token = await getToken();
+      const res = await fetch(`/api/notifications/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token || ""}`,
+        },
+        body: JSON.stringify({ read: true }),
       });
       if (res.ok) {
-        setNotifications(notifications.map(n => 
+        setNotifications(notifications.map(n =>
           n.id === id ? { ...n, read: true } : n
         ));
       }
@@ -72,12 +94,12 @@ export default function NotificationsPage() {
 
   async function markAllAsRead() {
     if (!user) return;
-    
+
     try {
-      const res = await fetch("/api/notifications", {
+      const token = await getToken();
+      const res = await fetch("/api/notifications/read-all", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id }),
+        headers: { Authorization: `Bearer ${token || ""}` },
       });
       if (res.ok) {
         setNotifications(notifications.map(n => ({ ...n, read: true })));
