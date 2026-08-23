@@ -344,6 +344,7 @@ export default function CheckoutPage() {
           }
         >
           <p className="text-muted">Thank you for your purchase. Your order has been confirmed.</p>
+          <p className="text-muted mt-3 text-sm">Please check your email inbox (and spam or junk folder, just in case) for your ebook download link(s).</p>
         </SuccessConfirmation>
       </div>
     );
