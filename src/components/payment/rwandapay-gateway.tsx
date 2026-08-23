@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   AlertCircle,
   ArrowRight,
-  Lock,
   Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -50,7 +49,6 @@ export function RwandaPayGateway({
   const [step, setStep] = useState<Step>("form");
   const [phone, setPhone] = useState(() => normalizeDefaultPhone(defaultPhone));
   const [provider, setProvider] = useState(providers[0].id);
-  const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [transactionId, setTransactionId] = useState("");
@@ -86,10 +84,6 @@ export function RwandaPayGateway({
 
     if (!phone || phone.length < 9) {
       setError("Please enter a valid mobile money number.");
-      return;
-    }
-    if (!pin || pin.length < 4) {
-      setError("Please enter your Mobile Money PIN.");
       return;
     }
 
@@ -144,8 +138,8 @@ export function RwandaPayGateway({
               <Smartphone className="h-5 w-5 text-yellow" />
             </div>
             <div>
-              <p className="text-sm font-bold text-white">RwandaPay</p>
-              <p className="text-[10px] text-muted">Secure Mobile Money</p>
+              <p className="text-sm font-bold text-white">MubaristaPay</p>
+              <p className="text-[10px] text-muted">Mobile Money Checkout</p>
             </div>
           </div>
           <button
@@ -207,24 +201,8 @@ export function RwandaPayGateway({
                       className="w-full rounded-xl border border-white/10 bg-muted-bg py-3 pl-10 pr-4 text-sm text-white focus:border-yellow focus:outline-none focus:ring-1 focus:ring-yellow"
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-muted">PIN</label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-                    <input
-                      type="password"
-                      inputMode="numeric"
-                      maxLength={6}
-                      value={pin}
-                      onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
-                      placeholder="Enter Mobile Money PIN"
-                      className="w-full rounded-xl border border-white/10 bg-muted-bg py-3 pl-10 pr-4 text-sm text-white focus:border-yellow focus:outline-none focus:ring-1 focus:ring-yellow"
-                    />
-                  </div>
                   <p className="mt-1.5 text-[10px] text-muted">
-                    Demo mode: any 4-digit PIN will simulate a successful payment.
+                    Demo mode: tapping Pay Now will simulate a RwandaPay confirmation.
                   </p>
                 </div>
 
