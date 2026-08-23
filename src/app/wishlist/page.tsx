@@ -67,7 +67,7 @@ export default function WishlistPage() {
             title: tool.name,
             price: Number(tool.price) || 0,
             image: (tool.image as string | null) || null,
-            inStock: (tool.stock ?? 0) > 0,
+            inStock: tool.stock === null || tool.stock === undefined || (tool.stock ?? 0) > 0,
           };
         }
         return null;
