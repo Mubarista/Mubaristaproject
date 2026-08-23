@@ -78,7 +78,25 @@ export function Navbar() {
       const interval = setInterval(() => {
         fetchUnreadCount();
       }, 30000);
-      return () => clearInterval(interval);
+
+      const channel = supabase
+        .channel(`notifications-navbar-${user.id}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+          () => fetchUnreadCount()
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "notifications", filter: "is_global=eq.true" },
+          () => fetchUnreadCount()
+        )
+        .subscribe();
+
+      return () => {
+        clearInterval(interval);
+        supabase.removeChannel(channel);
+      };
     }
   }, [user?.id]);
 

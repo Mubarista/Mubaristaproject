@@ -153,6 +153,16 @@ body {
   }
 }
 
+/* Higher specificity so these override .section-padding
+   (Tailwind pb-0/pt-0 utilities lose to unlayered CSS) */
+.section-padding.pb-0 {
+  padding-bottom: 0;
+}
+
+.section-padding.pt-0 {
+  padding-top: 0;
+}
+
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }

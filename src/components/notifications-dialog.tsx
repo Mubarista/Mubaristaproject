@@ -64,7 +64,24 @@ export function NotificationsDialog({
       fetchNotifications();
     }, 30000);
 
-    return () => clearInterval(interval);
+    const channel = supabase
+      .channel(`notifications-dialog-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+        () => fetchNotifications()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "notifications", filter: "is_global=eq.true" },
+        () => fetchNotifications()
+      )
+      .subscribe();
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, [open, user?.id]);
 
   async function fetchNotifications() {
