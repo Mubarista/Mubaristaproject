@@ -248,6 +248,9 @@ export default function PaymentPage() {
           amount={application.competition?.entryFee ?? 0}
           currency="RWF"
           description={`Entry fee for ${application.competition?.title || "competition"}`}
+          customerName={application.fullName || application.userName || "Participant"}
+          customerEmail={application.email || application.userEmail || ""}
+          defaultPhone={application.mobileNumber || ""}
           onComplete={handleGatewayComplete}
           onCancel={handleGatewayCancel}
         />

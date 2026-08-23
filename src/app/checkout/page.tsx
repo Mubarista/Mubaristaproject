@@ -738,6 +738,8 @@ export default function CheckoutPage() {
           amount={total}
           currency="RWF"
           description={`MUBARISTA order - ${cartItems.map((item) => item.title).join(", ")}`}
+          customerName={formData.fullName || user?.name || "Customer"}
+          customerEmail={formData.email || user?.email || ""}
           defaultPhone={momoPhone}
           onComplete={handleGatewayComplete}
           onCancel={handleGatewayCancel}

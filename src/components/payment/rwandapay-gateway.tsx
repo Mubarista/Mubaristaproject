@@ -15,11 +15,14 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
+import { initiateRwandaPay, processRwandaPay, verifyRwandaPay } from "@/lib/payment";
 
 interface RwandaPayGatewayProps {
   amount: number;
   currency?: string;
   description?: string;
+  customerName?: string;
+  customerEmail?: string;
   defaultPhone?: string;
   onComplete: (transactionId: string) => void;
   onCancel: () => void;
@@ -39,10 +42,20 @@ function normalizeDefaultPhone(value?: string) {
   return digits;
 }
 
+function formatMomoPhone(value: string) {
+  const digits = value.replace(/\D/g, "");
+  if (digits.startsWith("250") && digits.length === 12) return `0${digits.slice(3)}`;
+  if (digits.startsWith("07") && digits.length === 10) return digits;
+  if (digits.startsWith("7") && digits.length === 9) return `0${digits}`;
+  return digits;
+}
+
 export function RwandaPayGateway({
   amount,
   currency = "RWF",
   description = "Payment",
+  customerName,
+  customerEmail,
   defaultPhone,
   onComplete,
   onCancel,
@@ -54,10 +67,12 @@ export function RwandaPayGateway({
   const [progress, setProgress] = useState(0);
   const [transactionId, setTransactionId] = useState("");
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
+      if (pollRef.current) clearInterval(pollRef.current);
     };
   }, []);
 
@@ -65,21 +80,7 @@ export function RwandaPayGateway({
     setPhone(normalizeDefaultPhone(defaultPhone));
   }, [defaultPhone]);
 
-  function simulateProgress(target: number, duration: number, onDone?: () => void) {
-    const start = performance.now();
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => {
-      const elapsed = performance.now() - start;
-      const p = Math.min((elapsed / duration) * target, target);
-      setProgress(p);
-      if (p >= target) {
-        if (intervalRef.current) clearInterval(intervalRef.current);
-        onDone?.();
-      }
-    }, 50);
-  }
-
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
@@ -88,27 +89,93 @@ export function RwandaPayGateway({
       return;
     }
 
-    startDemoFlow();
+    await startPaymentFlow();
   }
 
-  function startDemoFlow() {
+  async function startPaymentFlow() {
+    const formattedPhone = formatMomoPhone(phone);
+    if (formattedPhone.length !== 10) {
+      setError("Please enter a valid 10-digit mobile money number (e.g. 0788123456).");
+      return;
+    }
+
     const tx = `RWP-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     setTransactionId(tx);
     setStep("connecting");
-    setProgress(0);
+    setProgress(25);
 
-    simulateProgress(35, 1200, () => {
-      setStep("approve");
-      setProgress(35);
-      simulateProgress(70, 2500, () => {
-        setStep("verifying");
-        setProgress(70);
-        simulateProgress(100, 1800, () => {
-          setStep("success");
-          setTimeout(() => onComplete(tx), 1200);
-        });
+    try {
+      const { session_id } = await initiateRwandaPay({
+        amount,
+        tx_ref: tx,
+        customer: {
+          name: customerName || "Customer",
+          phone: formattedPhone,
+          email: customerEmail || "",
+        },
+        currency,
+        description,
+        meta: { source: "mubarista-pay" },
       });
-    });
+
+      setProgress(50);
+      setStep("approve");
+
+      const processRes = await processRwandaPay({
+        session_id,
+        phone: formattedPhone,
+        network: provider === "mtn" ? "MTN" : "Airtel",
+        customer_name: customerName || "Customer",
+        email: customerEmail,
+      });
+
+      const mode = processRes.data?.mode;
+      const reference = processRes.data?.reference || tx;
+
+      if (mode === "test") {
+        setProgress(100);
+        setStep("success");
+        setTimeout(() => onComplete(reference), 800);
+        return;
+      }
+
+      setProgress(75);
+      setStep("verifying");
+
+      let attempts = 0;
+      const maxAttempts = 40;
+      if (pollRef.current) clearInterval(pollRef.current);
+      pollRef.current = setInterval(async () => {
+        attempts++;
+        try {
+          const status = await verifyRwandaPay(reference);
+          if (status.completed) {
+            if (pollRef.current) clearInterval(pollRef.current);
+            if (status.status === "successful" || status.success) {
+              setProgress(100);
+              setStep("success");
+              setTimeout(() => onComplete(reference), 800);
+            } else {
+              setStep("error");
+              setError(status.message || "Payment failed. Please try again.");
+            }
+            return;
+          }
+          if (attempts >= maxAttempts) {
+            if (pollRef.current) clearInterval(pollRef.current);
+            setStep("error");
+            setError("We did not receive a payment confirmation in time. Please try again.");
+          }
+        } catch (err: any) {
+          if (pollRef.current) clearInterval(pollRef.current);
+          setStep("error");
+          setError(err.message || "Failed to verify payment.");
+        }
+      }, 3000);
+    } catch (err: any) {
+      setStep("error");
+      setError(err.message || "Payment could not be started. Please try again.");
+    }
   }
 
   return (
@@ -209,7 +276,7 @@ export function RwandaPayGateway({
                     />
                   </div>
                   <p className="mt-1.5 text-[10px] text-muted">
-                    Demo mode: tapping Pay Now will simulate a RwandaPay confirmation.
+                    Enter your mobile money number to pay with MubaristaPay.
                   </p>
                 </div>
 
@@ -230,7 +297,7 @@ export function RwandaPayGateway({
               </motion.form>
             )}
 
-            {step !== "form" && step !== "error" && (
+            {step !== "form" && (
               <motion.div
                 key="processing"
                 initial={{ opacity: 0, x: 20 }}
@@ -249,6 +316,15 @@ export function RwandaPayGateway({
                       >
                         <CheckCircle2 className="h-10 w-10 text-green" />
                       </motion.div>
+                    ) : step === "error" ? (
+                      <motion.div
+                        key="error"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                      >
+                        <AlertCircle className="h-10 w-10 text-red" />
+                      </motion.div>
                     ) : (
                       <motion.div
                         key="spinner"
@@ -264,20 +340,22 @@ export function RwandaPayGateway({
 
                 <div>
                   <h3 className="text-lg font-bold text-white">
-                    {step === "connecting" && "Connecting to RwandaPay"}
+                    {step === "connecting" && "Connecting to MubaristaPay"}
                     {step === "approve" && "Approve on your phone"}
                     {step === "verifying" && "Verifying payment"}
                     {step === "success" && "Payment successful"}
+                    {step === "error" && "Payment failed"}
                   </h3>
                   <p className="mt-1 text-sm text-muted">
                     {step === "connecting" && "Securely linking to your mobile money wallet…"}
                     {step === "approve" && "Please confirm the prompt on your mobile device."}
                     {step === "verifying" && "We are confirming the transaction…"}
                     {step === "success" && `Ref: ${transactionId}`}
+                    {step === "error" && (error || "Something went wrong. Please try again.")}
                   </p>
                 </div>
 
-                {step !== "success" && (
+                {step !== "success" && step !== "error" && (
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs text-muted">
                       <span>Processing</span>
@@ -318,6 +396,12 @@ export function RwandaPayGateway({
                     <ShieldCheck className="mx-auto mb-2 h-6 w-6" />
                     Your payment of {formatCurrency(amount, currency)} has been received.
                   </motion.div>
+                )}
+
+                {step === "error" && (
+                  <Button variant="secondary" onClick={onCancel} className="w-full">
+                    Close
+                  </Button>
                 )}
               </motion.div>
             )}
