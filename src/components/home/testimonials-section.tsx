@@ -85,7 +85,7 @@ export function TestimonialsSection() {
   };
 
   return (
-    <section className="section-padding pt-1 md:pt-2">
+    <section className="section-padding pt-0">
       {/* Notification Toast */}
       {notification.show && (
         <motion.div
@@ -106,6 +106,7 @@ export function TestimonialsSection() {
           eyebrow="Community"
           title="What Baristas Say"
           description="Real stories from baristas who transformed their careers with MUBARISTA."
+          className="mb-6"
         />
 
         {loading ? (
@@ -113,7 +114,7 @@ export function TestimonialsSection() {
             <LoadingDots />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
             {displayedReviews.map((t, i) => (
             <motion.div
               key={t.id}
@@ -155,7 +156,7 @@ export function TestimonialsSection() {
         )}
 
         {testimonials.length > 3 && (
-          <div className="text-center mb-12">
+          <div className="text-center mb-6">
             <Button
               variant="secondary"
               onClick={() => setShowAll(!showAll)}
