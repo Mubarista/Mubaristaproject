@@ -20,6 +20,7 @@ interface Review {
   id: string;
   toolId: string;
   userId: string;
+  userName?: string;
   rating: number;
   comment: string;
   createdAt: string;
@@ -478,13 +479,23 @@ export default function ToolDetailPage({ params }: { params: Promise<{ id: strin
             <div className="space-y-4">
               {reviews.map((review) => (
                 <Card key={review.id} className="p-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star key={star} className={`h-4 w-4 ${star <= Math.round(review.rating || 0) ? "fill-yellow text-yellow" : "text-muted"}`} />
-                    ))}
-                    <span className="text-sm text-muted ml-2">{new Date(review.createdAt).toLocaleDateString()}</span>
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 shrink-0 rounded-full bg-muted-bg flex items-center justify-center text-sm font-semibold">
+                      {(review.userName || "?").charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <p className="font-semibold text-sm truncate">{review.userName || "Anonymous"}</p>
+                        <span className="text-xs text-muted shrink-0">{new Date(review.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star key={star} className={`h-4 w-4 ${star <= Math.round(review.rating || 0) ? "fill-yellow text-yellow" : "text-muted"}`} />
+                        ))}
+                      </div>
+                      <p className="text-sm text-muted">{review.comment || "No comment"}</p>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted">{review.comment || "No comment"}</p>
                 </Card>
               ))}
             </div>

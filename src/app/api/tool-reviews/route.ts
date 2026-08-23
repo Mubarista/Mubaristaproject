@@ -17,7 +17,28 @@ export async function GET(request: Request) {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return NextResponse.json(mapKeysToCamelCase(data || []));
+
+    const reviews = (data || []) as Array<Record<string, unknown> & { user_id?: string }>;
+    const userIds = [...new Set(reviews.map((r) => r.user_id).filter((id): id is string => Boolean(id)))];
+    let namesById: Record<string, string> = {};
+    if (userIds.length > 0) {
+      const { data: users } = await supabaseAdmin
+        .from("users")
+        .select("id, name")
+        .in("id", userIds);
+      namesById = Object.fromEntries(
+        ((users || []) as Array<{ id: string; name: string }>).map((u) => [u.id, u.name])
+      );
+    }
+
+    return NextResponse.json(
+      mapKeysToCamelCase(
+        reviews.map((r) => ({
+          ...r,
+          user_name: (r.user_id && namesById[r.user_id]) || "Anonymous",
+        }))
+      )
+    );
   } catch (error) {
     console.error("Error fetching tool reviews:", error);
     return NextResponse.json([], { status: 500 });

@@ -17,9 +17,14 @@ export async function getWishlist(): Promise<WishlistRow[]> {
 }
 
 export async function addWishlistItem(itemId: string, itemType: "book" | "tool") {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, message: "Please login to add items to wishlist" };
+  }
+
   const { error } = await supabase
     .from("wishlists")
-    .insert({ item_id: itemId, item_type: itemType })
+    .insert({ user_id: user.id, item_id: itemId, item_type: itemType })
     .select()
     .single();
   if (error) {
