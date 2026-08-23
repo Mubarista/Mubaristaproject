@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendEmail, getSiteLogo } from "@/lib/email";
+import { createNotification } from "@/lib/notifications";
 
 const DEFAULT_LOGO = "https://www.mubarista.com/logo-bimi.svg";
 
@@ -55,6 +56,15 @@ export async function POST(request: Request) {
     if (sendError) {
       console.error("Error sending password changed email:", sendError);
     }
+
+    await createNotification({
+      userId: authData.user.id,
+      type: "password",
+      title: "Password changed",
+      message: `Your MUBARISTA HUB LTD account password was changed on ${changedAt}.`,
+      link: "/settings/security",
+      data: { changedAt },
+    });
 
     return NextResponse.json({ success: true, sent });
   } catch (error) {

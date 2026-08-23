@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase, keysToSnakeCase } from "@/lib/supabase-utils";
 import { syncCompetitionStatuses } from "@/lib/competition";
+import { createNotification } from "@/lib/notifications";
 
 export async function GET(request: Request) {
   try {
@@ -72,6 +73,19 @@ export async function POST(request: Request) {
       .single();
 
     console.log("Created competition:", synced);
+
+    // Notify all users about the new competition
+    if (synced) {
+      createNotification({
+        isGlobal: true,
+        type: "competition",
+        title: "New competition available",
+        message: `A new competition "${synced.title}" is now live. Check it out and apply!`,
+        link: `/competitions/${synced.slug || synced.id}`,
+        data: { competitionId: synced.id, competitionTitle: synced.title },
+      }).catch((err) => console.error("Failed to create competition notification:", err));
+    }
+
     return NextResponse.json(mapKeysToCamelCase(synced));
   } catch (error) {
     console.error("Error creating competition:", error);

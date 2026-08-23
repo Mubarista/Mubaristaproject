@@ -24,6 +24,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useCart } from "@/lib/cart-context";
 import { safeLocalStorage } from "@/lib/safe-storage";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 import { NotificationsDialog } from "@/components/notifications-dialog";
 
 function LinkLabel({ label }: { label: string }) {
@@ -102,10 +103,14 @@ export function Navbar() {
   async function fetchUnreadCount() {
     if (!user) return;
     try {
-      const res = await fetch(`/api/notifications?userId=${user.id}&unreadOnly=true`);
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      const res = await fetch("/api/notifications/unread", {
+        headers: { Authorization: `Bearer ${token || ""}` },
+      });
       if (res.ok) {
         const data = await res.json();
-        setUnreadCount(data.length);
+        setUnreadCount(data.count || 0);
       }
     } catch (error) {
       console.error("Error fetching unread count:", error);

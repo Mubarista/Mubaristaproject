@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase, keysToSnakeCase } from "@/lib/supabase-utils";
+import { createNotification } from "@/lib/notifications";
 
 export async function GET() {
   try {
@@ -40,6 +41,18 @@ export async function POST(request: Request) {
     }
 
     if (error) throw error;
+
+    if (data) {
+      createNotification({
+        isGlobal: true,
+        type: "coffee_fact",
+        title: "New coffee fact",
+        message: `A new coffee fact "${data.title || "Coffee Fact"}" has been published.`,
+        link: `/coffee-facts`,
+        data: { factId: data.id, title: data.title },
+      }).catch((err) => console.error("Failed to create coffee fact notification:", err));
+    }
+
     return NextResponse.json(mapKeysToCamelCase(data));
   } catch (error) {
     console.error("Error creating coffee fact:", error);

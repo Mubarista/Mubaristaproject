@@ -17,9 +17,11 @@ import {
   MessageSquare,
   ChevronDown,
   ChevronUp,
+  Bell,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
+import { NotificationsDialog } from "@/components/notifications-dialog";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -53,6 +55,7 @@ export default function UserDashboard() {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showAllActivities, setShowAllActivities] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [applicationCount, setApplicationCount] = useState(0);
   const [orderCount, setOrderCount] = useState(0);
@@ -180,7 +183,7 @@ export default function UserDashboard() {
     { icon: Trophy, title: "Browse Competitions", desc: "Discover live competitions", link: "/competitions" },
     { icon: Package, title: "Order History", desc: "View past purchases", link: "/orders" },
     { icon: User, title: "My Profile", desc: "Update your profile", link: "/settings/profile" },
-    { icon: MessageSquare, title: "Messages", desc: "View your messages", link: "/settings/notifications" },
+    { icon: Bell, title: "Notifications", desc: "View your alerts and updates", action: () => setShowNotifications(true) },
     { icon: BookOpen, title: "Shop E-Books", desc: "Browse coffee e-books", link: "/books" },
     { icon: ShoppingBag, title: "Shop Tools", desc: "Professional equipment", link: "/tools" },
   ];
@@ -293,13 +296,21 @@ export default function UserDashboard() {
             ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 skeleton-fade-in">
               {quickActions.map((item) => (
-                <Link key={item.title} href={item.link}>
-                  <Card className="cursor-pointer hover:border-blue/50 transition-colors p-4">
+                item.action ? (
+                  <Card key={item.title} className="cursor-pointer hover:border-blue/50 transition-colors p-4" onClick={item.action}>
                     <item.icon className="h-6 w-6 text-blue mb-2" />
                     <CardTitle className="text-base">{item.title}</CardTitle>
                     <p className="text-sm text-muted">{item.desc}</p>
                   </Card>
-                </Link>
+                ) : (
+                  <Link key={item.title} href={item.link!}>
+                    <Card className="cursor-pointer hover:border-blue/50 transition-colors p-4">
+                      <item.icon className="h-6 w-6 text-blue mb-2" />
+                      <CardTitle className="text-base">{item.title}</CardTitle>
+                      <p className="text-sm text-muted">{item.desc}</p>
+                    </Card>
+                  </Link>
+                )
               ))}
             </div>
             )}
@@ -420,6 +431,11 @@ export default function UserDashboard() {
           </Card>
         )}
       </div>
+
+      <NotificationsDialog
+        open={showNotifications}
+        onOpenChange={setShowNotifications}
+      />
 
       {/* Logout Confirmation Dialog */}
       <AnimatePresence>

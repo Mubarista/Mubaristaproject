@@ -16,16 +16,16 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data, error } = await supabaseAdmin
+  const { count, error } = await supabaseAdmin
     .from("notifications")
-    .select("*")
+    .select("*", { count: "exact", head: true })
     .or(`user_id.eq.${user.id},is_global.eq.true`)
-    .order("created_at", { ascending: false });
+    .eq("read", false);
 
   if (error) {
-    console.error("Error fetching notifications:", error);
-    return NextResponse.json({ error: "Failed to fetch notifications" }, { status: 500 });
+    console.error("Error counting notifications:", error);
+    return NextResponse.json({ error: "Failed to count notifications" }, { status: 500 });
   }
 
-  return NextResponse.json({ notifications: data });
+  return NextResponse.json({ count: count || 0 });
 }

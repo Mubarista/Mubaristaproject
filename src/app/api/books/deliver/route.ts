@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { sendBookDeliveryEmail } from "@/lib/email";
+import { createNotification } from "@/lib/notifications";
 
 interface DeliveryRequest {
   bookIds: string[];
@@ -57,6 +58,24 @@ export async function POST(request: Request) {
         { error: result.error || "Failed to send ebook delivery email" },
         { status: 500 }
       );
+    }
+
+    // Create in-app purchase notification
+    const { data: order } = await supabaseAdmin
+      .from("orders")
+      .select("user_id")
+      .eq("id", orderId)
+      .single();
+
+    if (order?.user_id) {
+      await createNotification({
+        userId: order.user_id,
+        type: "purchase",
+        title: "Ebook purchase successful",
+        message: `Your order #${orderId} has been confirmed. The PDFs have been sent to your email.`,
+        link: "/orders",
+        data: { orderId, books: deliveredBooks.map((b) => b.title) },
+      });
     }
 
     return NextResponse.json({

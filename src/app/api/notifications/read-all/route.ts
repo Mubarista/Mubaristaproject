@@ -10,22 +10,22 @@ async function getUserFromToken(request: Request) {
   return data.user;
 }
 
-export async function GET(request: Request) {
+export async function PATCH(request: Request) {
   const user = await getUserFromToken(request);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data, error } = await supabaseAdmin
+  const { error } = await supabaseAdmin
     .from("notifications")
-    .select("*")
+    .update({ read: true, updated_at: new Date().toISOString() })
     .or(`user_id.eq.${user.id},is_global.eq.true`)
-    .order("created_at", { ascending: false });
+    .eq("read", false);
 
   if (error) {
-    console.error("Error fetching notifications:", error);
-    return NextResponse.json({ error: "Failed to fetch notifications" }, { status: 500 });
+    console.error("Error marking all notifications as read:", error);
+    return NextResponse.json({ error: "Failed to mark all as read" }, { status: 500 });
   }
 
-  return NextResponse.json({ notifications: data });
+  return NextResponse.json({ success: true });
 }

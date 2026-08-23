@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase, keysToSnakeCase } from "@/lib/supabase-utils";
+import { createNotification } from "@/lib/notifications";
 
 export async function GET() {
   try {
@@ -76,7 +77,18 @@ export async function POST(request: Request) {
     mappedData.category = mappedData.articleCategories?.name || '';
     mappedData.categoryId = mappedData.categoryId || null;
     delete mappedData.articleCategories;
-    
+
+    if (data) {
+      createNotification({
+        isGlobal: true,
+        type: "article",
+        title: "New article published",
+        message: `A new article "${data.title || "News"}" has been published.`,
+        link: `/articles`,
+        data: { articleId: data.id, title: data.title },
+      }).catch((err) => console.error("Failed to create article notification:", err));
+    }
+
     return NextResponse.json(mappedData);
   } catch (error) {
     console.error("Error creating article:", error);

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { mapKeysToCamelCase, keysToSnakeCase } from "@/lib/supabase-utils";
+import { createNotification } from "@/lib/notifications";
 
 export async function GET(request: Request) {
   try {
@@ -50,6 +51,18 @@ export async function POST(request: Request) {
       delete mappedData.orderColumn;
     }
     
+    // Notify all users about the new school
+    if (data) {
+      createNotification({
+        isGlobal: true,
+        type: "school",
+        title: "New school added",
+        message: `Check out "${data.name}" — a new school has been added to Mubarista.`,
+        link: `/schools`,
+        data: { schoolId: data.id, schoolName: data.name },
+      }).catch((err) => console.error("Failed to create school notification:", err));
+    }
+
     return NextResponse.json(mappedData);
   } catch (error) {
     console.error("Error creating school:", error);
