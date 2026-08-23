@@ -28,7 +28,7 @@ interface RwandaPayGatewayProps {
 type Step = "form" | "connecting" | "approve" | "verifying" | "success" | "error";
 
 const providers = [
-  { id: "mtn", label: "MTN Mobile Money", color: "#FBBF24", logo: "/images/mtnmomo-logo.png" },
+  { id: "mtn", label: "MTN Mobile Money", color: "#FBBF24", logo: "/images/mtnlogo.png" },
   { id: "airtel", label: "Airtel Money", color: "#EF4444", logo: "/images/airtel-logo-128.png" },
 ];
 
