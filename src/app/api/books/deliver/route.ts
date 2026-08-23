@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { sendBookDeliveryEmail } from "@/lib/email";
 
 interface DeliveryRequest {
   bookIds: string[];
@@ -36,25 +37,31 @@ export async function POST(request: Request) {
       );
     }
 
-    // In a real app, you would integrate with an email service like Resend, SendGrid, AWS SES, etc.
-    // For this implementation, we'll return the delivery payload so the frontend can show a confirmation
-    // and the admin/system can send the email using the configured email provider.
     const deliveredBooks = booksWithPdf.map((book: { id: string; title: string; pdf_url: string }) => ({
       id: book.id,
       title: book.title,
       pdfUrl: book.pdf_url,
     }));
 
-    // Log delivery attempt
-    console.log(`Book delivery prepared for ${email}`, {
+    // Send the delivery email instantly
+    const result = await sendBookDeliveryEmail({
+      to: email,
+      customerName: customerName || "Reader",
       orderId,
-      customerName,
       books: deliveredBooks,
     });
 
+    if (!result.sent) {
+      console.error("Failed to send ebook delivery email:", result.error);
+      return NextResponse.json(
+        { error: result.error || "Failed to send ebook delivery email" },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
       success: true,
-      message: `Book PDFs ready for delivery to ${email}`,
+      message: `Ebook PDFs sent successfully to ${email}`,
       orderId,
       deliveredBooks,
     });

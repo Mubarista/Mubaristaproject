@@ -340,6 +340,54 @@ export async function sendPaymentFailedEmail(
   });
 }
 
+export interface SendBookDeliveryEmailInput {
+  to: string;
+  customerName: string;
+  orderId: string;
+  books: { title: string; pdfUrl: string }[];
+}
+
+export async function sendBookDeliveryEmail(input: SendBookDeliveryEmailInput): Promise<SendEmailResult> {
+  const { to, customerName, orderId, books } = input;
+  const supportEmail = process.env.SUPPORT_EMAIL || "hello@mubarista.com";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
+
+  const bookListHtml = books
+    .map(
+      (book) => `
+        <tr>
+          <td style="padding:12px; border:1px solid #e5e7eb; border-radius:12px;">
+            <p style="margin:0 0 8px 0; font-size:16px; color:#111827; font-weight:600;">${book.title}</p>
+            <a href="${book.pdfUrl}" target="_blank" download style="display:inline-block; padding:10px 20px; background-color:#f59e0b; color:#111827; text-decoration:none; border-radius:8px; font-weight:600; font-size:14px;">Download PDF</a>
+          </td>
+        </tr>
+      `
+    )
+    .join("");
+
+  const html = await buildEmailHtml({
+    title: "Your Mubarista Ebooks are ready",
+    body: `
+      <p style="font-size:16px; color:#111827; margin:0 0 16px 0; line-height:1.5;">Dear ${customerName},</p>
+      <p style="font-size:16px; color:#374151; margin:0 0 16px 0; line-height:1.5;">Thank you for purchasing with <strong>Mubarista Hub</strong>. Your order <strong>#${orderId}</strong> has been confirmed, and your ebooks are ready for instant download.</p>
+      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin:24px 0;">
+        ${bookListHtml}
+      </table>
+      <p style="font-size:16px; color:#374151; margin:16px 0; line-height:1.5;">We truly appreciate your support. If you have any questions, inquiries, or compliance concerns, please do not hesitate to contact our team for kind and helpful support.</p>
+      <p style="font-size:16px; color:#374151; margin:16px 0; line-height:1.5;">Reach us anytime at <a href="mailto:${supportEmail}" style="color:#f59e0b; text-decoration:none;">${supportEmail}</a>.</p>
+    `,
+  });
+
+  return sendEmail({
+    to,
+    subject: "Your Mubarista Ebooks are ready for download",
+    fromName: "MUBARISTA HUB LTD",
+    fromEmail: process.env.RESEND_FROM_EMAIL || "hello@mubarista.com",
+    html,
+    text: `Dear ${customerName},\n\nThank you for purchasing with Mubarista Hub. Your order #${orderId} has been confirmed.\n\nYour ebooks:\n${books.map((b) => `${b.title}: ${b.pdfUrl}`).join("\n")}\n\nIf you have any questions, please contact us at ${supportEmail}.`,
+  });
+}
+
 export interface SendJudgeAccessEmailInput {
   to: string;
   name: string;
