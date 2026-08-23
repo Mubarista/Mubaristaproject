@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -28,7 +29,7 @@ type Step = "form" | "connecting" | "approve" | "verifying" | "success" | "error
 
 const providers = [
   { id: "mtn", label: "MTN Mobile Money", color: "#FBBF24" },
-  { id: "airtel", label: "Airtel Money", color: "#EF4444" },
+  { id: "airtel", label: "Airtel Money", color: "#EF4444", logo: "/images/airtel-logo-128.png" },
 ];
 
 function normalizeDefaultPhone(value?: string) {
@@ -182,7 +183,13 @@ export function RwandaPayGateway({
                             : "border-white/10 bg-white/5 text-muted hover:bg-white/10"
                         }`}
                       >
-                        <span className="h-2.5 w-2.5 rounded-full" style={{ background: p.color }} />
+                        {p.logo ? (
+                          <div className="h-5 w-5 overflow-hidden rounded-full bg-white">
+                            <Image src={p.logo} alt={p.label} width={20} height={20} className="h-5 w-5 object-cover" />
+                          </div>
+                        ) : (
+                          <span className="h-2.5 w-2.5 rounded-full" style={{ background: p.color }} />
+                        )}
                         {p.label.split(" ")[0]}
                       </button>
                     ))}
