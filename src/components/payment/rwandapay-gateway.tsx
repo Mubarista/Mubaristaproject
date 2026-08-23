@@ -80,6 +80,20 @@ export function RwandaPayGateway({
     setPhone(normalizeDefaultPhone(defaultPhone));
   }, [defaultPhone]);
 
+  useEffect(() => {
+    if (step !== "form") return;
+    const digits = phone.replace(/\D/g, "");
+    const prefix = provider === "mtn" ? "078" : "073";
+    let normalized = digits;
+    if (digits.startsWith("078")) normalized = prefix + digits.slice(3);
+    else if (digits.startsWith("073")) normalized = prefix + digits.slice(3);
+    else if (digits.startsWith("78")) normalized = prefix + digits.slice(2);
+    else if (digits.startsWith("73")) normalized = prefix + digits.slice(2);
+    else if (digits.length < 3) normalized = prefix;
+    else if (!digits.startsWith(prefix)) normalized = prefix + digits;
+    if (normalized !== digits) setPhone(normalized);
+  }, [provider, step]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
