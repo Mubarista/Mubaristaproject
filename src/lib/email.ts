@@ -350,15 +350,22 @@ export interface SendBookDeliveryEmailInput {
 export async function sendBookDeliveryEmail(input: SendBookDeliveryEmailInput): Promise<SendEmailResult> {
   const { to, customerName, orderId, books } = input;
   const supportEmail = process.env.SUPPORT_EMAIL || "hello@mubarista.com";
-  const companyName = "Mubarista Hub";
+  const logoUrl = await getSiteLogo();
 
   const bookListHtml = books
     .map(
       (book) => `
         <tr>
-          <td style="padding:12px; border:1px solid #e5e7eb; border-radius:12px;">
-            <p style="margin:0 0 8px 0; font-size:16px; color:#111827; font-weight:600;">${book.title}</p>
-            <a href="${book.pdfUrl}" target="_blank" download style="display:inline-block; padding:10px 20px; background-color:#f59e0b; color:#111827; text-decoration:none; border-radius:8px; font-weight:600; font-size:14px;">Download PDF</a>
+          <td style="padding:12px;border:1px solid #e5e7eb;font-size:14px;color:#111827;font-family:Arial,Helvetica,sans-serif;">
+            ${book.title}
+          </td>
+          <td style="padding:12px;border:1px solid #e5e7eb;text-align:center;">
+            <a
+              href="${book.pdfUrl}"
+              target="_blank"
+              download
+              style="display:inline-block;padding:10px 20px;background-color:#2563eb;color:#ffffff;text-decoration:none;border-radius:8px;font-size:14px;font-family:Arial,Helvetica,sans-serif;font-weight:600;"
+            >Download PDF</a>
           </td>
         </tr>
       `
@@ -372,11 +379,11 @@ export async function sendBookDeliveryEmail(input: SendBookDeliveryEmailInput): 
     fromEmail: process.env.RESEND_FROM_EMAIL || "hello@mubarista.com",
     templateId: "ebook-delivery",
     templateData: {
+      LOGO_URL: logoUrl || "",
       CUSTOMER_NAME: customerName || "Reader",
       ORDER_ID: orderId,
       BOOK_LIST: bookListHtml,
       SUPPORT_EMAIL: supportEmail,
-      COMPANY_NAME: companyName,
     },
   });
 }
