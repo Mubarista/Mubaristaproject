@@ -20,6 +20,7 @@ interface RwandaPayGatewayProps {
   amount: number;
   currency?: string;
   description?: string;
+  defaultPhone?: string;
   onComplete: (transactionId: string) => void;
   onCancel: () => void;
 }
@@ -31,15 +32,23 @@ const providers = [
   { id: "airtel", label: "Airtel Money", color: "#EF4444" },
 ];
 
+function normalizeDefaultPhone(value?: string) {
+  if (!value) return "";
+  const digits = value.replace(/\D/g, "");
+  if (digits.startsWith("250")) return digits.slice(3);
+  return digits;
+}
+
 export function RwandaPayGateway({
   amount,
   currency = "RWF",
   description = "Payment",
+  defaultPhone,
   onComplete,
   onCancel,
 }: RwandaPayGatewayProps) {
   const [step, setStep] = useState<Step>("form");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(() => normalizeDefaultPhone(defaultPhone));
   const [provider, setProvider] = useState(providers[0].id);
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +61,10 @@ export function RwandaPayGateway({
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    setPhone(normalizeDefaultPhone(defaultPhone));
+  }, [defaultPhone]);
 
   function simulateProgress(target: number, duration: number, onDone?: () => void) {
     const start = performance.now();

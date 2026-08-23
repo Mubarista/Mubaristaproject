@@ -9,7 +9,8 @@ import { useCart } from "@/lib/cart-context";
 import { useAuth } from "@/lib/auth-context";
 import { useAdminData } from "@/lib/admin-data-context";
 import { useOrders } from "@/lib/order-context";
-import { initiateRwandaPay, initiatePesapal, createPayment, generateReference } from "@/lib/payment";
+import { initiatePesapal, createPayment, generateReference } from "@/lib/payment";
+import { RwandaPayGateway } from "@/components/payment/rwandapay-gateway";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SuccessConfirmation } from "@/components/ui/success-confirmation";
@@ -32,6 +33,7 @@ export default function CheckoutPage() {
   const [momoPhoneError, setMomoPhoneError] = useState<string | null>(null);
   const [momoCode, setMomoCode] = useState("");
   const [momoStep, setMomoStep] = useState<"phone" | "code">("phone");
+  const [showGateway, setShowGateway] = useState(false);
 
   const [formData, setFormData] = useState({
     fullName: user?.name || "",
@@ -122,35 +124,8 @@ export default function CheckoutPage() {
       return;
     }
 
-    setProcessing(true);
-    try {
-      const orderId = generateReference("ORD");
-      const paymentType = cartItems.some((item) => item.type === "tool") ? "tool_purchase" : "book_purchase";
-      const { payment_url } = await initiateRwandaPay({
-        amount: total,
-        tx_ref: orderId,
-        customer: {
-          name: formData.fullName || user.name,
-          email: formData.email || user.email,
-          phone,
-        },
-        currency: "RWF",
-        description: `MUBARISTA order - ${cartItems.map((item) => item.title).join(", ")}`,
-        meta: {
-          type: paymentType,
-          items: cartItems,
-          shippingAddress: formData,
-          userCountry: formData.country,
-          userId: user.id,
-        },
-      });
-
-      window.location.href = payment_url;
-    } catch (error: any) {
-      console.error("RwandaPay checkout failed:", error);
-      alert(error.message || "Failed to start payment. Please try again.");
-      setProcessing(false);
-    }
+    setMomoPhone(phone);
+    setShowGateway(true);
   }
 
   async function processPesapalPayment() {
@@ -299,6 +274,10 @@ export default function CheckoutPage() {
       setProcessing(false);
       return;
     }
+    await completeCheckout();
+  };
+
+  async function completeCheckout() {
     setStep("processing");
 
     // Simulate payment processing
@@ -316,7 +295,22 @@ export default function CheckoutPage() {
     await deliverBookPdfs(order.id);
     setStep("success");
     setProcessing(false);
-  };
+  }
+
+  async function handleGatewayComplete() {
+    setShowGateway(false);
+    setProcessing(true);
+    if (!(await decrementStock())) {
+      setProcessing(false);
+      return;
+    }
+    await completeCheckout();
+  }
+
+  function handleGatewayCancel() {
+    setShowGateway(false);
+    setProcessing(false);
+  }
 
   if (step === "processing") {
     return (
@@ -548,7 +542,7 @@ export default function CheckoutPage() {
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted mt-4">
                           <Lock className="h-3 w-3" />
-                          <span>You will be redirected to RwandaPay to complete this payment.</span>
+                          <span>You will complete this payment securely in-app with RwandaPay.</span>
                         </div>
                       </>
                     )}
@@ -738,6 +732,17 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+
+      {showGateway && (
+        <RwandaPayGateway
+          amount={total}
+          currency="RWF"
+          description={`MUBARISTA order - ${cartItems.map((item) => item.title).join(", ")}`}
+          defaultPhone={momoPhone}
+          onComplete={handleGatewayComplete}
+          onCancel={handleGatewayCancel}
+        />
+      )}
     </div>
   );
 }
