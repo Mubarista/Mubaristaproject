@@ -142,7 +142,7 @@ export function HowItWorksSection() {
   }
 
   return (
-    <section className="section-padding pb-4 md:pb-6">
+    <section className="section-padding pb-1 md:pb-2">
       <div className="mx-auto max-w-7xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

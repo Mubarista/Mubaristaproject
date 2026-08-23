@@ -85,7 +85,7 @@ export function TestimonialsSection() {
   };
 
   return (
-    <section className="section-padding pt-4 md:pt-6">
+    <section className="section-padding pt-1 md:pt-2">
       {/* Notification Toast */}
       {notification.show && (
         <motion.div
