@@ -191,7 +191,7 @@ export function FeaturedArtSection() {
   }, [allArt, copies]);
 
   return (
-    <section className="section-padding bg-muted-bg/30">
+    <section className="section-padding pb-0 pt-sm bg-muted-bg/30">
       {/* Notification Toast */}
       {notification.show && (
         <motion.div

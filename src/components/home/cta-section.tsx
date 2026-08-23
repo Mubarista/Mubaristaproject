@@ -43,7 +43,7 @@ export function CTASection() {
   }
 
   return (
-    <section className="section-padding">
+    <section className="section-padding pt-sm">
       <div className="mx-auto max-w-7xl">
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }}

@@ -56,6 +56,7 @@ export default function CheckoutPage() {
   const [paymentSettings, setPaymentSettings] = useState<any>({});
   const [tools, setTools] = useState<any[]>([]);
   const [stockError, setStockError] = useState<string | null>(null);
+  const [lastOrderHadBooks, setLastOrderHadBooks] = useState(false);
 
   useEffect(() => {
     fetch("/api/site-settings")
@@ -289,6 +290,7 @@ export default function CheckoutPage() {
       total,
       shippingAddress: formData,
     });
+    setLastOrderHadBooks(order.items.some((item: any) => item.type === "book"));
 
     clearCart();
     await recordPayment(order.id);
@@ -344,7 +346,9 @@ export default function CheckoutPage() {
           }
         >
           <p className="text-muted">Thank you for your purchase. Your order has been confirmed.</p>
-          <p className="text-muted mt-3 text-sm">Please check your email inbox (and spam or junk folder, just in case) for your ebook download link(s).</p>
+          {lastOrderHadBooks && (
+            <p className="text-muted mt-3 text-sm">Please check your email inbox (and spam or junk folder, just in case) for your ebook download link(s).</p>
+          )}
         </SuccessConfirmation>
       </div>
     );

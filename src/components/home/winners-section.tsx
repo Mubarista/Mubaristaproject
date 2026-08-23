@@ -70,7 +70,7 @@ export function WinnersSection() {
   }
 
   return (
-    <section className="section-padding">
+    <section className="section-padding pb-0 pt-0">
       <div className="mx-auto max-w-7xl">
         <SectionHeading
           eyebrow="Hall of Fame"
