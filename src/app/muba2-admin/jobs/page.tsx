@@ -28,6 +28,8 @@ interface Job {
   order: number;
   createdAt: string;
   updatedAt: string;
+  purchased?: boolean;
+  sold?: boolean;
 }
 
 const blank: Omit<Job, 'id' | 'createdAt' | 'updatedAt'> = { title: "", company: "", country: "", salary: "", experience: "", type: "Full-time", category: "free", price: 0, status: "available", companyEmail: "", companyPhone: "", companyWebsite: "", companySocials: [], description: "", active: true, order: 0 };
@@ -43,6 +45,8 @@ export default function AdminJobsPage() {
 
   useEffect(() => {
     fetchJobs();
+    const interval = setInterval(fetchJobs, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   async function fetchJobs() {
@@ -154,7 +158,11 @@ export default function AdminJobsPage() {
           { label: "Salary", render: (j) => <span className="text-green text-sm">{j.salary}</span> },
           { label: "Type", render: (j) => <Badge variant="blue">{j.type}</Badge> },
           { label: "Category", render: (j) => <Badge variant={j.category === "free" ? "green" : "yellow"}>{j.category}</Badge> },
-          { label: "Status", render: (j) => <Badge variant={j.status === "available" ? "green" : "red"}>{j.status}</Badge> },
+          { label: "Status", render: (j) => j.sold ? (
+            <Badge variant="red">Purchased</Badge>
+          ) : (
+            <Badge variant={j.status === "available" ? "green" : "red"}>{j.status}</Badge>
+          ) },
           { label: "Experience", render: (j) => <span className="text-xs text-muted">{j.experience}</span> },
         ]}
       />
