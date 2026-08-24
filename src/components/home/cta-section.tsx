@@ -2,10 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import Link from "next/link";
-import { ArrowRight, Trophy, Zap } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/auth-context";
+import { Zap } from "lucide-react";
 
 export function CTASection() {
   const [ctaSettings, setCtaSettings] = useState({
@@ -16,8 +13,6 @@ export function CTASection() {
     primaryButtonText: "Join Free Today",
     secondaryButtonText: "View Live Competitions",
   });
-
-  const { user, isLoading: isAuthLoading } = useAuth();
 
   useEffect(() => {
     fetchSiteSettings();
@@ -83,30 +78,7 @@ export function CTASection() {
               <p className="text-white/80 text-lg max-w-2xl mx-auto mb-10">
                 {ctaSettings.description}
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                {!(user && !isAuthLoading) && (
-                  <Link href="/register">
-                    <Button
-                      variant="secondary"
-                      size="xl"
-                      className="bg-white text-blue hover:bg-white/90 border-0"
-                    >
-                      {ctaSettings.primaryButtonText}
-                      <ArrowRight className="h-5 w-5" />
-                    </Button>
-                  </Link>
-                )}
-                <Link href="/competitions">
-                  <Button
-                    variant="outline"
-                    size="xl"
-                    className="border-white/40 text-white hover:bg-white/10"
-                  >
-                    <Trophy className="h-5 w-5 text-yellow-300" />
-                    {ctaSettings.secondaryButtonText}
-                  </Button>
-                </Link>
-              </div>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center" />
             </motion.div>
           </div>
         </motion.div>

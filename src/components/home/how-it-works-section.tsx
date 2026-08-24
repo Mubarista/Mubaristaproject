@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import Link from "next/link";
 import {
   UserPlus,
   Search,
@@ -16,11 +15,8 @@ import {
   Globe,
   Award,
   Zap,
-  ArrowRight,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { LoadingDots } from "@/components/ui/loading-dots";
-import { useAuth } from "@/lib/auth-context";
 
 interface HowItWorksStep {
   id: string;
@@ -103,8 +99,6 @@ const defaultSteps: HowItWorksStep[] = [
 export function HowItWorksSection() {
   const [steps, setSteps] = useState<HowItWorksStep[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const { user, isLoading: isAuthLoading } = useAuth();
 
   useEffect(() => {
     async function fetchSteps() {
@@ -200,21 +194,6 @@ export function HowItWorksSection() {
           })}
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center"
-        >
-          {!(user && !isAuthLoading) && (
-            <Link href="/register">
-              <Button variant="primary" size="xl">
-                Get Started Free
-                <ArrowRight className="h-5 w-5" />
-              </Button>
-            </Link>
-          )}
-        </motion.div>
       </div>
     </section>
   );
