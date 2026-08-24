@@ -176,9 +176,16 @@ export function HeroSection() {
                 </Link>
               )}
               <Link href="/competitions">
-                <Button variant="secondary" size="xl" className="w-full sm:w-auto !bg-black/50 !text-white hover:!bg-white/10">
-                  <Trophy className="h-5 w-5 text-yellow" />
+                <Button
+                  variant="ghost"
+                  size="xl"
+                  className="group w-full sm:w-auto bg-black/40 text-white backdrop-blur-xl border border-yellow/30 hover:bg-black/30 hover:border-yellow/50 shadow-lg shadow-black/20 hover:shadow-yellow/20"
+                >
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-yellow/15 ring-1 ring-yellow/40 transition-transform duration-300 group-hover:scale-110 group-hover:bg-yellow/25">
+                    <Trophy className="h-4 w-4 text-yellow" />
+                  </span>
                   {heroContent?.ctaSecondary}
+                  <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
                 </Button>
               </Link>
               <Link href="/learn">
