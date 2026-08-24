@@ -78,7 +78,7 @@ export function CTASection() {
               <p className="text-white/80 text-lg max-w-2xl mx-auto mb-10">
                 {ctaSettings.description}
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center" />
+
             </motion.div>
           </div>
         </motion.div>
