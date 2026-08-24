@@ -163,13 +163,8 @@ export function Navbar() {
             {siteLogo ? (
               <img src={siteLogo} alt="MUBARISTA" className="h-14 w-auto bg-transparent transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-2 cursor-pointer" />
             ) : null}
-            <span
-              className={cn(
-                "text-xl font-bold tracking-tight leading-none animate-gradient-text",
-                user && "hidden"
-              )}
-            >
-              MUBARISTA
+            <span className="text-xl font-bold tracking-tight leading-none animate-gradient-text">
+              {user ? "MB" : "MUBARISTA"}
               <span className="text-[0.45em] tracking-widest uppercase align-top ml-0.5">HUB</span>
             </span>
           </Link>
