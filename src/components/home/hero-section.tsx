@@ -52,14 +52,6 @@ export function HeroSection() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    fetchHeroData();
-
-    // Poll for latest stats so the hero section stays in sync with admin data
-    const interval = setInterval(fetchHeroData, 10000);
-    return () => clearInterval(interval);
-  }, []);
-
   async function fetchHeroData() {
     try {
       const response = await fetch("/api/hero");
@@ -78,8 +70,15 @@ export function HeroSection() {
     }
   }
 
-  // Check if there are active/live competitions
-  const hasLiveCompetitions = (platformStats?.liveCompetitions ?? 0) > 0;
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    fetchHeroData();
+
+    // Poll for latest stats so the hero section stays in sync with admin data
+    const interval = setInterval(fetchHeroData, 10000);
+    return () => clearInterval(interval);
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const hints = (heroContent?.badges || [heroContent?.badge].filter(Boolean))
     .filter((h): h is string => typeof h === "string" && h.trim() !== "");
