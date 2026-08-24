@@ -47,6 +47,26 @@ function groupByPeriod(payments: ReturnType<typeof useAdminData>["payments"], pe
   return Object.entries(buckets).sort((a, b) => a[0].localeCompare(b[0]));
 }
 
+function groupNetRevenueByMonth(payments: ReturnType<typeof useAdminData>["payments"]) {
+  const buckets: Record<string, { amount: number; date: Date }> = {};
+
+  payments.forEach((payment) => {
+    if (payment.status !== "completed" || !payment.createdAt) return;
+    const date = new Date(payment.paidAt || payment.createdAt);
+    if (Number.isNaN(date.getTime())) return;
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    buckets[key] ||= { amount: 0, date };
+    buckets[key].amount += payment.type === "refund"
+      ? -Math.abs(payment.amount || 0)
+      : Math.abs(payment.amount || 0);
+  });
+
+  return Object.entries(buckets)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-6)
+    .map(([key, value]) => ({ key, ...value }));
+}
+
 /* ── component ──────────────────────────────────────────────────── */
 export default function PaymentAnalyticsPage() {
   const { payments } = useAdminData();
@@ -78,6 +98,8 @@ export default function PaymentAnalyticsPage() {
   /* period time-series */
   const timeSeries = groupByPeriod(payments, period);
   const maxRevenue = Math.max(...timeSeries.map(([, v]) => v.revenue), 1);
+  const netRevenueComparison = groupNetRevenueByMonth(payments);
+  const maxNetRevenue = Math.max(...netRevenueComparison.map((month) => Math.max(month.amount, 0)), 1);
 
   /* method over time (stacked) */
   const methodTimeSeries = (["card", "mobile_money", "bank_transfer", "paypal"] as PaymentMethod[]).map(m => ({
@@ -125,6 +147,37 @@ export default function PaymentAnalyticsPage() {
             </div>
           );
         })}
+      </div>
+
+      {/* ── Net revenue comparison ── */}
+      <div className="glass-card rounded-2xl p-6 mb-6">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="font-semibold">Net Revenue Comparison</h2>
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-green">
+            <span className="h-1.5 w-1.5 rounded-full bg-green animate-pulse" /> Live
+          </span>
+        </div>
+        {netRevenueComparison.length > 0 ? (
+          <div className="flex items-end gap-4 h-40">
+            {netRevenueComparison.map((month, index) => {
+              const pct = (Math.max(month.amount, 0) / maxNetRevenue) * 100;
+              const isLatest = index === netRevenueComparison.length - 1;
+              return (
+                <div key={month.key} className="flex-1 flex flex-col items-center gap-1.5 cursor-pointer min-w-0">
+                  <span className="text-xs text-muted truncate max-w-full">{fmt(month.amount)}</span>
+                  <div className="w-full rounded-t-xl overflow-hidden bg-white/5" style={{ height: `${Math.max(pct, 5)}%` }}>
+                    <div className={`w-full h-full rounded-t-xl transition-all ${isLatest ? "bg-blue" : "bg-blue/30 hover:bg-blue/50"}`} />
+                  </div>
+                  <span className={`text-xs font-medium ${isLatest ? "text-blue" : "text-muted"}`}>
+                    {month.date.toLocaleDateString("en-US", { month: "short" })}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="flex items-center justify-center h-40 text-sm text-muted">No completed revenue yet</p>
+        )}
       </div>
 
       {/* ── Method vs Type cross table ── */}
