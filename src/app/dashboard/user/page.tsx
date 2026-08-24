@@ -20,7 +20,6 @@ import {
   Bell,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { supabase } from "@/lib/supabase";
 import { NotificationsDialog } from "@/components/notifications-dialog";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +27,8 @@ import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { type SubscriptionPlan } from "@/lib/admin-data-context";
 import { SubscribePrompt } from "@/components/subscribe-prompt";
-import { initiateRwandaPay, generateReference } from "@/lib/payment";
+import { supabase } from "@/lib/supabase";
+import { RwandaPayGateway } from "@/components/payment/rwandapay-gateway";
 import {
   DashboardStatsSkeleton,
   DashboardActivitySkeleton,
@@ -65,6 +65,9 @@ export default function UserDashboard() {
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [startingPlan, setStartingPlan] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
+  const [showRwandaPay, setShowRwandaPay] = useState(false);
+  const [completingPayment, setCompletingPayment] = useState(false);
 
   // Ensure skeletons show for a minimum duration to prevent flash
   const showStatsSkeleton = useDelayedLoading(!loadingStats, 700);
@@ -213,6 +216,36 @@ export default function UserDashboard() {
       cancelled: "red",
     };
     return map[(status || "").toLowerCase()] || "blue";
+  }
+
+  async function handlePremiumPaymentComplete(reference: string) {
+    setCompletingPayment(true);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const response = await fetch("/api/payments/rwandapay/complete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.session?.access_token || ""}`,
+        },
+        body: JSON.stringify({ reference }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Failed to confirm payment");
+      window.location.reload();
+    } catch (error: any) {
+      console.error("Failed to complete premium payment:", error);
+      alert(error.message || "Failed to confirm payment. Please contact support.");
+      setCompletingPayment(false);
+      setStartingPlan(null);
+    }
+  }
+
+  function cancelPremiumPayment() {
+    setShowRwandaPay(false);
+    setSelectedPlan(null);
+    setStartingPlan(null);
+    setCompletingPayment(false);
   }
 
   if (!user) {
@@ -600,42 +633,15 @@ export default function UserDashboard() {
                     <Button
                       variant={plan.popular ? "premium" : "primary"}
                       className="w-full"
-                      disabled={startingPlan === plan.id}
-                      onClick={async () => {
-                      if (!user) return;
-                      setStartingPlan(plan.id);
-                      try {
-                        const tx_ref = generateReference(`PREM-${plan.id}`);
-                        const { payment_url } = await initiateRwandaPay({
-                          amount: plan.price,
-                          tx_ref,
-                          customer: {
-                            name: user.name,
-                            email: user.email,
-                            phone: user.phone || "",
-                          },
-                          currency: plan.currency,
-                          description: `Premium subscription - ${plan.name}`,
-                          meta: {
-                            type: "premium_subscription",
-                            planId: plan.id,
-                            duration: plan.duration,
-                            userId: user.id,
-                            userCountry: user.country,
-                            userName: user.name,
-                            userEmail: user.email,
-                          },
-                        });
-
-                        window.location.href = payment_url;
-                      } catch (error: any) {
-                        console.error("Failed to start payment:", error);
-                        alert(error.message || "Failed to start payment.");
-                        setStartingPlan(null);
-                      }
-                    }}
+                      disabled={startingPlan === plan.id || completingPayment}
+                      onClick={() => {
+                        if (!user) return;
+                        setStartingPlan(plan.id);
+                        setSelectedPlan(plan);
+                        setShowRwandaPay(true);
+                      }}
                     >
-                      {startingPlan === plan.id ? "Processing..." : `Choose ${plan.name}`}
+                      {startingPlan === plan.id ? "Enter payment details..." : `Choose ${plan.name}`}
                     </Button>
                       </Card>
                     </motion.div>
@@ -647,6 +653,28 @@ export default function UserDashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {showRwandaPay && selectedPlan && user && (
+        <RwandaPayGateway
+          amount={selectedPlan.price}
+          currency={selectedPlan.currency || "RWF"}
+          description={`Premium subscription - ${selectedPlan.name}`}
+          customerName={user.name}
+          customerEmail={user.email}
+          defaultPhone={user.phone || ""}
+          meta={{
+            type: "premium_subscription",
+            planId: selectedPlan.id,
+            duration: selectedPlan.duration,
+            userId: user.id,
+            userCountry: user.country,
+            userName: user.name,
+            userEmail: user.email,
+          }}
+          onComplete={handlePremiumPaymentComplete}
+          onCancel={cancelPremiumPayment}
+        />
+      )}
     </div>
   );
 }
