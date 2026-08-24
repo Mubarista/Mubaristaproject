@@ -352,7 +352,7 @@ export function Navbar() {
                 </Link>
                 <Link href="/register">
                   <Button variant="primary" size="sm">
-                    Register
+                    Sign up
                   </Button>
                 </Link>
               </div>
@@ -453,7 +453,7 @@ export function Navbar() {
                       </Link>
                       <Link href="/register" onClick={() => setIsOpen(false)}>
                         <Button variant="primary" className="w-full">
-                          Register
+                          Sign up
                         </Button>
                       </Link>
                     </>
