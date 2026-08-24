@@ -21,16 +21,16 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { reference } = body;
+    const { reference, paymentReference = reference } = body;
 
-    if (!reference) {
+    if (!reference || !paymentReference) {
       return NextResponse.json({ error: "Reference is required" }, { status: 400 });
     }
 
     const { data: payment, error: paymentError } = await supabaseAdmin
       .from("payments")
       .select("*")
-      .eq("reference", reference)
+      .eq("reference", paymentReference)
       .maybeSingle();
 
     if (paymentError || !payment) {

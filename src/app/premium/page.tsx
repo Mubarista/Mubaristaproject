@@ -35,7 +35,7 @@ export default function PremiumPage() {
     setShowGateway(true);
   };
 
-  async function handleGatewayComplete(reference: string) {
+  async function handleGatewayComplete(paymentReference: string, providerReference?: string) {
     setCompleting(true);
     try {
       const { data } = await supabase.auth.getSession();
@@ -46,7 +46,10 @@ export default function PremiumPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token || ""}`,
         },
-        body: JSON.stringify({ reference }),
+        body: JSON.stringify({
+          reference: providerReference || paymentReference,
+          paymentReference,
+        }),
       });
 
       if (!res.ok) {

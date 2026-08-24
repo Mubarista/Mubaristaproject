@@ -218,7 +218,7 @@ export default function UserDashboard() {
     return map[(status || "").toLowerCase()] || "blue";
   }
 
-  async function handlePremiumPaymentComplete(reference: string) {
+  async function handlePremiumPaymentComplete(paymentReference: string, providerReference?: string) {
     setCompletingPayment(true);
     try {
       const { data } = await supabase.auth.getSession();
@@ -228,7 +228,10 @@ export default function UserDashboard() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${data.session?.access_token || ""}`,
         },
-        body: JSON.stringify({ reference }),
+        body: JSON.stringify({
+          reference: providerReference || paymentReference,
+          paymentReference,
+        }),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || "Failed to confirm payment");

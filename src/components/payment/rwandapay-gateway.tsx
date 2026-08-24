@@ -25,7 +25,7 @@ interface RwandaPayGatewayProps {
   customerEmail?: string;
   defaultPhone?: string;
   meta?: Record<string, any>;
-  onComplete: (transactionId: string) => void;
+  onComplete: (transactionId: string, providerReference?: string) => void;
   onCancel: () => void;
 }
 
@@ -151,7 +151,7 @@ export function RwandaPayGateway({
       if (mode === "test") {
         setProgress(100);
         setStep("success");
-        setTimeout(() => onComplete(reference), 800);
+        setTimeout(() => onComplete(tx, reference), 800);
         return;
       }
 
@@ -170,7 +170,7 @@ export function RwandaPayGateway({
             if (status.status === "successful" || status.success) {
               setProgress(100);
               setStep("success");
-              setTimeout(() => onComplete(reference), 800);
+              setTimeout(() => onComplete(tx, reference), 800);
             } else {
               setStep("error");
               setError(status.message || "Payment failed. Please try again.");
