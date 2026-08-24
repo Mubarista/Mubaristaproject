@@ -24,6 +24,7 @@ interface RwandaPayGatewayProps {
   customerName?: string;
   customerEmail?: string;
   defaultPhone?: string;
+  meta?: Record<string, any>;
   onComplete: (transactionId: string) => void;
   onCancel: () => void;
 }
@@ -57,6 +58,7 @@ export function RwandaPayGateway({
   customerName,
   customerEmail,
   defaultPhone,
+  meta = {},
   onComplete,
   onCancel,
 }: RwandaPayGatewayProps) {
@@ -129,7 +131,7 @@ export function RwandaPayGateway({
         },
         currency,
         description,
-        meta: { source: "mubarista-pay" },
+        meta: { source: "mubarista-pay", ...meta },
       });
 
       setProgress(50);

@@ -6,20 +6,23 @@ import Link from "next/link";
 import { Crown, Check, ArrowRight, Star, Loader2 } from "lucide-react";
 import { useAdminData } from "@/lib/admin-data-context";
 import { useAuth } from "@/lib/auth-context";
-import { initiateRwandaPay, generateReference } from "@/lib/payment";
+import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { RwandaPayGateway } from "@/components/payment/rwandapay-gateway";
 
 export default function PremiumPage() {
   const { subscriptionPlans } = useAdminData();
   const { user } = useAuth();
-  const [processingPlan, setProcessingPlan] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
+  const [showGateway, setShowGateway] = useState(false);
+  const [completing, setCompleting] = useState(false);
 
   const activePlans = subscriptionPlans.filter(p => p.active);
 
-  const handleSelectPlan = async (planId: string) => {
+  const handleSelectPlan = (planId: string) => {
     if (!user) {
       alert("Please login to upgrade to premium");
       return;
@@ -28,37 +31,42 @@ export default function PremiumPage() {
     const plan = subscriptionPlans.find(p => p.id === planId);
     if (!plan) return;
 
-    setProcessingPlan(planId);
+    setSelectedPlan(plan);
+    setShowGateway(true);
+  };
+
+  async function handleGatewayComplete(reference: string) {
+    setCompleting(true);
     try {
-      const tx_ref = generateReference(`PREM-${planId}`);
-      const { payment_url } = await initiateRwandaPay({
-        amount: plan.price,
-        tx_ref,
-        customer: {
-          name: user.name,
-          email: user.email,
-          phone: user.phone || "",
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      const res = await fetch("/api/payments/rwandapay/complete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token || ""}`,
         },
-        currency: plan.currency,
-        description: `Premium subscription - ${plan.name}`,
-        meta: {
-          type: "premium_subscription",
-          planId,
-          duration: plan.duration,
-          userId: user.id,
-          userCountry: user.country,
-          userName: user.name,
-          userEmail: user.email,
-        },
+        body: JSON.stringify({ reference }),
       });
 
-      window.location.href = payment_url;
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Failed to complete payment" }));
+        throw new Error(err.error || "Failed to complete payment");
+      }
+
+      window.location.href = "/dashboard";
     } catch (error: any) {
-      console.error("Upgrade failed:", error);
-      alert(error.message || "Failed to start payment. Please try again.");
-      setProcessingPlan(null);
+      console.error("Premium completion failed:", error);
+      alert(error.message || "Failed to confirm payment. Please contact support.");
+      setCompleting(false);
     }
-  };
+  }
+
+  function handleGatewayCancel() {
+    setShowGateway(false);
+    setSelectedPlan(null);
+    setCompleting(false);
+  }
 
   return (
     <div className="pt-24 pb-16 min-h-screen">
@@ -121,9 +129,9 @@ export default function PremiumPage() {
                   variant={plan.popular ? "primary" : "secondary"}
                   className="w-full"
                   onClick={() => handleSelectPlan(plan.id)}
-                  disabled={processingPlan === plan.id}
+                  disabled={completing || user?.subscriptionPlan === plan.id}
                 >
-                  {processingPlan === plan.id ? (
+                  {completing && selectedPlan?.id === plan.id ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Processing...
@@ -183,6 +191,28 @@ export default function PremiumPage() {
           </Link>
         </div>
       </div>
+
+      {showGateway && selectedPlan && user && (
+        <RwandaPayGateway
+          amount={selectedPlan.price}
+          currency={selectedPlan.currency || "RWF"}
+          description={`Premium subscription - ${selectedPlan.name}`}
+          customerName={user.name}
+          customerEmail={user.email}
+          defaultPhone={user.phone || ""}
+          meta={{
+            type: "premium_subscription",
+            planId: selectedPlan.id,
+            duration: selectedPlan.duration,
+            userId: user.id,
+            userCountry: user.country,
+            userName: user.name,
+            userEmail: user.email,
+          }}
+          onComplete={handleGatewayComplete}
+          onCancel={handleGatewayCancel}
+        />
+      )}
     </div>
   );
 }
