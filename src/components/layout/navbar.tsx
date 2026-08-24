@@ -166,7 +166,7 @@ export function Navbar() {
             <span
               className={cn(
                 "text-xl font-bold tracking-tight leading-none animate-gradient-text",
-                user && "hidden sm:inline"
+                user && "hidden"
               )}
             >
               MUBARISTA
