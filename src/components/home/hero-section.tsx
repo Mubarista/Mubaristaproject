@@ -143,7 +143,6 @@ export function HeroSection() {
           >
             {hints.length > 0 && (
               <span className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 text-sm mb-6 text-white">
-                <span className="h-2 w-2 rounded-full bg-green animate-pulse" />
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={hints[hintIndex]}
