@@ -183,6 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (session?.user) {
+        setIsLoading(true);
         if (isReservedAdmin(session.user.email)) {
           await supabase.auth.signOut({ scope: "local" });
           if (mounted) {
@@ -232,8 +233,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw error;
     }
     if (data.user) {
-      // Valid, confirmed email/password login. Sign the user in immediately.
-      setUser(mapSupabaseUser(data.user, null));
+      // Load the persisted profile before rendering the signed-in state so premium status is immediate.
+      setIsLoading(true);
+      const profile = await ensureUserProfile(data.user);
+      if (profile) {
+        setUser(mapSupabaseUser(data.user, profile));
+      }
+      setIsLoading(false);
     }
   }, [setUser]);
 
