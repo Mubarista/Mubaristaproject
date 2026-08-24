@@ -41,6 +41,30 @@ function fmt(n: number, currency = "RWF") {
   }).format(Math.abs(n));
 }
 
+function getMonthlyRevenue(payments: Payment[]) {
+  const months = new Map<string, { period: string; amount: number; date: Date }>();
+
+  payments.forEach((payment) => {
+    if (payment.status !== "completed" || !payment.createdAt) return;
+    const date = new Date(payment.paidAt || payment.createdAt);
+    if (Number.isNaN(date.getTime())) return;
+
+    const key = `${date.getFullYear()}-${date.getMonth()}`;
+    const existing = months.get(key) || {
+      period: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      amount: 0,
+      date,
+    };
+    const value = payment.type === "refund" ? -Math.abs(payment.amount || 0) : Math.abs(payment.amount || 0);
+    existing.amount += value;
+    months.set(key, existing);
+  });
+
+  return Array.from(months.values())
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
+    .slice(-6);
+}
+
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
     completed: "bg-green/10 text-green",
@@ -107,6 +131,8 @@ export default function AdminPaymentsPage() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
+    const interval = setInterval(fetchData, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) {
@@ -123,8 +149,6 @@ export default function AdminPaymentsPage() {
   const totalRefunds = Math.abs(refunds.reduce((s, p) => s + (p.amount || 0), 0));
   const netRevenue = totalRevenue - totalRefunds;
   const pendingAmount = pending.reduce((s, p) => s + (p.amount || 0), 0);
-
-  const latestStatement = statements && statements.length > 0 ? statements[statements.length - 1] : null;
 
   // Revenue by type
   const byType = completed
@@ -191,38 +215,48 @@ export default function AdminPaymentsPage() {
           </div>
         </div>
 
-        {/* Monthly trend */}
+        {/* Live monthly earnings trend */}
         <div className="glass-card rounded-2xl p-5 lg:col-span-2">
-          <h2 className="font-semibold mb-4">Monthly Net Revenue</h2>
-          {statements && statements.length > 0 ? (
-            <>
-              <div className="flex items-end gap-3 h-32">
-                {statements.map(s => {
-                  const maxNet = Math.max(...statements.map(x => x.netBalance || 0));
-                  const pct = maxNet > 0 ? ((s.netBalance || 0) / maxNet) * 100 : 0;
-                  return (
-                    <div key={`${s.period || s.id}`} className="flex-1 flex flex-col items-center gap-1">
-                      <span className="text-xs text-muted">{fmt(s.netBalance || 0, s.currency || baseCurrency)}</span>
-                      <div className="w-full rounded-t-lg bg-blue/20 relative overflow-hidden" style={{ height: `${Math.max(pct, 8)}%` }}>
-                        <div className="absolute inset-x-0 bottom-0 bg-blue rounded-t-lg" style={{ height: `${pct}%` }} />
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold">Monthly Net Revenue</h2>
+            <span className="inline-flex items-center gap-1.5 text-[11px] text-green">
+              <span className="h-1.5 w-1.5 rounded-full bg-green animate-pulse" /> Live
+            </span>
+          </div>
+          {(() => {
+            const trend = getMonthlyRevenue(payments);
+            const maxAmount = Math.max(...trend.map((month) => Math.max(month.amount, 0)), 0);
+            const latest = trend[trend.length - 1];
+
+            return trend.length > 0 ? (
+              <>
+                <div className="flex items-end gap-3 h-32">
+                  {trend.map((month) => {
+                    const pct = maxAmount > 0 ? (Math.max(month.amount, 0) / maxAmount) * 100 : 0;
+                    return (
+                      <div key={month.period} className="flex-1 flex flex-col items-center gap-1 min-w-0">
+                        <span className="text-xs text-muted truncate max-w-full">{fmt(month.amount, baseCurrency)}</span>
+                        <div className="w-full rounded-t-lg bg-blue/20 relative overflow-hidden" style={{ height: `${Math.max(pct, 8)}%` }}>
+                          <div className="absolute inset-x-0 bottom-0 bg-blue rounded-t-lg transition-all duration-500" style={{ height: `${pct}%` }} />
+                        </div>
+                        <span className="text-xs text-muted">{month.date.toLocaleDateString("en-US", { month: "short" })}</span>
                       </div>
-                      <span className="text-xs text-muted">{s.period ? s.period.slice(0, 3) : 'N/A'}</span>
-                    </div>
-                  );
-                })}
-              </div>
-              {latestStatement && (
-                <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between text-xs text-muted">
-                  <span>Latest: <strong className="text-foreground">{latestStatement.period || 'N/A'}</strong></span>
-                  <span>{fmt(latestStatement.netBalance || 0, latestStatement.currency || baseCurrency)} net</span>
+                    );
+                  })}
                 </div>
-              )}
-            </>
-          ) : (
-            <div className="flex items-center justify-center h-32 text-muted text-sm">
-              No statement data available yet
-            </div>
-          )}
+                {latest && (
+                  <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between text-xs text-muted">
+                    <span>Latest: <strong className="text-foreground">{latest.period}</strong></span>
+                    <span>{fmt(latest.amount, baseCurrency)} net</span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-32 text-muted text-sm">
+                No completed earnings yet
+              </div>
+            );
+          })()}
         </div>
       </div>
 
