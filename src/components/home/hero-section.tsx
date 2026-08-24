@@ -168,17 +168,10 @@ export function HeroSection() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 mb-16">
-              {user && !isAuthLoading ? (
+              {user && !isAuthLoading && (
                 <Link href="/dashboard">
                   <Button variant="primary" size="xl" className="w-full sm:w-auto">
                     Go to Dashboard
-                    <ArrowRight className="h-5 w-5" />
-                  </Button>
-                </Link>
-              ) : (
-                <Link href="/register">
-                  <Button variant="primary" size="xl" className="w-full sm:w-auto">
-                    {heroContent?.ctaPrimary}
                     <ArrowRight className="h-5 w-5" />
                   </Button>
                 </Link>
