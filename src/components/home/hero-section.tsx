@@ -168,7 +168,7 @@ export function HeroSection() {
             <div className="flex flex-col sm:flex-row gap-4 mb-16">
               {user && !isAuthLoading && (
                 <Link href="/dashboard">
-                  <Button variant="primary" size="xl" className="w-full sm:w-auto">
+                  <Button variant="outline" size="xl" className="w-full sm:w-auto border-white/30 text-white hover:bg-white hover:text-black">
                     Go to Dashboard
                     <ArrowRight className="h-5 w-5" />
                   </Button>
